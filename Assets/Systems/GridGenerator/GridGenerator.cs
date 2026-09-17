@@ -1,6 +1,7 @@
 using ABB.Cell;
 
 using UnityEditor;
+using UnityEditor.SceneManagement;
 
 using UnityEngine;
 
@@ -22,6 +23,8 @@ namespace ABB.Grid
 		[SerializeField, Tooltip("Cells spawned per frame")]
 		protected int _cellsPerFrame = 10;
 
+		[SerializeField, HideInInspector] protected GameObject _gridParent;
+
 
 		[ContextMenu("Generate Grid")]
 		protected abstract bool GenerateGrid();
@@ -36,8 +39,8 @@ namespace ABB.Grid
 
 		protected void ResetGrid()
 		{
-			Transform[] cells = transform.GetComponentsInChildren<Transform>(true);
-			ArrayUtility.Remove(ref cells, transform);
+			Transform[] cells = _gridParent.transform.GetComponentsInChildren<Transform>(true);
+			ArrayUtility.Remove(ref cells, _gridParent.transform);
 
 			for (int i = 0; i < cells.Length; i++)
 			{
@@ -49,7 +52,28 @@ namespace ABB.Grid
 
 		private void Reset()
 		{
-			ResetGrid();
+			EditorApplication.delayCall += CreateHelpers;
+			EditorApplication.delayCall += ResetGrid;
+		}
+
+		private void CreateHelpers()
+		{
+			if (this == null) return;
+
+			bool createdSomething = false;
+
+			if (_gridParent == null)
+			{
+				GameObject gridParent = new GameObject("GridParent");
+				gridParent.transform.SetParent(transform);
+				_gridParent = gridParent;
+			}
+
+			if (createdSomething)
+			{
+				EditorUtility.SetDirty(this);
+				EditorSceneManager.MarkSceneDirty(gameObject.scene);
+			}
 		}
 
 

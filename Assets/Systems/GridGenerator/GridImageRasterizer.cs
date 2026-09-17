@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 
 using UnityEditor;
+using UnityEditor.SceneManagement;
 
 using UnityEngine;
 
@@ -41,11 +42,15 @@ namespace ABB.Grid.Rasterizer
 		{
 			if (this == null) return;
 
+			bool createdSomething = false;
+
 			if (_meshRenderer == null)
 			{
 				GameObject textureMesh = new GameObject("TextureRenderer");
 				textureMesh.transform.SetParent(transform);
 				_meshRenderer = textureMesh.AddComponent<MeshRenderer>();
+
+				createdSomething = true;
 			}
 
 			if (_polygonCollider == null)
@@ -53,6 +58,14 @@ namespace ABB.Grid.Rasterizer
 				GameObject polygonCollider = new GameObject("PolygonCollider");
 				polygonCollider.transform.SetParent(transform);
 				_polygonCollider = polygonCollider.AddComponent<PolygonCollider2D>();
+
+				createdSomething = true;
+			}
+
+			if (createdSomething)
+			{
+				EditorUtility.SetDirty(this);
+				EditorSceneManager.MarkSceneDirty(gameObject.scene);
 			}
 		}
 #endif

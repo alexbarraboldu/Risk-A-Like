@@ -18,6 +18,11 @@ namespace ABB.Grid.Rasterizer
 			_gridImageRasterizer = GetComponent<GridImageRasterizer>();
 		}
 
+		private void Start()
+		{
+			GenerateGrid();
+		}
+
 
 		protected override bool GenerateGrid()
 		{
@@ -39,12 +44,12 @@ namespace ABB.Grid.Rasterizer
 			}
 		}
 
-		public async void GenerateGridFromIntersectionsCoordinates(Dictionary<Vector3, Vector3> intersectionsCoordinates)
+		private async void GenerateGridFromIntersectionsCoordinates(Dictionary<Vector3, Vector3> intersectionsCoordinates)
 		{
 			ResetGrid();
 
 			InstantiateParameters instantiateParams = new();
-			instantiateParams.parent = transform;
+			instantiateParams.parent = _gridParent.transform;
 			instantiateParams.worldSpace = true;
 
 			///	Generate cell mesh

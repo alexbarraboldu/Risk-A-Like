@@ -45,7 +45,6 @@ namespace ABB.Grid.Biome
 				_terrrainsBiomes.Add(biome.terrain, biome);
 			}
 
-
 			lakeRandom = new Random();
 
 			GenerateBiomes(_terrrainsBiomes.Keys.ToArray());
@@ -70,7 +69,7 @@ namespace ABB.Grid.Biome
 			}
 		}
 
-		private async void GenerateBiomes(TerrainType[] terrains)
+		public async void GenerateBiomes(TerrainType[] terrains)
 		{
 			foreach (TerrainType terrain in terrains)
 			{

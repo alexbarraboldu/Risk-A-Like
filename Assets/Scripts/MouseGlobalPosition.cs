@@ -7,6 +7,7 @@ public class MouseGlobalPosition : MonoBehaviour
 	private InputAction _mouseRightButtonInput = null;
 	private InputAction _mousePositionInput = null;
 
+
 	private void Awake()
 	{
 		if (_inputAsset == null)
@@ -17,10 +18,19 @@ public class MouseGlobalPosition : MonoBehaviour
 		{
 			_mouseRightButtonInput = _inputAsset.FindAction("MouseRightButton");
 			_mousePositionInput = _inputAsset.FindAction("MousePosition");
-
-			_mouseRightButtonInput.performed += OnMouseRightClick;
 		}
 	}
+
+	private void OnEnable()
+	{
+		_mouseRightButtonInput.performed += OnMouseRightClick;
+	}
+
+	private void OnDisable()
+	{
+		_mouseRightButtonInput.performed -= OnMouseRightClick;
+	}
+
 
 	private void OnMouseRightClick(InputAction.CallbackContext context)
 	{

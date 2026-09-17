@@ -72,16 +72,18 @@ public class GridImageRasterizer : MonoBehaviour
 			return;
 
 		if (_meshRenderer != null)
-			_meshRenderer.gameObject.SetActive(_enableVisualHelpers);
+			_meshRenderer.enabled = _enableVisualHelpers;
 
 		if (_polygonCollider != null)
-			_polygonCollider.gameObject.SetActive(_enableVisualHelpers);
+			_polygonCollider.enabled = _enableVisualHelpers;
 	}
 #endif
 
 
 	private void ApplyTexture(Texture2D texture2D)
 	{
+		_meshRenderer.enabled = true;
+
 		_meshRenderer.material.SetTexture("_BaseMap", _image);
 
 		Debug.Log($"{_image.width} | {_image.height}");
@@ -92,13 +94,18 @@ public class GridImageRasterizer : MonoBehaviour
 		scale.x *= _aspectRatio;
 
 		_meshRenderer.transform.localScale = scale;
+
+		_meshRenderer.enabled = _enableVisualHelpers;
 	}
 
 	private void CreateMesh(Sprite sprite)
 	{
-		_polygonCollider.CreateFromSprite(sprite);
+		_polygonCollider.enabled = true;
 
+		_polygonCollider.CreateFromSprite(sprite);
 		_polygonCollider.transform.localScale = Vector3.one * (_size / 8f);
+
+		_polygonCollider.enabled = _enableVisualHelpers;
 	}
 
 
@@ -147,7 +154,7 @@ public class GridImageRasterizer : MonoBehaviour
 				float startX = intersections[j];
 				float endX = intersections[j + 1];
 
-				Debug.Log($"Start: {startX}, End: {endX}");
+				//Debug.Log($"Start: {startX}, End: {endX}");
 
 				intersectionsCoordinates.Add(new(startX, y), new(endX, y));
 			}

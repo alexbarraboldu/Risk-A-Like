@@ -26,11 +26,18 @@ namespace UnityTemplateProjects
 				z += translation.z;
 			}
 
-			public void LerpTowards(CameraState target, float positionLerpPct, float positionYLerpPct, float rotationLerpPct = 0f)
+			public void LerpTowards(CameraState target, float positionLerpPct, float positionScrollLerpPct, float rotationLerpPct = 0f)
 			{
 				x = Mathf.Lerp(x, target.x, positionLerpPct);
-				y = Mathf.Lerp(y, target.y, positionYLerpPct);
+				y = Mathf.Lerp(y, target.y, positionScrollLerpPct);
 				z = Mathf.Lerp(z, target.z, positionLerpPct);
+			}
+
+			public void LerpTowards(CameraState target, Vector3 positionLerpPct, float rotationLerpPct = 0f)
+			{
+				x = Mathf.Lerp(x, target.x, positionLerpPct.x);
+				y = Mathf.Lerp(y, target.y, positionLerpPct.y);
+				z = Mathf.Lerp(z, target.z, positionLerpPct.z);
 			}
 
 			public void UpdateTransform(Transform t)
@@ -57,12 +64,12 @@ namespace UnityTemplateProjects
 		[Tooltip("Value to mange scroll wheel direct output"), Range(0.1f, 10f)]
 		public float scrollMultiplier = 2f;
 		[Tooltip("Whether or not to invert our Y axis for mouse input to rotation.")]
-		public bool invertY = false;
+		public bool invertScrollWheel = false;
 
 		[Tooltip("Time it takes to interpolate camera position 99% of the way to the target on X & Z axis."), Range(0.001f, 1f)]
 		public float positionLerpTime = 0.2f;
 		[Tooltip("Same than positionLerpTime but for Y axis."), Range(0.001f, 1f)]
-		public float positionYLerpTime = 0.8f;
+		public float positionScrollLerpTime = 0.8f;
 
 		#region Rotation
 		//[Header("Rotation Settings")]
@@ -99,6 +106,16 @@ namespace UnityTemplateProjects
 			{
 				_mouseScrollInput = _inputAsset.FindAction("MouseScroll");
 				_moveCameraInput = _inputAsset.FindAction("CameraMovement");
+			}
+
+			Vector3 forward = transform.forward;
+			if (forward == Vector3.forward)
+			{
+				invertScrollWheel = false;
+			}
+			else if (forward == Vector3.down)
+			{
+				invertScrollWheel = true;
 			}
 		}
 
@@ -160,10 +177,13 @@ namespace UnityTemplateProjects
 
 			/// Framerate-independent interpolation
 			/// Calculate the lerp amount, such that we get 99% of the way to our target in the specified time
-			float positionLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / positionLerpTime) * Time.deltaTime);
-			float positionYLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / positionYLerpTime) * Time.deltaTime);
+			float positionMoveLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / positionLerpTime) * Time.deltaTime);
+			float positionScrollLerpPct = 1f - Mathf.Exp((Mathf.Log(1f - 0.99f) / positionScrollLerpTime) * Time.deltaTime);
 
-			m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, positionYLerpPct);
+			Vector3 correctedDirection = CorrectDirection(positionMoveLerpPct, positionScrollLerpPct);
+
+			//m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, positionLerpPct, positionScrollLerpPct);
+			m_InterpolatingCameraState.LerpTowards(m_TargetCameraState, correctedDirection);
 
 			m_InterpolatingCameraState.UpdateTransform(transform);
 
@@ -203,6 +223,23 @@ namespace UnityTemplateProjects
 			{
 				_inputVector = Vector3.zero;
 			}
+		}
+
+		Vector3 CorrectDirection(float positionMoveLerpPct, float positionScrollLerpPct)
+		{
+			Vector3 rotatedDirection = new Vector3();
+			Vector3 forward = transform.forward;
+
+			if (forward == Vector3.forward)
+			{
+				rotatedDirection = new(positionMoveLerpPct, positionMoveLerpPct, positionScrollLerpPct);
+			}
+			else if (forward == Vector3.down)
+			{
+				rotatedDirection = new(positionMoveLerpPct, positionScrollLerpPct, positionMoveLerpPct);
+			}
+
+			return rotatedDirection;
 		}
 
 		Vector3 GetInputTranslationDirection(Vector2 inputValue)

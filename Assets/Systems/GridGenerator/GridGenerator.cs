@@ -26,7 +26,6 @@ namespace ABB.Grid
 		[SerializeField, HideInInspector] protected GameObject _gridParent;
 
 
-		[ContextMenu("Generate Grid")]
 		protected abstract bool GenerateGrid();
 
 		public Vector2 GetCellSize()
@@ -50,6 +49,7 @@ namespace ABB.Grid
 		}
 
 
+#if UNITY_EDITOR
 		private void Reset()
 		{
 			EditorApplication.delayCall += CreateHelpers;
@@ -67,6 +67,8 @@ namespace ABB.Grid
 				GameObject gridParent = new GameObject("GridParent");
 				gridParent.transform.SetParent(transform);
 				_gridParent = gridParent;
+
+				createdSomething = true;
 			}
 
 			if (createdSomething)
@@ -77,7 +79,6 @@ namespace ABB.Grid
 		}
 
 
-#if UNITY_EDITOR
 		public int CellsPerFrame
 		{
 			get => _cellsPerFrame;

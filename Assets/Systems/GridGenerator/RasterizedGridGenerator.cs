@@ -24,6 +24,7 @@ namespace ABB.Grid.Rasterizer
 		}
 
 
+		[ContextMenu("Generate Grid")]
 		protected override bool GenerateGrid()
 		{
 			ResetGrid();

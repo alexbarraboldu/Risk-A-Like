@@ -231,10 +231,8 @@ namespace ABB.Grid.Rasterizer
 			if (_polygonCollider == null)
 				_polygonCollider = GetComponentInChildren<PolygonCollider2D>(true);
 
-#if UNITY_EDITOR
 			EditorApplication.delayCall -= UpdateVisualHelpers;
 			EditorApplication.delayCall += UpdateVisualHelpers;
-#endif
 		}
 
 		private void OnDrawGizmos()

@@ -25,7 +25,7 @@ namespace ABB.Grid.Rasterizer
 
 
 		[ContextMenu("Generate Grid")]
-		protected override bool GenerateGrid()
+		protected override async Task<bool> GenerateGrid()
 		{
 			ResetGrid();
 
@@ -33,7 +33,10 @@ namespace ABB.Grid.Rasterizer
 			{
 				_gridImageRasterizer.cellHeight = GetCellSize().y;
 				Dictionary<Vector3, Vector3> intersectionsCoordinates = _gridImageRasterizer.Rasterize();
-				GenerateGridFromIntersectionsCoordinates(intersectionsCoordinates);
+
+				await GenerateGridFromIntersectionsCoordinates(intersectionsCoordinates);
+
+				InvokeOnGridGenerated();
 
 				return true;
 			}
@@ -45,7 +48,7 @@ namespace ABB.Grid.Rasterizer
 			}
 		}
 
-		private async void GenerateGridFromIntersectionsCoordinates(Dictionary<Vector3, Vector3> intersectionsCoordinates)
+		private async Task<bool> GenerateGridFromIntersectionsCoordinates(Dictionary<Vector3, Vector3> intersectionsCoordinates)
 		{
 			ResetGrid();
 
@@ -101,6 +104,8 @@ namespace ABB.Grid.Rasterizer
 						await Task.Yield();
 				}
 			}
+
+			return true;
 		}
 	}
 }

@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+
 using ABB.Cell;
 
 using UnityEditor;
@@ -25,8 +28,15 @@ namespace ABB.Grid
 
 		[SerializeField, HideInInspector] protected GameObject _gridParent;
 
+		public event Action<HexagonCell[][]> OnGridGenerated;
 
-		protected abstract bool GenerateGrid();
+
+		protected virtual void InvokeOnGridGenerated()
+		{
+			OnGridGenerated?.Invoke(_grid);
+		}
+
+		protected virtual async Task<bool> GenerateGrid() => false;
 
 		public Vector2 GetCellSize()
 		{

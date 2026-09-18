@@ -15,6 +15,7 @@ using Random = System.Random;
 
 namespace ABB.Grid.Biome
 {
+	[RequireComponent(typeof(GridGenerator))]
 	public class BiomeGenerator : MonoBehaviour
 	{
 		HexagonCell[][] _grid = null;
@@ -25,37 +26,42 @@ namespace ABB.Grid.Biome
 
 		[Header("Demonstration")]
 		[SerializeField, Tooltip("in milliseconds")]
-		private int _delayTime = 1000;
+		private int _cellsPerFrame = 10;
 
 
-		private void Start()
+		public void Awake()
 		{
 			GridGenerator gridGenerator = GetComponent<GridGenerator>();
-			_grid = gridGenerator.Grid;
+			gridGenerator.OnGridGenerated += RegenerateBiomes;
 
+			SetUp();
+		}
+
+
+		private void SetUp()
+		{
 			_terrrainsBiomes = new();
 			foreach (Biome biome in _biomes)
 			{
 				if (biome.material == null)
 				{
 					Debug.LogError("Biome's material is NULL", this);
-					return;
+					break;
 				}
 
 				_terrrainsBiomes.Add(biome.terrain, biome);
 			}
 
 			lakeRandom = new Random();
-
-			GenerateBiomes(_terrrainsBiomes.Keys.ToArray());
 		}
 
-
 		[ContextMenu("Regenerate Biomes")]
-		private void RegenerateBiomes()
+		private void RegenerateBiomes(HexagonCell[][] grid)
 		{
+			_grid = grid;
+
 			ResetBiomes();
-			GenerateBiomes(_terrrainsBiomes.Keys.ToArray());
+			GenerateBiomes();
 		}
 
 		private void ResetBiomes()
@@ -69,8 +75,9 @@ namespace ABB.Grid.Biome
 			}
 		}
 
-		public async void GenerateBiomes(TerrainType[] terrains)
+		public async void GenerateBiomes()
 		{
+			TerrainType[] terrains = _terrrainsBiomes.Keys.ToArray();
 			foreach (TerrainType terrain in terrains)
 			{
 				switch (terrain)
@@ -168,7 +175,8 @@ namespace ABB.Grid.Biome
 					_grid[row][column].SetBiome(_terrrainsBiomes[TerrainType.MOUNTAIN]);
 				}
 
-				await Task.Delay(_delayTime);
+				if (m % _cellsPerFrame == 0)
+					await Task.Yield();
 			}
 		}
 
@@ -255,7 +263,8 @@ namespace ABB.Grid.Biome
 						visitedCells.Add(currentCell);
 					}
 
-					await Task.Delay(_delayTime);
+					if (l % _cellsPerFrame == 0)
+						await Task.Yield();
 				}
 				else
 				{
@@ -271,6 +280,7 @@ namespace ABB.Grid.Biome
 			{
 				Vector2Int[] neighbours = GetNeighbours(cell);
 
+				int n = 0;
 				foreach (Vector2Int neighbour in neighbours)
 				{
 					if (neighbour.x == -1) continue;
@@ -279,7 +289,10 @@ namespace ABB.Grid.Biome
 
 					_grid[neighbour.x][neighbour.y].SetBiome(grassLand);
 
-					await Task.Delay(_delayTime / 10);
+					if (n % _cellsPerFrame == 0)
+						await Task.Yield();
+
+					n++;
 				}
 			}
 		}

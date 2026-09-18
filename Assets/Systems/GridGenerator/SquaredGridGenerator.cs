@@ -8,13 +8,13 @@ namespace ABB.Grid.Squared
 {
 	public class SquaredGridGenerator : GridGenerator
 	{
-		protected override bool GenerateGrid()
+		protected override async Task<bool> GenerateGrid()
 		{
 			ResetGrid();
 
 			try
 			{
-				GenerateSquaredGrid();
+				await GenerateSquaredGrid();
 
 				return true;
 			}
@@ -26,7 +26,7 @@ namespace ABB.Grid.Squared
 			}
 		}
 
-		public async void GenerateSquaredGrid()
+		public async Task<bool> GenerateSquaredGrid()
 		{
 			ResetGrid();
 
@@ -67,6 +67,8 @@ namespace ABB.Grid.Squared
 				lastPosition.y += 0.4330127f * 2f;
 				lastPosition.x = 0f;
 			}
+
+			return true;
 		}
 
 

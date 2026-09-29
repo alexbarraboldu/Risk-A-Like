@@ -18,9 +18,9 @@ namespace ABB.Grid.Rasterizer
 			_gridImageRasterizer = GetComponent<GridImageRasterizer>();
 		}
 
-		private void Start()
+		private async void Start()
 		{
-			GenerateGrid();
+			await GenerateGrid();
 		}
 
 

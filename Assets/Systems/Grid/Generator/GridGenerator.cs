@@ -36,7 +36,7 @@ namespace ABB.Grid
 			OnGridGenerated?.Invoke(_grid);
 		}
 
-		protected virtual async Task<bool> GenerateGrid() => false;
+		protected virtual async Task<bool> GenerateGrid() => await Task.FromResult(false);
 
 		public Vector2 GetCellSize()
 		{

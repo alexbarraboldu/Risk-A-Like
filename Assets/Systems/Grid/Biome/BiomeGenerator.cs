@@ -32,7 +32,7 @@ namespace ABB.Grid.Biome
 		public void Awake()
 		{
 			GridGenerator gridGenerator = GetComponent<GridGenerator>();
-			gridGenerator.OnGridGenerated += RegenerateBiomes;
+			gridGenerator.OnGridGenerated += SetGridAndRegenerateBiomes;
 
 			SetUp();
 		}
@@ -56,9 +56,15 @@ namespace ABB.Grid.Biome
 		}
 
 		[ContextMenu("Regenerate Biomes")]
-		private void RegenerateBiomes(HexagonCell[][] grid)
+		private void RegenerateBiomes()
 		{
-			_grid = grid;
+			ResetBiomes();
+			GenerateBiomes();
+		}
+
+		private void SetGridAndRegenerateBiomes(HexagonCell[][] grid)
+		{
+			if (grid != null) _grid = grid;
 
 			ResetBiomes();
 			GenerateBiomes();
@@ -132,7 +138,7 @@ namespace ABB.Grid.Biome
 			int mountainCount = random.Next(mountainCounts[mountainCountsIndex].x, mountainCounts[mountainCountsIndex].y);
 
 			int rowCount = _grid.Length;
-			int columnCount = _grid[0].Length;
+			int columnCount = _grid.Max(x => x.Length);
 
 			for (int m = 0; m < mountainCount; m++)
 			{
@@ -169,7 +175,7 @@ namespace ABB.Grid.Biome
 					int row = currentPos.y;
 
 					if ((row < 0 || row >= rowCount) ||
-						(column < 0 || column >= columnCount))
+						(column < 0 || column >= _grid[row].Length))
 						break;
 
 					_grid[row][column].SetBiome(_terrrainsBiomes[TerrainType.MOUNTAIN]);

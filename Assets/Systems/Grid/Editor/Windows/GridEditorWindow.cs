@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 
+using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
 using ABB.Grid.Editor.VisualElements;
@@ -14,6 +15,8 @@ namespace ABB.Grid.Editor.Windows
 {
 	public class GridEditorWindow : EditorWindow
 	{
+		private bool guiBuilt = false;
+
 		private const string StylePath = "Assets/";
 		public StyleSheet uss;
 
@@ -37,11 +40,15 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDisable()
 		{
+			if (!guiBuilt) return;
+
 			SaveSessionFile();
 		}
 
 		private void OnDestroy()
 		{
+			if (!guiBuilt) return;
+
 			SaveSessionFile();
 		}
 
@@ -62,17 +69,34 @@ namespace ABB.Grid.Editor.Windows
 				Debug.LogException(exception, this);
 			}
 
-
 			///	BUILD WINDOW UI
+			TabView tabView = new();
+			tabView.style.flexGrow = 1;
+			tabView.contentContainer.style.flexGrow = 1;
+
+			EditorTab editorTab = new("Editor");
+			editorTab.style.flexGrow = 1;
+			editorTab.contentContainer.style.flexGrow = 1;
+			ExportTab exportTab = new("Export");
+
 			_toolsView = new();
-			rootVisualElement.Add(_toolsView);
+			VisualElement rootCellGridCanvas = BuildCellGridCanvasUI();
 
-			BuildCellGridCanvasUI();
+			///	ADD UI
+			rootVisualElement.Add(tabView);
 
+			tabView.contentContainer.Add(editorTab);
+			tabView.contentContainer.Add(exportTab);
+
+			editorTab.contentContainer.Add(_toolsView);
+			editorTab.contentContainer.Add(rootCellGridCanvas);
 
 			///	ADD LOGIC
-			_toolsView.AddLogic(OnCellGameObjectIdChanged, OnGridSizeChanged, _cellGridCanvas.ResetGrid, _cellGridCanvas.FillGrid);
-
+			_toolsView.OnCellGameObjectIdChanged += OnCellGameObjectIdChanged;
+			_toolsView.OnTerrainChanged += OnTerrainChanged;
+			_toolsView.OnGridSizeChanged += OnGridSizeChanged;
+			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
+			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
 
 			///	UPDATE VALUES
 			_toolsView.GridSize = new Vector2Int((int)sessionFile.columns, (int)sessionFile.rows);
@@ -81,6 +105,8 @@ namespace ABB.Grid.Editor.Windows
 
 			_cellGridCanvas.Grid = sessionFile.grid;
 			_cellGridCanvas.CellSize = sessionFile.cellSize;
+
+			guiBuilt = true;
 		}
 
 
@@ -100,16 +126,21 @@ namespace ABB.Grid.Editor.Windows
 
 				BinarySerialization.WriteToBinary<SessionFileData>($"{PATH}\\{FILE_NAME}", sessionFile);
 			}
-			catch (Exception exception)
+			catch (Exception)
 			{
-				Debug.Log("Could not serialize session file data");
-				Debug.LogException(exception);
+				//Debug.Log("Could not serialize session file data");
+				//Debug.LogException(exception);
 			}
 		}
 
 		private void OnCellGameObjectIdChanged(string cellGameObjectId)
 		{
 			sessionFile.cellGameObjectId = cellGameObjectId;
+		}
+
+		private void OnTerrainChanged(int terrain)
+		{
+			_cellGridCanvas.SelectedTerrain = (TerrainType)terrain;
 		}
 
 		private void OnGridSizeChanged(Vector2Int newValue)
@@ -121,25 +152,13 @@ namespace ABB.Grid.Editor.Windows
 
 		#region UI
 
-		private void BuildCellGridCanvasUI()
+		private VisualElement BuildCellGridCanvasUI()
 		{
-			VisualElement rootCellGridCanvas = new()
-			{
-				style =
-			{
-				flexGrow = 1
-			}
-			};
+			Vector2Int gridSize = new Vector2Int((int)sessionFile.columns, (int)sessionFile.rows);
+			_cellGridCanvas = new(gridSize);
 
-			_cellGridCanvas = new();
-
-
-			///	ADD TO UI
-			rootCellGridCanvas.Add(_cellGridCanvas);
-
-			rootVisualElement.Add(rootCellGridCanvas);
+			return _cellGridCanvas;
 		}
-
 
 		#endregion
 	}

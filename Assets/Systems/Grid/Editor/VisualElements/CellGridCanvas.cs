@@ -1,3 +1,5 @@
+using ABB.Gameplay.Data.Types;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,8 +22,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public float CellSize { get; set; }
 
-		private uint[][] _grid = null;
-		public uint[][] Grid
+		private int[][] _grid = null;
+		public int[][] Grid
 		{
 			get => _grid;
 			set
@@ -30,6 +32,9 @@ namespace ABB.Grid.Editor.VisualElements
 				EnsureGrid();
 			}
 		}
+
+		public TerrainType SelectedTerrain { get; set; }
+
 
 		private Vector2 localMousePosition = Vector2.zero;
 		private Vector2 localMouseStartPosition = Vector2.zero;
@@ -43,11 +48,13 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellHeight = yOffset * 2f;
 
 
-		public CellGridCanvas()
+		public CellGridCanvas(Vector2Int gridSize)
 		{
 			focusable = true;
 
 			SetStyle();
+
+			GridSize = gridSize;
 
 			generateVisualContent += OnGenerateVisualContent;
 
@@ -78,7 +85,7 @@ namespace ABB.Grid.Editor.VisualElements
 			DrawPointerRectangle(context, localMousePosition);
 		}
 
-		public void LoadGrid(uint[][] grid, float cellSize)
+		public void LoadGrid(int[][] grid, float cellSize)
 		{
 			this.Grid = grid;
 			this.CellSize = cellSize;
@@ -109,10 +116,10 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 			if (!needsRebuild) return true;
 
-			_grid = new uint[columns][];
+			_grid = new int[columns][];
 			for (int x = 0; x < columns; x++)
 			{
-				_grid[x] = new uint[rows];
+				_grid[x] = new int[rows];
 			}
 
 			return true;
@@ -123,9 +130,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void DrawGrid(MeshGenerationContext context)
 		{
-			for (uint x = 0; x < _gridSize.x; x++)
+			for (int x = 0; x < _gridSize.x; x++)
 			{
-				for (uint y = 0; y < _gridSize.y; y++)
+				for (int y = 0; y < _gridSize.y; y++)
 				{
 					float oddColumnOffset = (x & 1) != 0 ? yOffset * CellSize : 0f;
 
@@ -134,8 +141,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 					Vector2 position = gridPosition + new Vector2(xPos, yPos);
 
-					if (Grid[x][y] == 1)
-						AllocateHexagon(context, position);
+					int cellValue = Grid[x][y];
+					if (cellValue != -1)
+						AllocateHexagon(context, position, cellValue);
 					else
 						DrawHexagonOutline(context, position);
 				}
@@ -185,7 +193,7 @@ namespace ABB.Grid.Editor.VisualElements
 			painter.Stroke();
 		}
 
-		private void AllocateHexagon(MeshGenerationContext context, Vector2 position)
+		private void AllocateHexagon(MeshGenerationContext context, Vector2 position, int cellValue)
 		{
 			if (CellSize <= 0f)
 			{
@@ -200,23 +208,25 @@ namespace ABB.Grid.Editor.VisualElements
 
 			MeshWriteData mesh = context.Allocate(7, 18);
 
+			Color tint = SelectCellTint(cellValue);
+
 			///	Calculate vertices
 			Vertex[] vertices = new Vertex[7]
 			{
 			///	0 bottom left
-			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = tint },
 			///	1 mid left
-			new Vertex { position = new Vector3(position.x + center.x - radius,     position.y + center.y,              Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x - radius,     position.y + center.y,              Vertex.nearZ), tint = tint },
 			///	2 top left
-			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = tint },
 			///	3 top right
-			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = tint },
 			///	4 mid right
-			new Vertex { position = new Vector3(position.x + center.x + radius,     position.y + center.y,              Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x + radius,     position.y + center.y,              Vertex.nearZ), tint = tint },
 			///	5 bottom right
-			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = tint },
 			///	6 middle
-			new Vertex { position = new Vector3(position.x + center.x,              position.y + center.y,              Vertex.nearZ), tint = Color.white },
+			new Vertex { position = new Vector3(position.x + center.x,              position.y + center.y,              Vertex.nearZ), tint = tint },
 			};
 			mesh.SetAllVertices(vertices);
 
@@ -237,6 +247,35 @@ namespace ABB.Grid.Editor.VisualElements
 				1, 0, 6
 			};
 			mesh.SetAllIndices(tris);
+		}
+
+		private Color SelectCellTint(int cellValue)
+		{
+			switch ((TerrainType)cellValue)
+			{
+				case TerrainType.PLAIN:
+					return Color.beige;
+				case TerrainType.PLATEAU:
+					return Color.sandyBrown;
+				case TerrainType.MOUNTAIN:
+					return Color.brown;
+				case TerrainType.VALLEY:
+					return Color.burlywood;
+				case TerrainType.CANYON:
+					return Color.sandyBrown;
+				case TerrainType.PLAYA:
+					return Color.softYellow;
+				case TerrainType.DESSERT:
+					return Color.lightGoldenRodYellow;
+				case TerrainType.WETLAND:
+					return Color.lightCyan;
+				case TerrainType.LAKE:
+					return Color.aliceBlue;
+				case TerrainType.SEA:
+					return Color.blue;
+				default:
+					return Color.white;
+			}
 		}
 
 		#endregion
@@ -271,8 +310,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			//Debug.Log($"Clicked cell: column: {column}, row: {row}");
 
-			if (button == 0) _grid[column][row] = 1;
-			else if (button == 1) _grid[column][row] = 0;
+			if (button == 0) _grid[column][row] = (int)SelectedTerrain;
+			else if (button == 1) _grid[column][row] = -1;
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -322,7 +361,7 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				for (int r = 0; r < rows; r++)
 				{
-					_grid[c][r] = 0;
+					_grid[c][r] = -1;
 				}
 			}
 

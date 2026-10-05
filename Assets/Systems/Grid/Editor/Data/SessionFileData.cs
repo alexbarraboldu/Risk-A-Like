@@ -10,11 +10,12 @@ namespace ABB.Grid.Editor.Data
 		public uint columns;
 		public uint rows;
 
-		public uint[][] grid;
+		public int[][] grid;
 
 		public float cellSize;
 
 		public string cellGameObjectId;
+
 
 		public SessionFileData() { }
 
@@ -26,7 +27,7 @@ namespace ABB.Grid.Editor.Data
 			this.cellGameObjectId = sessionFile.cellGameObjectId;
 		}
 
-		public SessionFileData(Vector2Int gridSize, uint[][] grid, float cellSize, string cellGameObjectId)
+		public SessionFileData(Vector2Int gridSize, int[][] grid, float cellSize, string cellGameObjectId)
 		{
 			this.columns = (uint)gridSize.x;
 			this.rows = (uint)gridSize.y;

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 using ABB.Gameplay.Data.Types;
 
-using UnityEditor.Search;
-
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,10 +10,12 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
-		private ObjectField cellGameObjectField = null;
-		private Vector2IntElement gridSizeElement = null;
+		private Vector2IntField gridSizeElement = null;
+
 		private Button resetGridButton = null;
 		private Button fillGridButton = null;
+
+		private Button exportGridButton = null;
 
 		private TerrainType selectedTerrain = 0;
 
@@ -25,7 +25,6 @@ namespace ABB.Grid.Editor.VisualElements
 			set => gridSizeElement.Value = value;
 		}
 
-		public event Action<string> OnCellGameObjectIdChanged;
 		public event Action<int> OnTerrainChanged;
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
@@ -42,11 +41,18 @@ namespace ABB.Grid.Editor.VisualElements
 			add => fillGridButton.clicked += value;
 			remove => fillGridButton.clicked -= value;
 		}
+		public event Action OnExportGrid
+		{
+			add => exportGridButton.clicked += value;
+			remove => exportGridButton.clicked -= value;
+		}
 
 
 		public ToolsView()
 		{
 			BuildUI();
+			AddStyle();
+			AddLogic();
 		}
 
 		private void BuildUI()
@@ -60,7 +66,7 @@ namespace ABB.Grid.Editor.VisualElements
 					paddingTop = 4,
 					paddingBottom = 4,
 					paddingRight = 4,
-					backgroundColor = Color.gray,
+					backgroundColor = Color.gray4,
 					alignItems = Align.Center
 				}
 			};
@@ -75,16 +81,15 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			cellGameObjectField = CreateCellGameObjectField();
-			cellGameObjectField.style.maxWidth = 240;
-
-			gridSizeElement = new Vector2IntElement("Grid Size", "Columns", "Rows");
+			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows");
 
 			VisualElement middleOptionsElement = new()
 			{
 				style =
 				{
-					flexGrow = 1
+					flexGrow = 1,
+					flexDirection = FlexDirection.Row,
+					justifyContent = Justify.Center
 				}
 			};
 
@@ -96,6 +101,11 @@ namespace ABB.Grid.Editor.VisualElements
 					maxWidth = 300
 				}
 			};
+
+
+			///	Terrain type selector
+			var terrainTypeSelector = CreateTerrainTypeSelector();
+			///----------------------
 
 			///	Reset Grid Button
 			resetGridButton = new()
@@ -152,41 +162,64 @@ namespace ABB.Grid.Editor.VisualElements
 			fillGridButton.Add(fillGridButtonLabel);
 			///------------------
 
+			///	Export Grid Button
+			exportGridButton = new()
+			{
+				name = "export-grid",
+				tooltip = "Export grid",
+				style =
+				{
+					minWidth = 100,
+					maxWidth = 100,
+					minHeight = 50,
+					maxHeight = 50,
+					paddingLeft = 4
+				}
+			};
+
+			Label exportGridButtonLabel = new("Export")
+			{
+				style =
+				{
+					flexGrow = 1,
+					fontSize = 24
+				}
+			};
+
+			exportGridButton.Add(exportGridButtonLabel);
+			///-------------------
 
 			///	ADD TO UI
-			leftOptionsElement.Add(cellGameObjectField);
+			Add(rootOptionsElement);
 
-			var terrainTypeSelector = CreateTerrainTypeSelector();
-			leftOptionsElement.Add(terrainTypeSelector);
-
-			leftOptionsElement.Add(gridSizeElement);
+			///	Left
 			rootOptionsElement.Add(leftOptionsElement);
 
+			leftOptionsElement.Add(terrainTypeSelector);
+			leftOptionsElement.Add(gridSizeElement);
+
+			///	Middle
 			rootOptionsElement.Add(middleOptionsElement);
 
-			rightOptionsElement.Add(resetGridButton);
-			rightOptionsElement.Add(fillGridButton);
+			middleOptionsElement.Add(resetGridButton);
+			middleOptionsElement.Add(fillGridButton);
+
+			///	Right
 			rootOptionsElement.Add(rightOptionsElement);
 
-			Add(rootOptionsElement);
+			rightOptionsElement.Add(exportGridButton);
 		}
 
-		private ObjectField CreateCellGameObjectField()
+		private void AddStyle()
 		{
-			ObjectField gameObjectField = new ObjectField("Cell")
-			{
-				objectType = typeof(GameObject)
-			};
-			gameObjectField.RegisterValueChangedCallback(OnCellGameObjectChanged);
 
-			return gameObjectField;
 		}
 
-		private void OnCellGameObjectChanged(ChangeEvent<UnityEngine.Object> evt)
+		private void AddLogic()
 		{
-			string cellGameObjectId = (evt.newValue as GameObject).GetInstanceID().ToString();
-			OnCellGameObjectIdChanged?.Invoke(cellGameObjectId);
+
 		}
+
 
 		private DropdownField CreateTerrainTypeSelector()
 		{

@@ -421,6 +421,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnResizeWindow(GeometryChangedEvent evt)
 		{
+			if (_grid == null) return;
+
 			float width = evt.newRect.width;
 			float height = evt.newRect.height;
 			gridPosition.x = (width / 2f) - ((_grid.Length * CellSize) / 2f) * xOffset;

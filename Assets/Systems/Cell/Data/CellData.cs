@@ -28,25 +28,6 @@ namespace ABB.Cell.Data
 		{
 			ID = Guid.NewGuid().ToString();
 		}
-
-
-		public static implicit operator CellData(CellDataSO cellDataSO)
-		{
-			CellData cellData = null;
-
-			cellData.ID = cellDataSO.ID;
-
-			cellData.TerrainType = cellDataSO.TerrainType;
-			cellData.Position = cellDataSO.Position;
-
-			cellData.Owner = cellDataSO.Owner;
-
-			cellData.Buildings = cellDataSO.Buildings;
-
-			cellData.Troops = cellDataSO.Troops;
-
-			return cellData;
-		}
 	}
 }
 

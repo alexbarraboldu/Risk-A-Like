@@ -43,14 +43,14 @@ namespace ABB.Grid.Editor.Windows
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
-			window.minSize = new Vector2(500, 500);
+			window.minSize = new Vector2(500, 200);
 		}
 
 		public static void OpenWindow(SessionData session)
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
-			window.minSize = new Vector2(500, 500);
+			window.minSize = new Vector2(500, 200);
 
 			window._grid = session.grid;
 		}
@@ -82,6 +82,9 @@ namespace ABB.Grid.Editor.Windows
 			fileNameField.value = exportSettings?.fileName ?? string.Empty;
 			fileNameField.RegisterValueChangedCallback(OnFileNameFieldValueChanged);
 
+			VisualElement spacer = new();
+			spacer.style.flexGrow = 1;
+
 			///	Export Grid Button
 			exportButton = new()
 			{
@@ -93,7 +96,9 @@ namespace ABB.Grid.Editor.Windows
 					maxWidth = 100,
 					minHeight = 50,
 					maxHeight = 50,
-					paddingLeft = 4
+					paddingLeft = 4,
+					bottom = 8,
+					alignSelf = Align.Center,
 				}
 			};
 
@@ -114,6 +119,7 @@ namespace ABB.Grid.Editor.Windows
 			rootVisualElement.Add(cellGameObjectField);
 			rootVisualElement.Add(directoryPathBrowser);
 			rootVisualElement.Add(fileNameField);
+			rootVisualElement.Add(spacer);
 			rootVisualElement.Add(exportButton);
 
 			guiBuilt = true;
@@ -141,7 +147,8 @@ namespace ABB.Grid.Editor.Windows
 				style =
 			{
 				paddingTop = 4,
-				paddingLeft = 4
+				paddingLeft = 4,
+				paddingBottom = 8
 			},
 				objectType = typeof(GameObject)
 			};
@@ -221,6 +228,8 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
+				///	Chose preferable export method by adding function selector.
+				///	Maybe add a tab for Export Settings or add a settings button besides export button
 				if (AssetDatabase.AssetPathExists(soPath))
 				{
 					GridTerrainDataSO grid = CreateInstance<GridTerrainDataSO>();
@@ -241,6 +250,7 @@ namespace ABB.Grid.Editor.Windows
 			}
 		}
 
+		///	Divide into FindString() & ParseFolderPath()
 		private string ParseFolderPath()
 		{
 			string toFind = "Assets";

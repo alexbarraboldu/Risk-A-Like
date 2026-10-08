@@ -43,7 +43,7 @@ namespace ABB.Grid.Squared
 			_totalCells = _gridHeight * _gridWidth;
 
 			InstantiateParameters instantiateParams = new();
-			instantiateParams.parent = transform;
+			instantiateParams.parent = _gridParent.transform;
 			instantiateParams.worldSpace = true;
 
 			Vector3 lastPosition = Vector3.zero;
@@ -63,12 +63,12 @@ namespace ABB.Grid.Squared
 					gridCell.AssignName(i, j);
 					gridCell.AssignPosition(i, j);
 
-					TerrainType terrain = (TerrainType)gridTerrainData.gridTerrainData[i][j];
+					TerrainType terrain = (TerrainType)gridTerrainData.terrainData[j][i];
 
 					Biome.Biome biome = terrainLibrary.BiomesByTerrain.TryGetValue(terrain, out Biome.Biome value) ? value : null;
 					if (biome != null)
 						gridCell.SetBiome(biome);
-					else Debug.LogWarning("Biome not added to the library");
+					else Debug.LogWarning($"Biome {terrain} not added to the library");
 
 					float y = (j % 2 == 0) ? 0.4330127f : -0.4330127f;
 					gridCell.transform.position = lastPosition + new Vector3(0.75f, y, 0f);
@@ -77,8 +77,14 @@ namespace ABB.Grid.Squared
 
 					_grid[i][j] = gridCell;
 
-					//if (j % _cellsPerFrame == 0)
-					//	await Task.Yield();
+					if (_cellsPerFrame != 0 && j % _cellsPerFrame == 0)
+						await Task.Yield();
+
+					if (!Application.isPlaying)
+					{
+						ResetGrid();
+						return false;
+					}
 				}
 
 				lastPosition.y += 0.4330127f * 2f;

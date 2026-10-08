@@ -234,7 +234,7 @@ namespace ABB.Grid.Editor.Windows
 				if (AssetDatabase.AssetPathExists(soPath))
 				{
 					GridTerrainDataSO grid = CreateInstance<GridTerrainDataSO>();
-					grid.gridTerrainData = _grid;
+					grid.terrainData = _grid;
 
 					AssetDatabase.CreateAsset(grid, finalPath);
 				}

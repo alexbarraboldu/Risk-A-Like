@@ -14,26 +14,13 @@ namespace ABB.Grid.Data
 
 		public int Height => rows;
 
-		public int[][] gridTerrainData
+		public int[][] terrainData
 		{
 			get
 			{
 				if (lookup == null)
 				{
-					int[][] result = new int[columns][];
-
-					int i = 0;
-					for (int c = 0; c < columns; c++)
-					{
-						result[c] = new int[rows];
-						for (int r = 0; r < rows; r++)
-						{
-							result[c][r] = inlineGrid[i];
-							i++;
-						}
-					}
-
-					lookup = result;
+					SetLookUp();
 				}
 
 				return lookup;
@@ -69,7 +56,31 @@ namespace ABB.Grid.Data
 
 		public GridTerrainDataSO(int[][] grid)
 		{
+			this.terrainData = grid;
+		}
 
+		private void Awake()
+		{
+
+		}
+
+
+		private void SetLookUp()
+		{
+			int[][] result = new int[columns][];
+
+			int i = 0;
+			for (int c = 0; c < columns; c++)
+			{
+				result[c] = new int[rows];
+				for (int r = 0; r < rows; r++)
+				{
+					result[c][r] = inlineGrid[i];
+					i++;
+				}
+			}
+
+			lookup = result;
 		}
 	}
 }

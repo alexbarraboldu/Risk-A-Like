@@ -125,7 +125,7 @@ GameObject:
   - component: {fileID: 8913714052502391407}
   - component: {fileID: 7849816633833386476}
   m_Layer: 0
-  m_Name: GridGenerator
+  m_Name: RasterizedGridGenerator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

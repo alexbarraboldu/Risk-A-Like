@@ -13,8 +13,10 @@ namespace ABB.Grid.Rasterizer
 		private GridImageRasterizer _gridImageRasterizer = null;
 
 
-		private void Awake()
+		protected override void Awake()
 		{
+			base.Awake();
+
 			_gridImageRasterizer = GetComponent<GridImageRasterizer>();
 		}
 
@@ -50,8 +52,6 @@ namespace ABB.Grid.Rasterizer
 
 		private async Task<bool> GenerateGridFromIntersectionsCoordinates(Dictionary<Vector3, Vector3> intersectionsCoordinates)
 		{
-			ResetGrid();
-
 			InstantiateParameters instantiateParams = new();
 			instantiateParams.parent = _gridParent.transform;
 			instantiateParams.worldSpace = true;

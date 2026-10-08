@@ -31,6 +31,12 @@ namespace ABB.Grid
 		public event Action<HexagonCell[][]> OnGridGenerated;
 
 
+		protected virtual void Awake()
+		{
+			EnsureHelpers();
+		}
+
+
 		protected virtual void InvokeOnGridGenerated()
 		{
 			OnGridGenerated?.Invoke(_grid);
@@ -46,6 +52,7 @@ namespace ABB.Grid
 				return _cellPrefab?.GetSize() ?? Vector2.negativeInfinity;
 		}
 
+		[ContextMenu("Reset Grid")]
 		protected void ResetGrid()
 		{
 			Transform[] cells = _gridParent.transform.GetComponentsInChildren<Transform>(true);
@@ -64,6 +71,27 @@ namespace ABB.Grid
 		{
 			EditorApplication.delayCall += CreateHelpers;
 			EditorApplication.delayCall += ResetGrid;
+		}
+
+		private void EnsureHelpers()
+		{
+			if (_gridParent == null)
+			{
+				var transforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+				bool foundGridParent = false;
+
+				foreach (Transform t in transforms)
+				{
+					if (t.name == "GridParent")
+					{
+						_gridParent = t.gameObject;
+						foundGridParent = true;
+						break;
+					}
+				}
+
+				if (!foundGridParent) CreateHelpers();
+			}
 		}
 
 		private void CreateHelpers()

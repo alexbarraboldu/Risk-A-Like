@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
 
 using ABB.Cell;
+using ABB.Gameplay.Data.Types;
+using ABB.Grid.Biome;
+using ABB.Grid.Data;
 
 using UnityEngine;
 
@@ -8,6 +11,12 @@ namespace ABB.Grid.Squared
 {
 	public class SquaredGridGenerator : GridGenerator
 	{
+		[Space(10)]
+		[SerializeField] private GridTerrainDataSO gridTerrainData;
+		[SerializeField] private TerrainTypeLibrary terrainLibrary;
+
+
+		[ContextMenu("Generate Grid")]
 		protected override async Task<bool> GenerateGrid()
 		{
 			ResetGrid();
@@ -26,9 +35,10 @@ namespace ABB.Grid.Squared
 			}
 		}
 
-		public async Task<bool> GenerateSquaredGrid()
+		private async Task<bool> GenerateSquaredGrid()
 		{
-			ResetGrid();
+			_gridHeight = gridTerrainData.Height;
+			_gridWidth = gridTerrainData.Width;
 
 			_totalCells = _gridHeight * _gridWidth;
 
@@ -53,6 +63,13 @@ namespace ABB.Grid.Squared
 					gridCell.AssignName(i, j);
 					gridCell.AssignPosition(i, j);
 
+					TerrainType terrain = (TerrainType)gridTerrainData.gridTerrainData[i][j];
+
+					Biome.Biome biome = terrainLibrary.BiomesByTerrain.TryGetValue(terrain, out Biome.Biome value) ? value : null;
+					if (biome != null)
+						gridCell.SetBiome(biome);
+					else Debug.LogWarning("Biome not added to the library");
+
 					float y = (j % 2 == 0) ? 0.4330127f : -0.4330127f;
 					gridCell.transform.position = lastPosition + new Vector3(0.75f, y, 0f);
 
@@ -60,8 +77,8 @@ namespace ABB.Grid.Squared
 
 					_grid[i][j] = gridCell;
 
-					if (j % _cellsPerFrame == 0)
-						await Task.Yield();
+					//if (j % _cellsPerFrame == 0)
+					//	await Task.Yield();
 				}
 
 				lastPosition.y += 0.4330127f * 2f;

@@ -19,3 +19,5 @@ MonoBehaviour:
     material: {fileID: 2100000, guid: 52401e45823d4af40a1b766d1fb71d67, type: 2}
   - terrain: 8
     material: {fileID: 2100000, guid: f5310d303e36f8441b59b7ff0ceb911f, type: 2}
+  - terrain: 9
+    material: {fileID: 2100000, guid: 1ae3466f50110ff4ebc99048405d9437, type: 2}

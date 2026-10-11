@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 using ABB.Gameplay.Data.Types;
 
@@ -10,6 +9,9 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
+		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
+		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
+
 		private Vector2IntField gridSizeElement = null;
 
 		private Button resetGridButton = null;
@@ -17,15 +19,22 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private Button exportGridButton = null;
 
-		private TerrainType selectedTerrain = 0;
-
 		public Vector2Int GridSize
 		{
 			get => gridSizeElement.Value;
 			set => gridSizeElement.Value = value;
 		}
 
-		public event Action<int> OnTerrainChanged;
+		public event Action<int> OnLeftTerrainChanged
+		{
+			add => leftTerrainTypeSelector.OnValueChanged += value;
+			remove => leftTerrainTypeSelector.OnValueChanged -= value;
+		}
+		public event Action<int> OnRightTerrainChanged
+		{
+			add => rightTerrainTypeSelector.OnValueChanged += value;
+			remove => rightTerrainTypeSelector.OnValueChanged -= value;
+		}
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
 			add => gridSizeElement.ValueChanged += value;
@@ -54,6 +63,7 @@ namespace ABB.Grid.Editor.VisualElements
 			AddStyle();
 			AddLogic();
 		}
+
 
 		private void BuildUI()
 		{
@@ -104,7 +114,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 
 			///	Terrain type selector
-			var terrainTypeSelector = CreateTerrainTypeSelector();
+			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
+			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			///----------------------
 
 			///	Reset Grid Button
@@ -195,7 +206,14 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Left
 			rootOptionsElement.Add(leftOptionsElement);
 
-			leftOptionsElement.Add(terrainTypeSelector);
+			VisualElement rowSelectorParent = new();
+			rowSelectorParent.style.flexDirection = FlexDirection.Row;
+			rowSelectorParent.style.alignSelf = Align.Center;
+
+			rowSelectorParent.Add(leftTerrainTypeSelector);
+			rowSelectorParent.Add(rightTerrainTypeSelector);
+
+			leftOptionsElement.Add(rowSelectorParent);
 			leftOptionsElement.Add(gridSizeElement);
 
 			///	Middle
@@ -218,38 +236,6 @@ namespace ABB.Grid.Editor.VisualElements
 		private void AddLogic()
 		{
 
-		}
-
-
-		private DropdownField CreateTerrainTypeSelector()
-		{
-			DropdownField layerField = new DropdownField("Terrain type")
-			{
-				style =
-				{
-					paddingTop = 4
-				}
-			};
-
-			List<string> choices = new();
-
-			Type terrainType = typeof(TerrainType);
-			foreach (var terrain in Enum.GetValues(terrainType))
-			{
-				string terrainStr = terrain.ToString();
-				choices.Add(terrainStr);
-			}
-
-			layerField.choices = choices;
-			layerField.index = 0;
-			layerField.RegisterValueChangedCallback(evt =>
-			{
-				selectedTerrain = (TerrainType)Enum.Parse(terrainType, evt.newValue);
-				OnTerrainChanged?.Invoke((int)selectedTerrain);
-				Debug.Log(layerField.value);
-			});
-
-			return layerField;
 		}
 	}
 }

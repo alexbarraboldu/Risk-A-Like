@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using ABB.Cell;
@@ -23,6 +24,8 @@ namespace ABB.Grid.Squared
 
 			try
 			{
+				CheckGridTerrainData();
+
 				await GenerateSquaredGrid();
 
 				return true;
@@ -32,6 +35,24 @@ namespace ABB.Grid.Squared
 				Debug.LogException(exc, this);
 
 				return false;
+			}
+		}
+
+		private void CheckGridTerrainData()
+		{
+			if (gridTerrainData == null)
+			{
+				throw new NullReferenceException("gridTerrainData is null");
+			}
+
+			if (gridTerrainData.terrainData == null)
+			{
+				throw new NullReferenceException("gridTerrainData.terrainData is null");
+			}
+
+			if (gridTerrainData.Height <= 0 || gridTerrainData.Width <= 0)
+			{
+				throw new Exception("gridTerrainData's height or width are 0");
 			}
 		}
 

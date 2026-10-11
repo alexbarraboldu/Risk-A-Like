@@ -33,7 +33,8 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 		}
 
-		public TerrainType SelectedTerrain { get; set; }
+		public TerrainType LeftSelectedTerrain { get; set; }
+		public TerrainType RightSelectedTerrain { get; set; }
 
 
 		private Vector2 localMousePosition = Vector2.zero;
@@ -249,6 +250,10 @@ namespace ABB.Grid.Editor.VisualElements
 			mesh.SetAllIndices(tris);
 		}
 
+
+		///	TODO
+		///	Añadir un scriptable object o archivo binario para almacenar los colores
+		///	relaciondos por terreno
 		private Color SelectCellTint(int cellValue)
 		{
 			switch ((TerrainType)cellValue)
@@ -310,8 +315,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			//Debug.Log($"Clicked cell: column: {column}, row: {row}");
 
-			if (button == 0) _grid[column][row] = (int)SelectedTerrain;
-			else if (button == 1) _grid[column][row] = -1;
+			if (button == 0) _grid[column][row] = (int)LeftSelectedTerrain;
+			else if (button == 1) _grid[column][row] = (int)RightSelectedTerrain;
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -343,7 +348,7 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				for (int r = 0; r < rows; r++)
 				{
-					_grid[c][r] = 1;
+					_grid[c][r] = (int)LeftSelectedTerrain;
 				}
 			}
 

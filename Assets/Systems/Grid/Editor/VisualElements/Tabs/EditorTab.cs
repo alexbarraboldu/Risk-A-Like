@@ -35,7 +35,6 @@ namespace ABB.Grid.Editor.VisualElements
 				Debug.LogException(exception);
 			}
 
-
 			base.label = label;
 			closeable = false;
 
@@ -53,7 +52,8 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.Add(_cellGridCanvas);
 
 			///	ADD LOGIC
-			_toolsView.OnTerrainChanged += OnTerrainChanged;
+			_toolsView.OnLeftTerrainChanged += OnLeftTerrainChanged;
+			_toolsView.OnRightTerrainChanged += OnRightTerrainChanged;
 			_toolsView.OnGridSizeChanged += OnGridSizeChanged;
 			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
 			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
@@ -72,9 +72,14 @@ namespace ABB.Grid.Editor.VisualElements
 			ExportWindow.OpenWindow(sessionFile);
 		}
 
-		private void OnTerrainChanged(int terrain)
+		private void OnLeftTerrainChanged(int terrain)
 		{
-			_cellGridCanvas.SelectedTerrain = (TerrainType)terrain;
+			_cellGridCanvas.LeftSelectedTerrain = (TerrainType)terrain;
+		}
+
+		private void OnRightTerrainChanged(int terrain)
+		{
+			_cellGridCanvas.RightSelectedTerrain = (TerrainType)terrain;
 		}
 
 		private void OnGridSizeChanged(Vector2Int newValue)

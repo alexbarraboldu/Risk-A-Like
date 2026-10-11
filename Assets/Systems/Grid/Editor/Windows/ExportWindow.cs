@@ -234,7 +234,7 @@ namespace ABB.Grid.Editor.Windows
 				if (AssetDatabase.AssetPathExists(soPath))
 				{
 					GridTerrainDataSO grid = CreateInstance<GridTerrainDataSO>();
-					grid.terrainData = _grid;
+					grid.terrainData = ParseGridTerrainData(_grid);
 
 					AssetDatabase.CreateAsset(grid, finalPath);
 				}
@@ -281,6 +281,25 @@ namespace ABB.Grid.Editor.Windows
 			string subStr = cStr.Substring(startIndex, subStrLength);
 
 			return subStr;
+		}
+
+		private int[][] ParseGridTerrainData(int[][] grid)
+		{
+			int columns = grid.Length;
+			int rows = grid[0].Length;
+
+			int[][] result = new int[columns][];
+
+			for (int c = 0, C = columns - 1; c < columns; c++, --C)
+			{
+				result[c] = new int[rows];
+				for (int r = 0, R = rows - 1; r < rows; r++, --R)
+				{
+					result[c][r] = grid[c][R];
+				}
+			}
+
+			return result;
 		}
 	}
 }

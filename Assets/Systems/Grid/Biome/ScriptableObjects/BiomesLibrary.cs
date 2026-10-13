@@ -7,17 +7,10 @@ using UnityEngine;
 
 namespace ABB.Grid.Biome
 {
-	[CreateAssetMenu(fileName = "TerrainTypeLibrary", menuName = "Grid/Terrain Library")]
-	public class TerrainTypeLibrary : ScriptableObject
+	[CreateAssetMenu(fileName = "BiomesLibrary", menuName = "Grid/Biomes Library")]
+	public class BiomesLibrary : ScriptableObject
 	{
-		[Serializable]
-		private struct Entry
-		{
-			public TerrainType terrain;
-			public Material material;
-		}
-
-		[SerializeField] private Entry[] entries = Array.Empty<Entry>();
+		[SerializeField] private Biome[] biomes = Array.Empty<Biome>();
 
 		private Dictionary<TerrainType, Biome> lookup;
 
@@ -29,9 +22,9 @@ namespace ABB.Grid.Biome
 				{
 					var result = new Dictionary<TerrainType, Biome>();
 
-					foreach (Entry entry in entries)
+					foreach (Biome biome in biomes)
 					{
-						result.Add(entry.terrain, new Biome(entry.terrain, entry.material));
+						result.Add(biome.terrain, biome);
 					}
 
 					lookup = result;

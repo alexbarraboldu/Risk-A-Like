@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -20,8 +19,8 @@ namespace ABB.Grid.Biome
 	{
 		HexagonCell[][] _grid = null;
 
-		[SerializeField] private Biome[] _biomes = Array.Empty<Biome>();
-		private Dictionary<TerrainType, Biome> _terrrainsBiomes = null;
+
+		[SerializeField] private BiomesLibrary terrainLibrary;
 
 
 		[Header("Demonstration")]
@@ -34,26 +33,9 @@ namespace ABB.Grid.Biome
 			GridGenerator gridGenerator = GetComponent<GridGenerator>();
 			gridGenerator.OnGridGenerated += SetGridAndRegenerateBiomes;
 
-			SetUp();
-		}
-
-
-		private void SetUp()
-		{
-			_terrrainsBiomes = new();
-			foreach (Biome biome in _biomes)
-			{
-				if (biome.material == null)
-				{
-					Debug.LogError("Biome's material is NULL", this);
-					break;
-				}
-
-				_terrrainsBiomes.Add(biome.terrain, biome);
-			}
-
 			lakeRandom = new Random();
 		}
+
 
 		[ContextMenu("Regenerate Biomes")]
 		private void RegenerateBiomes()
@@ -76,14 +58,14 @@ namespace ABB.Grid.Biome
 			{
 				foreach (var cell in rows)
 				{
-					cell.SetBiome(_terrrainsBiomes[TerrainType.PLAIN]);
+					cell.SetBiome(terrainLibrary.BiomesByTerrain[TerrainType.PLAIN]);
 				}
 			}
 		}
 
 		public async void GenerateBiomes()
 		{
-			TerrainType[] terrains = _terrrainsBiomes.Keys.ToArray();
+			TerrainType[] terrains = terrainLibrary.BiomesByTerrain.Keys.ToArray();
 			foreach (TerrainType terrain in terrains)
 			{
 				switch (terrain)
@@ -123,7 +105,7 @@ namespace ABB.Grid.Biome
 			{
 				for (int j = 0; j < _grid[i].Length; j++)
 				{
-					_grid[i][j].SetBiome(_terrrainsBiomes[TerrainType.PLAIN]);
+					_grid[i][j].SetBiome(terrainLibrary.BiomesByTerrain[TerrainType.PLAIN]);
 				}
 			}
 		}
@@ -178,7 +160,7 @@ namespace ABB.Grid.Biome
 						(column < 0 || column >= _grid[row].Length))
 						break;
 
-					_grid[row][column].SetBiome(_terrrainsBiomes[TerrainType.MOUNTAIN]);
+					_grid[row][column].SetBiome(terrainLibrary.BiomesByTerrain[TerrainType.MOUNTAIN]);
 				}
 
 				if (m % _cellsPerFrame == 0)
@@ -243,7 +225,7 @@ namespace ABB.Grid.Biome
 				if (terrain == TerrainType.PLAIN && !visitedCells.Contains(startPos))
 				{
 					visitedCells.Add(startPos);
-					_grid[startPos.x][startPos.y].SetBiome(_terrrainsBiomes[TerrainType.LAKE]);
+					_grid[startPos.x][startPos.y].SetBiome(terrainLibrary.BiomesByTerrain[TerrainType.LAKE]);
 
 					int lakeMaxSize = 21;
 					int lakeSize = random.Next(0, lakeMaxSize);
@@ -265,7 +247,7 @@ namespace ABB.Grid.Biome
 						if (currentCell == new Vector2Int(-1, -1)) continue;
 						if (visitedCells.Contains(currentCell)) continue;
 
-						_grid[currentCell.x][currentCell.y].SetBiome(_terrrainsBiomes[TerrainType.LAKE]);
+						_grid[currentCell.x][currentCell.y].SetBiome(terrainLibrary.BiomesByTerrain[TerrainType.LAKE]);
 						visitedCells.Add(currentCell);
 					}
 
@@ -341,20 +323,6 @@ namespace ABB.Grid.Biome
 			}
 
 			return result;
-		}
-	}
-
-	[Serializable]
-	public class Biome
-	{
-		public TerrainType terrain;
-		public Material material;
-
-		public Biome() { }
-		public Biome(TerrainType terrain, Material material)
-		{
-			this.terrain = terrain;
-			this.material = material;
 		}
 	}
 }

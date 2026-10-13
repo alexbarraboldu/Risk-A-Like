@@ -4,16 +4,14 @@ namespace ABB.Grid.Data
 {
 	public class GridTerrainDataSO : ScriptableObject
 	{
-		private int columns;
-		private int rows;
-		private int[] inlineGrid;
+		[SerializeField] private int columns;
+		[SerializeField] private int rows;
+		[SerializeField] private int[] inlineGrid;
 
-		private int[][] lookup;
+		[System.NonSerialized] private int[][] lookup;
 
 		public int Width => columns;
-
 		public int Height => rows;
-
 		public int[][] terrainData
 		{
 			get
@@ -40,8 +38,8 @@ namespace ABB.Grid.Data
 					inlineGrid[i] = value[c][r];
 
 					i++;
-
 					r++;
+
 					if (1 == i / (rows * (c + 1)))
 					{
 						r = 0;
@@ -58,12 +56,6 @@ namespace ABB.Grid.Data
 		{
 			this.terrainData = grid;
 		}
-
-		private void Awake()
-		{
-
-		}
-
 
 		private void SetLookUp()
 		{

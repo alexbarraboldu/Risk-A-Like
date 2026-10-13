@@ -14,7 +14,7 @@ namespace ABB.Grid.Squared
 	{
 		[Space(10)]
 		[SerializeField] private GridTerrainDataSO gridTerrainData;
-		[SerializeField] private TerrainTypeLibrary terrainLibrary;
+		[SerializeField] private BiomesLibrary terrainLibrary;
 
 
 		[ContextMenu("Generate Grid")]
@@ -98,7 +98,7 @@ namespace ABB.Grid.Squared
 
 					_grid[i][j] = gridCell;
 
-					if (_cellsPerFrame != 0 && j % _cellsPerFrame == 0)
+					if (_cellsPerFrame > 0 && j % _cellsPerFrame == 0)
 						await Task.Yield();
 
 					if (!Application.isPlaying)

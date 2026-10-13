@@ -12,12 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96b4dcd516996f4429602d64484003a3, type: 3}
   m_Name: TerrainTypeLibrary
   m_EditorClassIdentifier: Assembly-CSharp::ABB.Grid.Biome.TerrainTypeLibrary
-  entries:
+  biomes:
   - terrain: 0
     material: {fileID: 2100000, guid: d2adc4af966bc03469c3a7b1d4f3afb4, type: 2}
-  - terrain: 2
-    material: {fileID: 2100000, guid: 52401e45823d4af40a1b766d1fb71d67, type: 2}
-  - terrain: 8
-    material: {fileID: 2100000, guid: f5310d303e36f8441b59b7ff0ceb911f, type: 2}
   - terrain: 9
     material: {fileID: 2100000, guid: 1ae3466f50110ff4ebc99048405d9437, type: 2}

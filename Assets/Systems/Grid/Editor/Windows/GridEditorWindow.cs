@@ -1,6 +1,3 @@
-using System;
-using System.IO;
-
 using ABB.Grid.Editor.VisualElements;
 
 using UnityEditor;
@@ -16,8 +13,6 @@ namespace ABB.Grid.Editor.Windows
 
 		private const string StylePath = "Assets/";
 		public StyleSheet uss;
-
-		public static readonly string PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ABB", "GridEditor");
 
 		private EditorTab _editorTab = null;
 		private SaveFilesTab _saveFilesTab = null;
@@ -59,6 +54,7 @@ namespace ABB.Grid.Editor.Windows
 			if (!guiBuilt) return;
 
 			_editorTab?.SaveSessionFile();
+			_editorTab?.SaveTerrainColorsFile();
 		}
 
 		private void OnDestroy()
@@ -66,6 +62,7 @@ namespace ABB.Grid.Editor.Windows
 			if (!guiBuilt) return;
 
 			_editorTab?.SaveSessionFile();
+			_editorTab?.SaveTerrainColorsFile();
 		}
 	}
 }

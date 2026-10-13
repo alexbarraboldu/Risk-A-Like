@@ -14,6 +14,10 @@ namespace ABB.Grid.Editor.Data
 
 		public float cellSize;
 
+		public uint leftColor;
+
+		public uint rightColor;
+
 
 		public SessionData() { }
 
@@ -22,14 +26,18 @@ namespace ABB.Grid.Editor.Data
 			columns = sessionFile.columns;
 			rows = sessionFile.rows;
 			grid = sessionFile.grid;
+			leftColor = sessionFile.leftColor;
+			rightColor = sessionFile.rightColor;
 		}
 
-		public SessionData(Vector2Int gridSize, int[][] grid, float cellSize, string cellGameObjectId)
+		public SessionData(Vector2Int gridSize, int[][] grid, float cellSize, string cellGameObjectId, uint leftColor, uint rightColor)
 		{
 			columns = (uint)gridSize.x;
 			rows = (uint)gridSize.y;
 			this.grid = grid;
 			this.cellSize = cellSize;
+			this.leftColor = leftColor;
+			this.rightColor = rightColor;
 		}
 	}
 }

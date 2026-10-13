@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 
 using ABB.Gameplay.Data.Types;
+using ABB.Grid.Editor.Data;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,8 +11,10 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
-		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
-		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
+		private TerrainColorData terrainColorsFile;
+
+		private static ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
+		private static ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
 
 		private Vector2IntField gridSizeElement = null;
 
@@ -18,6 +22,19 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button fillGridButton = null;
 
 		private Button exportGridButton = null;
+
+		public static Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
+
+		public uint LeftColor
+		{
+			get => (uint)leftTerrainTypeSelector.Value;
+			set => leftTerrainTypeSelector.Value = (int)value;
+		}
+		public uint RightColor
+		{
+			get => (uint)rightTerrainTypeSelector.Value;
+			set => rightTerrainTypeSelector.Value = (int)value;
+		}
 
 		public Vector2Int GridSize
 		{
@@ -59,6 +76,19 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public ToolsView()
 		{
+			try
+			{
+				LoadTerrainColorsFile();
+			}
+			catch (Exception exception)
+			{
+				SaveTerrainColorsFile();
+
+				Debug.LogWarning("Could not deserialize terrain colors file data");
+				Debug.LogException(exception);
+			}
+
+
 			BuildUI();
 			AddStyle();
 			AddLogic();
@@ -116,6 +146,13 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Terrain type selector
 			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
+
+			leftTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
+			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
+
+			leftTerrainTypeSelector.OnColorChanged += (value, color) => rightTerrainTypeSelector.ChangeColor(value, color);
+
+			rightTerrainTypeSelector.OnColorChanged += (value, color) => leftTerrainTypeSelector.ChangeColor(value, color);
 			///----------------------
 
 			///	Reset Grid Button
@@ -237,5 +274,36 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 
 		}
+
+
+		#region LOAD & SAVE DATA
+
+		public void LoadTerrainColorsFile()
+		{
+			terrainColorsFile = Utils.Load.LoadTerrainColorsFile();
+		}
+
+		public void SaveTerrainColorsFile()
+		{
+			TerrainColor[] terrainColors = new TerrainColor[leftTerrainTypeSelector.Length];
+			int i = 0;
+			foreach (var terrainColor in leftTerrainTypeSelector.TerrainColors)
+			{
+				terrainColors[i].terrain = (int)terrainColor.Key;
+
+				var value = terrainColor.Value;
+				terrainColors[i].r = value.r;
+				terrainColors[i].g = value.g;
+				terrainColors[i].b = value.b;
+				terrainColors[i].a = value.a;
+
+				i++;
+			}
+			terrainColorsFile.terrainColors = terrainColors;
+
+			Utils.Save.SaveTerrainColorsFile(terrainColorsFile);
+		}
+
+		#endregion
 	}
 }

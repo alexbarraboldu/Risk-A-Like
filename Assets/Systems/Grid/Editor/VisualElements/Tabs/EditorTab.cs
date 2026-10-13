@@ -13,7 +13,7 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class EditorTab : Tab
 	{
-		private readonly string FILE_NAME = "gridEditorSession.bin";
+		private readonly string SESSION_FILE_NAME = "gridEditorSession.bin";
 
 		private SessionData sessionFile;
 
@@ -31,9 +31,10 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				SaveSessionFile();
 
-				Debug.Log("Could not deserialize session file data");
+				Debug.LogWarning("Could not deserialize session file data");
 				Debug.LogException(exception);
 			}
+
 
 			base.label = label;
 			closeable = false;
@@ -64,6 +65,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			_cellGridCanvas.Grid = sessionFile.grid;
 			_cellGridCanvas.CellSize = sessionFile.cellSize;
+			_toolsView.LeftColor = sessionFile.leftColor;
+			_toolsView.RightColor = sessionFile.rightColor;
 		}
 
 
@@ -93,14 +96,14 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void LoadSessionFile()
 		{
-			sessionFile = BinarySerialization.ReadFromBinaryFile<SessionData>($"{GridEditorWindow.PATH}\\{FILE_NAME}");
+			sessionFile = BinarySerialization.ReadFromBinaryFile<SessionData>($"{Constants.PATH}\\{SESSION_FILE_NAME}");
 		}
 
 		public void SaveSessionFile()
 		{
-			if (!Directory.Exists(GridEditorWindow.PATH))
+			if (!Directory.Exists(Constants.PATH))
 			{
-				Directory.CreateDirectory(GridEditorWindow.PATH);
+				Directory.CreateDirectory(Constants.PATH);
 			}
 
 			try
@@ -109,8 +112,10 @@ namespace ABB.Grid.Editor.VisualElements
 
 				sessionFile.cellSize = _cellGridCanvas.CellSize;
 				sessionFile.grid = _cellGridCanvas.Grid;
+				sessionFile.leftColor = _toolsView.LeftColor;
+				sessionFile.rightColor = _toolsView.RightColor;
 
-				BinarySerialization.WriteToBinary<SessionData>($"{GridEditorWindow.PATH}\\{FILE_NAME}", sessionFile);
+				BinarySerialization.WriteToBinary<SessionData>($"{Constants.PATH}\\{SESSION_FILE_NAME}", sessionFile);
 			}
 			catch (Exception)
 			{
@@ -118,6 +123,10 @@ namespace ABB.Grid.Editor.VisualElements
 				//Debug.LogException(exception);
 			}
 		}
+
+		public void LoadTerrainColorsFile() => _toolsView?.LoadTerrainColorsFile();
+
+		public void SaveTerrainColorsFile() => _toolsView?.SaveTerrainColorsFile();
 
 		#endregion
 	}

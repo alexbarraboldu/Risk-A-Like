@@ -250,37 +250,11 @@ namespace ABB.Grid.Editor.VisualElements
 			mesh.SetAllIndices(tris);
 		}
 
-
-		///	TODO
-		///	Añadir un scriptable object o archivo binario para almacenar los colores
-		///	relaciondos por terreno
 		private Color SelectCellTint(int cellValue)
 		{
-			switch ((TerrainType)cellValue)
-			{
-				case TerrainType.PLAIN:
-					return Color.beige;
-				case TerrainType.PLATEAU:
-					return Color.sandyBrown;
-				case TerrainType.MOUNTAIN:
-					return Color.brown;
-				case TerrainType.VALLEY:
-					return Color.burlywood;
-				case TerrainType.CANYON:
-					return Color.sandyBrown;
-				case TerrainType.PLAYA:
-					return Color.softYellow;
-				case TerrainType.DESSERT:
-					return Color.lightGoldenRodYellow;
-				case TerrainType.WETLAND:
-					return Color.lightCyan;
-				case TerrainType.LAKE:
-					return Color.aliceBlue;
-				case TerrainType.SEA:
-					return Color.blue;
-				default:
-					return Color.white;
-			}
+			Color color = ToolsView.TerrainColors[(TerrainType)cellValue];
+
+			return color;
 		}
 
 		#endregion

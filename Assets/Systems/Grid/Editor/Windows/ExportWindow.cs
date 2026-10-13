@@ -183,21 +183,21 @@ namespace ABB.Grid.Editor.Windows
 
 		public void LoadExportSettingsFile()
 		{
-			exportSettings = BinarySerialization.ReadFromBinaryFile<ExportSettingsData>($"{GridEditorWindow.PATH}\\{FILE_NAME}");
+			exportSettings = BinarySerialization.ReadFromBinaryFile<ExportSettingsData>($"{Constants.PATH}\\{FILE_NAME}");
 		}
 
 		public void SaveExportSettingsFile()
 		{
-			if (!Directory.Exists(GridEditorWindow.PATH))
+			if (!Directory.Exists(Constants.PATH))
 			{
-				Directory.CreateDirectory(GridEditorWindow.PATH);
+				Directory.CreateDirectory(Constants.PATH);
 			}
 
 			try
 			{
 				if (exportSettings == null) exportSettings = new ExportSettingsData();
 
-				BinarySerialization.WriteToBinary<ExportSettingsData>($"{GridEditorWindow.PATH}\\{FILE_NAME}", exportSettings);
+				BinarySerialization.WriteToBinary<ExportSettingsData>($"{Constants.PATH}\\{FILE_NAME}", exportSettings);
 			}
 			catch (Exception)
 			{

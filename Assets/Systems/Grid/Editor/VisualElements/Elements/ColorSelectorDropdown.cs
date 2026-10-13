@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 
 using ABB.Gameplay.Data.Types;
+using ABB.Grid.Editor.Data;
 
 using UnityEditor.UIElements;
 
@@ -12,24 +13,46 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ColorSelectorDropdown<E> : VisualElement where E : Enum
 	{
-		public Color Color { get; private set; }
-		public int Value { get; private set; }
+		public Dictionary<TerrainType, Color> TerrainColors { get; private set; }
+
+		private int _value;
+		public int Value
+		{
+			get => _value;
+
+			set
+			{
+				colorField.value = TerrainColors[(TerrainType)value];
+				dropdownField.index = value;
+				_value = value;
+			}
+		}
+
+		public int Length = 0;
 
 		public event Action<int> OnValueChanged;
+		public event Action<int, Color> OnColorChanged;
+
+		private DropdownField dropdownField = null;
+		private ColorField colorField = null;
 
 		public ColorSelectorDropdown()
 		{
 			style.flexDirection = FlexDirection.Row;
 
-			ColorField colorField = new();
+			colorField = new();
 			colorField.style.width = 25;
 			colorField.style.height = 20;
 			colorField.style.marginRight = 0;
 			colorField.Q<VisualElement>("unity-eyedropper").style.display = DisplayStyle.None;
 
-			colorField.RegisterValueChangedCallback(evt => Color = evt.newValue);
+			colorField.RegisterValueChangedCallback(evt =>
+			{
+				TerrainColors[(TerrainType)_value] = evt.newValue;
+				OnColorChanged(_value, evt.newValue);
+			});
 
-			DropdownField layerField = new DropdownField()
+			dropdownField = new DropdownField()
 			{
 				focusable = true,
 				style =
@@ -47,32 +70,57 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				string terrainStr = terrain.ToString();
 				choices.Add(terrainStr);
+				Length++;
 			}
 
-			layerField.choices = choices;
-			layerField.index = 0;
-			E e = (E)Enum.Parse(terrainType, layerField.value);
-			Value = (int)(object)e;
-			layerField.tooltip = layerField.value;
-			layerField.RegisterValueChangedCallback(evt =>
+			dropdownField.choices = choices;
+			dropdownField.index = 0;
+			E e = (E)Enum.Parse(terrainType, dropdownField.value);
+			_value = (int)(object)e;
+			dropdownField.tooltip = dropdownField.value;
+			dropdownField.RegisterValueChangedCallback(evt =>
 			{
-				Value = (int)(TerrainType)Enum.Parse(terrainType, evt.newValue);
+				TerrainType terrain = (TerrainType)Enum.Parse(terrainType, evt.newValue);
+				_value = (int)terrain;
 
-				OnValueChanged?.Invoke(Value);
+				if (TerrainColors.TryGetValue(terrain, out Color color))
+					colorField.value = color;
+				else colorField.value = Color.black;
+
+				OnValueChanged?.Invoke(_value);
 			});
 
-			VisualElement popupInput = layerField.Q<VisualElement>(null, "unity-base-popup-field__input");
-			layerField.RegisterCallback<TooltipEvent>(evt =>
+			VisualElement popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");
+			dropdownField.RegisterCallback<TooltipEvent>(evt =>
 			{
-				evt.tooltip = layerField.value;
+				evt.tooltip = dropdownField.value;
 				evt.rect = popupInput.worldBound;
 				evt.StopPropagation();
 			}, TrickleDown.TrickleDown);
 
 			Add(colorField);
-			Add(layerField);
+			Add(dropdownField);
 		}
 
+		public void SetColors(TerrainColor[] terrainColors)
+		{
+			TerrainColors = new();
+
+			for (int i = 0; i < terrainColors.Length; i++)
+			{
+				TerrainColor terrainColor = terrainColors[i];
+				Color color = new Color(terrainColor.r, terrainColor.g, terrainColor.b, terrainColor.a);
+				TerrainType terrain = (TerrainType)terrainColor.terrain;
+
+				TerrainColors.TryAdd(terrain, color);
+			}
+
+			colorField.value = TerrainColors[(TerrainType)_value];
+		}
+
+		public void ChangeColor(int value, Color color)
+		{
+			TerrainColors[(TerrainType)value] = color;
+		}
 	}
 }
-//public static int EnumToInt<EValue>(this EValue value) where EValue : Enum => (int)(object)value;

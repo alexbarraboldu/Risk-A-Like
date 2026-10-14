@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Linq;
 
-using ABB.Grid.Data;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
+using ABB.Grid.Editor.VisualElements;
 
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -28,6 +28,8 @@ namespace ABB.Grid.Editor.Windows
 		}
 
 		private ExportSettingsData exportSettings;
+
+		private IExportGrid _exporter;
 
 
 		private ObjectField cellGameObjectField = null;
@@ -70,6 +72,10 @@ namespace ABB.Grid.Editor.Windows
 
 			cellGameObjectField = CreateCellGameObjectField();
 			cellGameObjectField.style.maxWidth = 240;
+
+			ObjectField exporterScriptField = CreateExporterScriptField();
+
+			TypeField<IExportGrid> typeField = CreateTypeField();
 
 			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder");
 			directoryPathBrowser.FolderPath = exportSettings?.folderPath ?? string.Empty;
@@ -118,6 +124,8 @@ namespace ABB.Grid.Editor.Windows
 
 
 			rootVisualElement.Add(cellGameObjectField);
+			rootVisualElement.Add(exporterScriptField);
+			rootVisualElement.Add(typeField);
 			rootVisualElement.Add(directoryPathBrowser);
 			rootVisualElement.Add(fileNameField);
 			rootVisualElement.Add(spacer);
@@ -160,6 +168,50 @@ namespace ABB.Grid.Editor.Windows
 				gameObjectField.value = AssetDatabase.LoadAssetByGUID(result, typeof(GameObject));
 
 			return gameObjectField;
+		}
+
+		private ObjectField CreateExporterScriptField()
+		{
+			ObjectField scriptField = new ObjectField("Exporter")
+			{
+				style =
+				{
+					paddingTop = 4,
+					paddingLeft = 4,
+					paddingBottom = 8
+				},
+				objectType = typeof(MonoScript),
+				allowSceneObjects = false
+			};
+
+			scriptField.Children().ToArray()[0].style.minWidth = 100;
+
+			scriptField.RegisterValueChangedCallback(evt =>
+			{
+				if (evt.newValue is not MonoScript script)
+					return;
+
+				Type type = script.GetClass();
+
+				if (type == null || !typeof(IExportGrid).IsAssignableFrom(type))
+				{
+					Debug.LogWarning($"The selected script must implement {typeof(IExportGrid)}");
+					scriptField.SetValueWithoutNotify(null);
+					return;
+				}
+
+				_exporter = (IExportGrid)Activator.CreateInstance(type);
+			});
+
+			return scriptField;
+		}
+
+
+		private TypeField<IExportGrid> CreateTypeField()
+		{
+			TypeField<IExportGrid> typeField = new("Exporter");
+
+			return typeField;
 		}
 
 		private void OnCellGameObjectChanged(ChangeEvent<UnityEngine.Object> evt)
@@ -229,14 +281,10 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				///	Chose preferable export method by adding function selector.
-				///	Maybe add a tab for Export Settings or add a settings button besides export button
 				if (AssetDatabase.AssetPathExists(soPath))
 				{
-					GridTerrainDataSO grid = CreateInstance<GridTerrainDataSO>();
-					grid.terrainData = ParseGridTerrainData(_grid);
-
-					AssetDatabase.CreateAsset(grid, finalPath);
+					int[][] parsedGrid = ParseGridTerrainData(_grid);
+					_exporter.ExportGrid(finalPath, parsedGrid);
 				}
 				else
 				{

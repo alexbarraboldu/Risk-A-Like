@@ -51,10 +51,10 @@ MonoBehaviour:
   _totalCells: 0
   _gridHeight: 0
   _gridWidth: 0
-  _cellsPerFrame: 0
+  _cellsPerFrame: 1
   _gridParent: {fileID: 0}
-  gridTerrainData: {fileID: 11400000, guid: 13b568f176c661f48b313b9fd913f2dc, type: 2}
-  terrainLibrary: {fileID: 11400000, guid: 103caed0edbbaa246955738ae41a8045, type: 2}
+  gridTerrainData: {fileID: 11400000, guid: 05852e40256007340bd0da19a4d8bc80, type: 2}
+  terrainLibrary: {fileID: 11400000, guid: 77222e0f983e01f4ca6b7e313ec59e34, type: 2}
 --- !u!1 &3555166127959556604
 GameObject:
   m_ObjectHideFlags: 0

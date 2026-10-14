@@ -9,11 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 96b4dcd516996f4429602d64484003a3, type: 3}
-  m_Name: TerrainTypeLibrary
-  m_EditorClassIdentifier: Assembly-CSharp::ABB.Grid.Biome.TerrainTypeLibrary
+  m_Script: {fileID: 11500000, guid: 04e6860ac4e591245ae962bf14f2135d, type: 3}
+  m_Name: BiomesLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::ABB.Grid.Biome.BiomesLibrary
   biomes:
   - terrain: 0
+    material: {fileID: 2100000, guid: 2d3f198d92ed1504a8d538dbb0de0d60, type: 2}
+  - terrain: 6
     material: {fileID: 2100000, guid: d2adc4af966bc03469c3a7b1d4f3afb4, type: 2}
-  - terrain: 9
+  - terrain: 0
     material: {fileID: 2100000, guid: 1ae3466f50110ff4ebc99048405d9437, type: 2}

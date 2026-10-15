@@ -22,8 +22,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 			set
 			{
+				if (_value == value) return;
+
 				colorField.value = TerrainColors[(TerrainType)value];
 				dropdownField.index = value;
+				OnValueChanged?.Invoke(value);
 				_value = value;
 			}
 		}
@@ -80,14 +83,7 @@ namespace ABB.Grid.Editor.VisualElements
 			dropdownField.tooltip = dropdownField.value;
 			dropdownField.RegisterValueChangedCallback(evt =>
 			{
-				TerrainType terrain = (TerrainType)Enum.Parse(terrainType, evt.newValue);
-				_value = (int)terrain;
-
-				if (TerrainColors.TryGetValue(terrain, out Color color))
-					colorField.value = color;
-				else colorField.value = Color.black;
-
-				OnValueChanged?.Invoke(_value);
+				Value = (int)dropdownField.index;
 			});
 
 			VisualElement popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");

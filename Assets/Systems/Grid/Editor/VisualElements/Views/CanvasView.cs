@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class CellGridCanvas : VisualElement
+	public class CanvasView : VisualElement
 	{
 		private Vector2 gridPosition = Vector2.zero;
 
@@ -49,7 +49,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellHeight = yOffset * 2f;
 
 
-		public CellGridCanvas(Vector2Int gridSize)
+		public CanvasView(Vector2Int gridSize)
 		{
 			focusable = true;
 

@@ -18,7 +18,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private SessionData sessionFile;
 
 		private ToolsView _toolsView = null;
-		private CellGridCanvas _cellGridCanvas = null;
+		private CanvasView _cellGridCanvas = null;
 
 
 		public EditorTab(string label)
@@ -60,7 +60,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
 
-			///	SET DATA
+			///	INJECT DATA
 			_toolsView.GridSize = gridSize;
 
 			_cellGridCanvas.Grid = sessionFile.grid;

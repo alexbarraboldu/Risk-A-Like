@@ -88,7 +88,6 @@ namespace ABB.Grid.Editor.VisualElements
 				Debug.LogException(exception);
 			}
 
-
 			BuildUI();
 			AddStyle();
 			AddLogic();
@@ -147,12 +146,12 @@ namespace ABB.Grid.Editor.VisualElements
 			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 
+			leftTerrainTypeSelector.OnColorChanged += (value, color) => rightTerrainTypeSelector.ChangeColor(value, color);
+			rightTerrainTypeSelector.OnColorChanged += (value, color) => leftTerrainTypeSelector.ChangeColor(value, color);
+
+			///	INJECT DATA
 			leftTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
 			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
-
-			leftTerrainTypeSelector.OnColorChanged += (value, color) => rightTerrainTypeSelector.ChangeColor(value, color);
-
-			rightTerrainTypeSelector.OnColorChanged += (value, color) => leftTerrainTypeSelector.ChangeColor(value, color);
 			///----------------------
 
 			///	Reset Grid Button

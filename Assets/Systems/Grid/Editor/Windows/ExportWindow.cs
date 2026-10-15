@@ -7,7 +7,6 @@ using ABB.Grid.Editor.Utils;
 using ABB.Grid.Editor.VisualElements;
 
 using UnityEditor;
-using UnityEditor.UIElements;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -32,7 +31,6 @@ namespace ABB.Grid.Editor.Windows
 		private IExportGrid _exporter;
 
 
-		private ObjectField cellGameObjectField = null;
 		private Button exportButton = null;
 
 		///	Add directory save path field
@@ -70,10 +68,6 @@ namespace ABB.Grid.Editor.Windows
 				SaveExportSettingsFile();
 			}
 
-			cellGameObjectField = CreateCellGameObjectField();
-			cellGameObjectField.style.maxWidth = 240;
-
-			ObjectField exporterScriptField = CreateExporterScriptField();
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
@@ -123,8 +117,6 @@ namespace ABB.Grid.Editor.Windows
 			exportButton.clicked += Export;
 
 
-			rootVisualElement.Add(cellGameObjectField);
-			rootVisualElement.Add(exporterScriptField);
 			rootVisualElement.Add(typeField);
 			rootVisualElement.Add(directoryPathBrowser);
 			rootVisualElement.Add(fileNameField);
@@ -149,30 +141,9 @@ namespace ABB.Grid.Editor.Windows
 		}
 
 
-		private ObjectField CreateCellGameObjectField()
+		private TypeField<IExportGrid> CreateTypeField()
 		{
-			ObjectField gameObjectField = new ObjectField("Cell")
-			{
-				style =
-			{
-				paddingTop = 4,
-				paddingLeft = 4,
-				paddingBottom = 8
-			},
-				objectType = typeof(GameObject)
-			};
-			gameObjectField.Children().ToArray()[0].style.minWidth = 100;
-			gameObjectField.RegisterValueChangedCallback(OnCellGameObjectChanged);
-
-			if (GUID.TryParse(exportSettings.cellGUID, out GUID result))
-				gameObjectField.value = AssetDatabase.LoadAssetByGUID(result, typeof(GameObject));
-
-			return gameObjectField;
-		}
-
-		private ObjectField CreateExporterScriptField()
-		{
-			ObjectField scriptField = new ObjectField("Exporter")
+			TypeField<IExportGrid> typeField = new("Exporter")
 			{
 				style =
 				{
@@ -180,45 +151,19 @@ namespace ABB.Grid.Editor.Windows
 					paddingLeft = 4,
 					paddingBottom = 8
 				},
-				objectType = typeof(MonoScript),
-				allowSceneObjects = false
 			};
 
-			scriptField.Children().ToArray()[0].style.minWidth = 100;
-
-			scriptField.RegisterValueChangedCallback(evt =>
+			typeField.RegisterValueChanged(x =>
 			{
-				if (evt.newValue is not MonoScript script)
-					return;
+				if (x == null) return;
 
-				Type type = script.GetClass();
-
-				if (type == null || !typeof(IExportGrid).IsAssignableFrom(type))
-				{
-					Debug.LogWarning($"The selected script must implement {typeof(IExportGrid)}");
-					scriptField.SetValueWithoutNotify(null);
-					return;
-				}
-
+				Type type = x.GetClass();
 				_exporter = (IExportGrid)Activator.CreateInstance(type);
+
+				Debug.Log($"Successfully assigned {type} as the exporter");
 			});
 
-			return scriptField;
-		}
-
-
-		private TypeField<IExportGrid> CreateTypeField()
-		{
-			TypeField<IExportGrid> typeField = new("Exporter");
-
 			return typeField;
-		}
-
-		private void OnCellGameObjectChanged(ChangeEvent<UnityEngine.Object> evt)
-		{
-			string path = AssetDatabase.GetAssetPath(evt.newValue);
-			string gUID = AssetDatabase.AssetPathToGUID(path);
-			exportSettings.cellGUID = gUID;
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)

@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using ABB.Grid.Editor.Utils;
-
 using UnityEditor;
 using UnityEditor.UIElements;
 
@@ -28,6 +26,7 @@ namespace ABB.Grid.Editor.Windows
 		public event Action<MonoScript> OnSelectedItem;
 
 		private ToolbarSearchField _searchField = null;
+		private TabView _tabView = null;
 		private Tab _tab = null;
 		private ListView _listView = null;
 
@@ -42,65 +41,68 @@ namespace ABB.Grid.Editor.Windows
 			window.titleContent = new GUIContent("Select Script");
 			window.minSize = new Vector2(150, 300);
 
-			//window.ShowAuxWindow();
-			window.ShowUtility();
+			window.ShowAuxWindow();
+			//window.ShowUtility();
 
 			return window;
 		}
 
 		private void CreateGUI()
 		{
-			rootVisualElement.style.flexDirection = FlexDirection.Column;
-			rootVisualElement.style.alignItems = Align.Stretch;
+			rootVisualElement.name = "unity-object-selector";
 
-			_searchField = new();
-			_searchField.style.width = StyleKeyword.Auto;
-			_searchField.style.height = 16;
-			_searchField.style.flexGrow = 0;
-			_searchField.style.flexShrink = 0;
-
-			_searchField.RegisterValueChangedCallback(evt =>
+			VisualElement visualElement = new VisualElement
 			{
-				if (evt.newValue == string.Empty)
-				{
-					_listView.itemsSource = scripts;
-					return;
-				}
+				name = "unity-object-selector__header"
+			};
 
-				List<MonoScript> newScripts = new();
-				for (int i = 0; i < scripts.Length; i++)
-				{
-					MonoScript script = scripts[i];
-					if (script == null) continue;
-					if (script.name.Contains(evt.newValue))
-					{
-						newScripts.Add(script);
-						Debug.Log(script.name);
-					}
-				}
+			Toolbar toolbar = new Toolbar
+			{
+				name = "unity-object-selector__search-bar"
+			};
 
-				_listView.itemsSource = newScripts.ToArray();
-			});
+			_searchField = new ToolbarSearchField
+			{
+				name = "unity-object-selector__search-field"
+			};
+			//_searchField.SetValueWithoutNotify(_searchFilter);
+			//_searchField.RegisterCallback<KeyDownEvent>(OnSearchFieldKeyDown, TrickleDown.TrickleDown);
+			//_searchField.RegisterValueChangedCallback(OnSearchFieldChanged);
+			//_searchField.RegisterCallback(delegate (AttachToPanelEvent evt)
+			//{
+			//	((VisualElement)evt.target).Focus();
+			//});
+			_searchField.RegisterValueChangedCallback(OnSearchFieldChanged);
 
-			_tab = new("Assets");
-			_tab.style.flexGrow = 1;
-			_tab.contentContainer.style.flexGrow = 1;
+			Toolbar _toolbar = new Toolbar
+			{
+				name = "unity-object-selector__toolbar"
+			};
+
+			_tabView = new TabView
+			{
+				name = "unity-object-selector__tab-view"
+			};
+
+			_tab = new Tab
+			{
+				label = "Assets",
+				name = "unity-object-selector__assets-tab"
+			};
+			_tabView.Add(_tab);
+			_tabView.activeTab = _tab;
 
 			_listView = new();
-			_listView.fixedItemHeight = 18;
-			_listView.selectionType = SelectionType.Single;
-
 			_listView.itemsChosen += (x) =>
 			{
 				object obj = x.First();
 				MonoScript script = (MonoScript)obj;
 
-				SelectedTypeName = script.name;
+				SelectedTypeName = script?.name ?? string.Empty;
 				OnSelectedItem?.Invoke(script);
 
 				Close();
 			};
-
 			_listView.makeItem = () =>
 			{
 				VisualElement parent = new();
@@ -120,7 +122,6 @@ namespace ABB.Grid.Editor.Windows
 
 				return parent;
 			};
-
 			_listView.bindItem = (element, index) =>
 			{
 				MonoScript script = (MonoScript)_listView.itemsSource[index];
@@ -139,18 +140,58 @@ namespace ABB.Grid.Editor.Windows
 				element.Q<Label>("label").text = name;
 			};
 
-			_tab.contentContainer.Add(_listView);
 
-			TabView tabView = new();
-			tabView.style.flexGrow = 1;
-			tabView.contentContainer.style.flexGrow = 1;
+			toolbar.Add(_searchField);
+			visualElement.Add(toolbar);
 
-			tabView.contentContainer.Add(_tab);
+			_toolbar.Add(_tabView);
+			visualElement.Add(_toolbar);
+			rootVisualElement.Add(visualElement);
 
-			rootVisualElement.Add(_searchField);
-			rootVisualElement.Add(tabView);
+			rootVisualElement.Add(_listView);
+
+			ApplyStyle();
 		}
 
+
+		private void OnSearchFieldChanged(ChangeEvent<string> evt)
+		{
+			if (evt.newValue == string.Empty)
+			{
+				_listView.itemsSource = scripts;
+				return;
+			}
+
+			List<MonoScript> newScripts = new();
+			for (int i = 0; i < scripts.Length; i++)
+			{
+				MonoScript script = scripts[i];
+				if (script == null) continue;
+				if (script.name.Contains(evt.newValue))
+				{
+					newScripts.Add(script);
+					Debug.Log(script.name);
+				}
+			}
+
+			_listView.itemsSource = newScripts.ToArray();
+		}
+
+		internal void AddSelectorStyle(string file)
+		{
+			StyleSheet sheet = EditorGUIUtility.Load($"Stylesheets/ObjectSelector/{file}.uss") as StyleSheet;
+
+			if (sheet != null)
+				rootVisualElement.styleSheets.Add(sheet);
+		}
+
+		private void ApplyStyle()
+		{
+			rootVisualElement.AddToClassList("unity-object-selector");
+
+			AddSelectorStyle("ObjectSelector");
+			AddSelectorStyle(EditorGUIUtility.isProSkin ? "ObjectSelectorDark" : "ObjectSelectorLight");
+		}
 
 		private void LoadScripts()
 		{
@@ -165,9 +206,10 @@ namespace ABB.Grid.Editor.Windows
 				if (GUID.TryParse(guid, out GUID result))
 				{
 					MonoScript script = AssetDatabase.LoadAssetByGUID<MonoScript>(result);
+					if (script == null) continue;
 
 					Type @class = script.GetClass();
-					if (@class == null || !typeof(IExportGrid).IsAssignableFrom(@class) || @class.IsInterface || @class.Name == Type.Name)
+					if (@class == null || !_type.IsAssignableFrom(@class) || @class.IsInterface || @class.Name == _type.Name)
 						continue;
 
 					if (script != null)

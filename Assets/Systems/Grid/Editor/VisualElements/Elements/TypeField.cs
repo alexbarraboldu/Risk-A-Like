@@ -117,11 +117,22 @@ namespace ABB.Grid.Editor.VisualElements
 
 			public void OnMonoScriptChanged(MonoScript script)
 			{
-				label.RemoveFromClassList("unity-object-field-display__label--value-null");
+				if (script == null)
+				{
+					label.AddToClassList("unity-object-field-display__label--value-null");
 
-				icon = new() { image = EditorGUIUtility.IconContent("cs Script Icon").image };
+					icon.image = null;
 
-				label.text = script.name;
+					label.text = text;
+				}
+				else
+				{
+					label.RemoveFromClassList("unity-object-field-display__label--value-null");
+
+					icon.image = EditorGUIUtility.IconContent("cs Script Icon").image;
+
+					label.text = script.name;
+				}
 			}
 		}
 

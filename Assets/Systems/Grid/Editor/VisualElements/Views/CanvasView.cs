@@ -164,7 +164,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			float lineWidth = 2f;
 
-			// Offset so the outline is not clipped at the top/left edge.
+			/// Offset so the outline is not clipped at the top/left edge.
 			Vector2 center = new Vector2(radius + lineWidth, inRadius + lineWidth);
 
 			Vector2[] points =
@@ -286,8 +286,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (column < 0 || column >= _grid.Length || row < 0 || row >= _grid[column].Length)
 				return;
-
-			//Debug.Log($"Clicked cell: column: {column}, row: {row}");
 
 			if (button == 0) _grid[column][row] = (int)LeftSelectedTerrain;
 			else if (button == 1) _grid[column][row] = (int)RightSelectedTerrain;

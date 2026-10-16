@@ -96,8 +96,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void BuildUI()
 		{
+			name = "tools_view";
+
 			VisualElement rootOptionsElement = new()
 			{
+				name = "tools-view--root",
 				style =
 				{
 					flexDirection = FlexDirection.Row,
@@ -112,6 +115,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement leftOptionsElement = new()
 			{
+				name = "tools-view--left-options",
 				style =
 				{
 					flexDirection = FlexDirection.Column,
@@ -121,9 +125,16 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows");
+			gridSizeElement.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
+			gridSizeElement.Q("vector2int-field").style.flexGrow = 1;
+
+			VisualElement visualElement = new();
+			gridSizeElement.Q("vector2int-field__fields-xField").style.width = 118;
+			gridSizeElement.Q("vector2int-field__fields-yField").style.width = 118;
 
 			VisualElement middleOptionsElement = new()
 			{
+				name = "tools-view--middle-options",
 				style =
 				{
 					flexGrow = 1,
@@ -134,6 +145,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement rightOptionsElement = new()
 			{
+				name = "tools-view--right-options",
 				style =
 				{
 					flexDirection = FlexDirection.Row,
@@ -157,7 +169,7 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
-				name = "reset-grid",
+				name = "tools-view--reset-grid__button",
 				tooltip = "Reset grid",
 				style =
 				{
@@ -184,7 +196,7 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Fill Grid Button
 			fillGridButton = new()
 			{
-				name = "fill-grid",
+				name = "tools-view--fill-grid__button",
 				tooltip = "Fill grid",
 				style =
 				{
@@ -212,7 +224,7 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Export Grid Button
 			exportGridButton = new()
 			{
-				name = "export-grid",
+				name = "tools-view--export-grid__button",
 				tooltip = "Export grid",
 				style =
 				{
@@ -226,6 +238,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			Label exportGridButtonLabel = new("Export")
 			{
+				name = "tools-view--export-grid__label",
 				style =
 				{
 					flexGrow = 1,

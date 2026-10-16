@@ -60,7 +60,7 @@ public class DirectoryPathBrowser : VisualElement
 				""
 			);
 
-		// Keep the previous selection if the dialog is cancelled.
+		///	Keep the previous selection if the dialog is cancelled.
 		if (!string.IsNullOrEmpty(path))
 			folderField.value = path;
 	}

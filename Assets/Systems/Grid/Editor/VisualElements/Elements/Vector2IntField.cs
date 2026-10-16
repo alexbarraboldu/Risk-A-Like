@@ -21,8 +21,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public event System.Action<Vector2Int> ValueChanged;
 
-		VisualElement _root;
-
 		Label _label;
 
 		IntegerField xField;
@@ -39,21 +37,20 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void BuildUI(string label, string xLabel, string yLabel)
 		{
-			_root = new();
-			_root.style.flexDirection = FlexDirection.Row;
-			_root.style.alignItems = Align.Center;
-			_root.style.paddingTop = 4;
+			name = "vector2int-field";
 
-			_label = new(label);
+			style.paddingTop = 4;
+
+			_label = new(label) { name = "vector2int-field__label" };
 			_label.style.width = 100;
 			_label.style.top = -10;
 			_label.style.left = 3;
 
-			VisualElement fieldsContainer = new();
+			VisualElement fieldsContainer = new() { name = "vector2int-field__fields-container" };
 			fieldsContainer.style.flexDirection = FlexDirection.Column;
 
-			xField = new(xLabel);
-			yField = new(yLabel);
+			xField = new(xLabel) { name = "vector2int-field__fields-xField" };
+			yField = new(yLabel) { name = "vector2int-field__fields-yField" };
 
 			xField.value = Value.x;
 			yField.value = Value.y;
@@ -65,10 +62,8 @@ namespace ABB.Grid.Editor.VisualElements
 			fieldsContainer.Add(xField);
 			fieldsContainer.Add(yField);
 
-			_root.Add(_label);
-			_root.Add(fieldsContainer);
-
-			base.Add(_root);
+			Add(_label);
+			Add(fieldsContainer);
 		}
 
 		private void AddLogic()
@@ -88,14 +83,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private static void ConfigureIntegerField(IntegerField field, float labelWidth, float totalWidth)
 		{
-			field.style.width = totalWidth;
-
 			field.labelElement.style.width = labelWidth;
 			field.labelElement.style.minWidth = labelWidth;
 			field.labelElement.style.maxWidth = labelWidth;
 			field.labelElement.style.flexBasis = labelWidth;
-			field.labelElement.style.flexGrow = 0;
-			field.labelElement.style.flexShrink = 0;
+			field.labelElement.style.flexGrow = 1;
+			field.labelElement.style.flexShrink = 1;
 		}
 
 	}

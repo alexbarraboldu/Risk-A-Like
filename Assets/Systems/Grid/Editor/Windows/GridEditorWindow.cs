@@ -32,7 +32,7 @@ namespace ABB.Grid.Editor.Windows
 			if (uss != null) rootVisualElement.styleSheets.Add(uss);
 
 			///	BUILD WINDOW UI
-			TabView tabView = new();
+			TabView tabView = new() { name = "grid-editor-window__tab-view" };
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
@@ -45,6 +45,7 @@ namespace ABB.Grid.Editor.Windows
 			tabView.contentContainer.Add(_editorTab);
 			tabView.contentContainer.Add(_saveFilesTab);
 
+			tabView.activeTab = _editorTab;
 
 			guiBuilt = true;
 		}

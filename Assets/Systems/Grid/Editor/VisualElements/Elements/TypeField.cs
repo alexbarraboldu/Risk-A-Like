@@ -15,9 +15,11 @@ namespace ABB.Grid.Editor.VisualElements
 		private TypeFieldDisplay typeFieldDisplay = null;
 		private TypeFieldSelector typeFieldSelector = null;
 
+		private string typeName = string.Empty;
 
 		public TypeField(string text)
 		{
+			name = "type-field";
 			focusable = true;
 
 			label = new Label();
@@ -51,15 +53,20 @@ namespace ABB.Grid.Editor.VisualElements
 			displaySelectorParent.Add(typeFieldSelector);
 		}
 
-
 		public bool RegisterValueChanged(Action<MonoScript> action)
 		{
 			if (action == null) return false;
 
 			typeFieldSelector.RegisterValueChanged(action);
-			typeFieldSelector.RegisterValueChanged(typeFieldDisplay.OnMonoScriptChanged);
+			typeFieldSelector.RegisterValueChanged((monoScript) => typeFieldDisplay.OnMonoScriptChanged(monoScript?.name ?? string.Empty));
 
 			return true;
+		}
+
+		public void SetTypeName(string typeName)
+		{
+			this.typeName = typeName;
+			typeFieldDisplay.OnMonoScriptChanged(typeName);
 		}
 
 
@@ -115,9 +122,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 			}
 
-			public void OnMonoScriptChanged(MonoScript script)
+			public void OnMonoScriptChanged(string scriptName)
 			{
-				if (script == null)
+				if (string.IsNullOrEmpty(scriptName))
 				{
 					label.AddToClassList("unity-object-field-display__label--value-null");
 
@@ -131,14 +138,14 @@ namespace ABB.Grid.Editor.VisualElements
 
 					icon.image = EditorGUIUtility.IconContent("cs Script Icon").image;
 
-					label.text = script.name;
+					label.text = scriptName;
 				}
 			}
 		}
 
 		internal class TypeFieldSelector : VisualElement
 		{
-			private Action<MonoScript> action;
+			private Action<MonoScript> OnItemSelected;
 			private TypeSelector typeSelector = null;
 
 
@@ -148,18 +155,18 @@ namespace ABB.Grid.Editor.VisualElements
 				{
 					typeSelector = TypeSelector.OpenWindow();
 					typeSelector.Type = type;
-					typeSelector.OnSelectedItem += action;
+					typeSelector.OnTypeSelected += OnItemSelected;
 				});
 
 				AddToClassList("unity-object-field__selector");
 			}
 
 
-			public bool RegisterValueChanged(Action<MonoScript> action)
+			public bool RegisterValueChanged(Action<MonoScript> onItemSelected)
 			{
-				if (action == null) return false;
+				if (onItemSelected == null) return false;
 
-				this.action += action;
+				this.OnItemSelected += onItemSelected;
 
 				return true;
 			}

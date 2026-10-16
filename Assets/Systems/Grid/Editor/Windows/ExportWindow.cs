@@ -71,35 +71,47 @@ namespace ABB.Grid.Editor.Windows
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
-			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder");
+			RestoreExporterInstance(typeField);
+
+			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder")
+			{
+				style = {
+					paddingLeft = 4,
+					paddingRight = 4,
+					paddingTop = 4
+				}
+			};
 			directoryPathBrowser.FolderPath = exportSettings?.folderPath ?? string.Empty;
 			directoryPathBrowser.OnFolderFieldValueChanged += OnFolderFieldValueChanged;
 
-			TextField fileNameField = new("File name");
-			fileNameField.style.paddingLeft = 4;
-			fileNameField.style.paddingRight = 4;
+			TextField fileNameField = new("File name")
+			{
+				style =
+				{
+					paddingLeft = 4,
+					paddingRight = 4,
+					paddingTop = 4
+				}
+			};
 			fileNameField.Children().ToArray()[0].style.minWidth = 100;
-
 			fileNameField.value = exportSettings?.fileName ?? string.Empty;
 			fileNameField.RegisterValueChangedCallback(OnFileNameFieldValueChanged);
 
 			VisualElement spacer = new();
-			spacer.style.flexGrow = 1;
+			spacer.style.flexGrow = 0.5f;
 
 			///	Export Grid Button
 			exportButton = new()
 			{
-				name = "export-grid",
+				name = "export-window--export-grid__button",
 				tooltip = "Export grid",
 				style =
 				{
+					alignSelf = Align.Center,
 					minWidth = 100,
 					maxWidth = 100,
 					minHeight = 50,
 					maxHeight = 50,
-					paddingLeft = 4,
-					bottom = 8,
-					alignSelf = Align.Center,
 				}
 			};
 
@@ -149,21 +161,39 @@ namespace ABB.Grid.Editor.Windows
 				{
 					paddingTop = 4,
 					paddingLeft = 4,
-					paddingBottom = 8
+					paddingRight = 4,
+					paddingBottom = 4
 				},
 			};
 
-			typeField.RegisterValueChanged(x =>
-			{
-				if (x == null) return;
-
-				Type type = x.GetClass();
-				_exporter = (IExportGrid)Activator.CreateInstance(type);
-
-				Debug.Log($"Successfully assigned {type} as the exporter");
-			});
+			typeField.RegisterValueChanged((monoScript) => CreateExporterInstance(monoScript?.GetClass()));
 
 			return typeField;
+		}
+
+		private void CreateExporterInstance(Type type)
+		{
+			if (type == null) return;
+
+			_exporter = (IExportGrid)Activator.CreateInstance(type);
+			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
+
+			Debug.Log($"Successfully assigned {type} as the exporter");
+		}
+
+		private void RestoreExporterInstance(TypeField<IExportGrid> typeField)
+		{
+			string assemblyQualifiedName = exportSettings?.assemblyQualifiedName ?? string.Empty;
+
+			int commaIndex = assemblyQualifiedName.IndexOf(',');
+			string typeName = commaIndex >= 0 ? assemblyQualifiedName.Substring(0, commaIndex) : assemblyQualifiedName;
+
+			typeField.SetTypeName(typeName);
+
+			if (string.IsNullOrEmpty(assemblyQualifiedName)) return;
+
+			Type exporterType = Type.GetType(assemblyQualifiedName);
+			CreateExporterInstance(exporterType);
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)

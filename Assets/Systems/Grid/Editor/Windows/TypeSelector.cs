@@ -23,16 +23,14 @@ namespace ABB.Grid.Editor.Windows
 			}
 		}
 
-		public event Action<MonoScript> OnSelectedItem;
+		public event Action<MonoScript> OnTypeSelected;
 
 		private ToolbarSearchField _searchField = null;
 		private TabView _tabView = null;
 		private Tab _tab = null;
 		private ListView _listView = null;
 
-		private MonoScript[] scripts;
-
-		public string SelectedTypeName = string.Empty;
+		private MonoScript[] scripts = Array.Empty<MonoScript>();
 
 
 		public static TypeSelector OpenWindow()
@@ -98,8 +96,7 @@ namespace ABB.Grid.Editor.Windows
 				object obj = x.First();
 				MonoScript script = (MonoScript)obj;
 
-				SelectedTypeName = script?.name ?? string.Empty;
-				OnSelectedItem?.Invoke(script);
+				OnTypeSelected?.Invoke(script);
 
 				Close();
 			};
@@ -162,10 +159,11 @@ namespace ABB.Grid.Editor.Windows
 				return;
 			}
 
+			MonoScript[] currentScripts = scripts;
 			List<MonoScript> newScripts = new();
 			for (int i = 0; i < scripts.Length; i++)
 			{
-				MonoScript script = scripts[i];
+				MonoScript script = currentScripts[i];
 				if (script == null) continue;
 				if (script.name.Contains(evt.newValue))
 				{

@@ -5,7 +5,7 @@ namespace ABB.Grid.Editor.Data
 	[Serializable]
 	public class ExportSettingsData
 	{
-		public string cellGUID;
+		public string assemblyQualifiedName;
 		public string folderPath;
 		public string fileName;
 
@@ -14,14 +14,14 @@ namespace ABB.Grid.Editor.Data
 
 		public ExportSettingsData(ExportSettingsData exportSettingsData)
 		{
-			cellGUID = exportSettingsData.cellGUID;
+			assemblyQualifiedName = exportSettingsData.assemblyQualifiedName;
 			folderPath = exportSettingsData.folderPath;
 			fileName = exportSettingsData.fileName;
 		}
 
 		public ExportSettingsData(string gameObjectGUID, string folderPath, string fileName)
 		{
-			this.cellGUID = gameObjectGUID;
+			this.assemblyQualifiedName = gameObjectGUID;
 			this.folderPath = folderPath;
 			this.fileName = fileName;
 		}

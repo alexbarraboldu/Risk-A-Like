@@ -36,6 +36,8 @@ namespace ABB.Grid.Editor.VisualElements
 		public TerrainType LeftSelectedTerrain { get; set; }
 		public TerrainType RightSelectedTerrain { get; set; }
 
+		private bool _deleteCell;
+
 
 		private Vector2 localMousePosition = Vector2.zero;
 		private Vector2 localMouseStartPosition = Vector2.zero;
@@ -287,8 +289,8 @@ namespace ABB.Grid.Editor.VisualElements
 			if (column < 0 || column >= _grid.Length || row < 0 || row >= _grid[column].Length)
 				return;
 
-			if (button == 0) _grid[column][row] = (int)LeftSelectedTerrain;
-			else if (button == 1) _grid[column][row] = (int)RightSelectedTerrain;
+			if (button == 0) _grid[column][row] = _deleteCell ? -1 : (int)LeftSelectedTerrain;
+			else if (button == 1) _grid[column][row] = _deleteCell ? -1 : (int)RightSelectedTerrain;
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -307,6 +309,11 @@ namespace ABB.Grid.Editor.VisualElements
 		private void Move()
 		{
 			gridPosition = localMouseDeltaPosition;
+		}
+
+		public void DeleteCell()
+		{
+			_deleteCell = !_deleteCell;
 		}
 
 		public void FillGrid()

@@ -39,8 +39,6 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			name = "vector2int-field";
 
-			style.paddingTop = 4;
-
 			_label = new(label) { name = "vector2int-field__label" };
 			_label.style.width = 100;
 			_label.style.top = -10;

@@ -56,6 +56,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnLeftTerrainChanged += OnLeftTerrainChanged;
 			_toolsView.OnRightTerrainChanged += OnRightTerrainChanged;
 			_toolsView.OnGridSizeChanged += OnGridSizeChanged;
+			_toolsView.OnDeleteCell += _cellGridCanvas.DeleteCell;
 			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
 			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;

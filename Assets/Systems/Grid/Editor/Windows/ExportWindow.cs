@@ -177,8 +177,6 @@ namespace ABB.Grid.Editor.Windows
 
 			_exporter = (IExportGrid)Activator.CreateInstance(type);
 			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
-
-			Debug.Log($"Successfully assigned {type} as the exporter");
 		}
 
 		private void RestoreExporterInstance(TypeField<IExportGrid> typeField)
@@ -194,6 +192,8 @@ namespace ABB.Grid.Editor.Windows
 
 			Type exporterType = Type.GetType(assemblyQualifiedName);
 			CreateExporterInstance(exporterType);
+
+			Debug.Log($"Successfully assigned {exporterType} as the exporter");
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)

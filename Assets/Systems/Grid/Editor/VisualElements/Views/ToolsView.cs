@@ -18,6 +18,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private Vector2IntField gridSizeElement = null;
 
+		private Button deleteCellButton = null;
+
 		private Button resetGridButton = null;
 		private Button fillGridButton = null;
 
@@ -56,6 +58,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			add => gridSizeElement.ValueChanged += value;
 			remove => gridSizeElement.ValueChanged -= value;
+		}
+		public event Action OnDeleteCell
+		{
+			add => deleteCellButton.clicked += value;
+			remove => deleteCellButton.clicked -= value;
 		}
 		public event Action OnResetGrid
 		{
@@ -166,6 +173,39 @@ namespace ABB.Grid.Editor.VisualElements
 			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
 			///----------------------
 
+			///	Delete Cell Button
+			deleteCellButton = new()
+			{
+				name = "tools-view--delete-grid__button",
+				tooltip = "Delete grid",
+				style =
+				{
+					minWidth = 80,
+					maxWidth = 80,
+					minHeight = 35,
+					maxHeight = 35,
+				}
+			};
+			deleteCellButton.clicked += () =>
+			{
+				if (deleteCellButton.style.backgroundColor == Color.gray3)
+					deleteCellButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				else
+					deleteCellButton.style.backgroundColor = Color.gray3;
+			};
+
+			Label deleteCellButtonLabel = new("Delete")
+			{
+				style =
+				{
+					flexGrow = 1,
+					fontSize = 22
+				}
+			};
+
+			deleteCellButton.Add(deleteCellButtonLabel);
+			///------------------
+
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
@@ -207,7 +247,6 @@ namespace ABB.Grid.Editor.VisualElements
 					paddingLeft = 4
 				}
 			};
-
 
 			Label fillGridButtonLabel = new("Fill")
 			{
@@ -262,8 +301,21 @@ namespace ABB.Grid.Editor.VisualElements
 			rowSelectorParent.Add(leftTerrainTypeSelector);
 			rowSelectorParent.Add(rightTerrainTypeSelector);
 
+			VisualElement rowGridSizeDeleteParent = new VisualElement()
+			{
+				style =
+				{
+					paddingTop = 4
+				}
+			};
+			rowGridSizeDeleteParent.style.flexDirection = FlexDirection.Row;
+			rowGridSizeDeleteParent.style.alignItems = Align.Center;
+
+			rowGridSizeDeleteParent.Add(gridSizeElement);
+			rowGridSizeDeleteParent.Add(deleteCellButton);
+
 			leftOptionsElement.Add(rowSelectorParent);
-			leftOptionsElement.Add(gridSizeElement);
+			leftOptionsElement.Add(rowGridSizeDeleteParent);
 
 			///	Middle
 			rootOptionsElement.Add(middleOptionsElement);

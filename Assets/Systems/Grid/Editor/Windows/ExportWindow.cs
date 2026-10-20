@@ -20,11 +20,6 @@ namespace ABB.Grid.Editor.Windows
 		private readonly string FILE_NAME = "exportSettings.bin";
 
 		private int[][] _grid;
-		public int[][] Grid
-		{
-			get => _grid;
-			set => _grid = value;
-		}
 
 		private ExportSettingsData exportSettings;
 
@@ -39,21 +34,17 @@ namespace ABB.Grid.Editor.Windows
 		///	Add file name save field
 		string soName = string.Empty;
 
+		private Action onDestroy;
 
-		public static void OpenWindow()
-		{
-			ExportWindow window = GetWindow<ExportWindow>();
-			window.titleContent = new GUIContent("Export Grid");
-			window.minSize = new Vector2(500, 200);
-		}
 
-		public static void OpenWindow(SessionData session)
+		public static void OpenWindow(SessionData session, Action onDestroy)
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
 			window.minSize = new Vector2(500, 200);
 
 			window._grid = session.grid;
+			window.onDestroy = onDestroy;
 		}
 
 
@@ -150,6 +141,8 @@ namespace ABB.Grid.Editor.Windows
 			if (!guiBuilt) return;
 
 			SaveExportSettingsFile();
+
+			onDestroy?.Invoke();
 		}
 
 
@@ -177,6 +170,8 @@ namespace ABB.Grid.Editor.Windows
 
 			_exporter = (IExportGrid)Activator.CreateInstance(type);
 			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
+
+			//Debug.Log($"Successfully assigned {exporterType} as the exporter");
 		}
 
 		private void RestoreExporterInstance(TypeField<IExportGrid> typeField)
@@ -192,8 +187,6 @@ namespace ABB.Grid.Editor.Windows
 
 			Type exporterType = Type.GetType(assemblyQualifiedName);
 			CreateExporterInstance(exporterType);
-
-			Debug.Log($"Successfully assigned {exporterType} as the exporter");
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)

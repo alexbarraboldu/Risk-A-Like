@@ -6,6 +6,8 @@ using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
 using ABB.Grid.Editor.Windows;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -73,7 +75,16 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnExportGrid()
 		{
-			ExportWindow.OpenWindow(sessionFile);
+			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
+			gridEditorWindow.tabView.SetEnabled(false);
+
+			ExportWindow.OpenWindow(sessionFile, OnDestroyExportWindow);
+		}
+
+		private void OnDestroyExportWindow()
+		{
+			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
+			gridEditorWindow.tabView.SetEnabled(true);
 		}
 
 		private void OnLeftTerrainChanged(int terrain)

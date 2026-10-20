@@ -17,6 +17,8 @@ namespace ABB.Grid.Editor.Windows
 		private EditorTab _editorTab = null;
 		private SaveFilesTab _saveFilesTab = null;
 
+		public TabView tabView = null;
+
 
 		[MenuItem("Window/Custom Tools/Grid Editor")]
 		private static void OpenWindow()
@@ -32,7 +34,7 @@ namespace ABB.Grid.Editor.Windows
 			if (uss != null) rootVisualElement.styleSheets.Add(uss);
 
 			///	BUILD WINDOW UI
-			TabView tabView = new() { name = "grid-editor-window__tab-view" };
+			tabView = new() { name = "grid-editor-window__tab-view" };
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 

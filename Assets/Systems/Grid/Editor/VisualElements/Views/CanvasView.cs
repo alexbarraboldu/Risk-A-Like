@@ -16,7 +16,9 @@ namespace ABB.Grid.Editor.VisualElements
 			set
 			{
 				_gridSize = value;
+
 				EnsureGrid();
+				MarkDirtyRepaint();
 			}
 		}
 
@@ -29,7 +31,13 @@ namespace ABB.Grid.Editor.VisualElements
 			set
 			{
 				_grid = value;
+
 				EnsureGrid();
+
+				_gridSize.x = _grid != null ? _grid.Length : 0;
+				_gridSize.y = _grid != null ? _grid[0].Length : 0;
+
+				MarkDirtyRepaint();
 			}
 		}
 
@@ -51,13 +59,11 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellHeight = yOffset * 2f;
 
 
-		public CanvasView(Vector2Int gridSize)
+		public CanvasView()
 		{
 			focusable = true;
 
 			SetStyle();
-
-			GridSize = gridSize;
 
 			generateVisualContent += OnGenerateVisualContent;
 

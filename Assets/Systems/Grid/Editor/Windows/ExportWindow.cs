@@ -37,13 +37,13 @@ namespace ABB.Grid.Editor.Windows
 		private Action onDestroy;
 
 
-		public static void OpenWindow(SessionData session, Action onDestroy)
+		public static void OpenWindow(int[][] grid, Action onDestroy)
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
 			window.minSize = new Vector2(500, 200);
 
-			window._grid = session.grid;
+			window._grid = grid;
 			window.onDestroy = onDestroy;
 		}
 

@@ -9,8 +9,6 @@ namespace ABB.Grid.Editor.Windows
 {
 	public class GridEditorWindow : EditorWindow
 	{
-		private bool guiBuilt = false;
-
 		private const string StylePath = "Assets/";
 		public StyleSheet uss;
 
@@ -41,6 +39,10 @@ namespace ABB.Grid.Editor.Windows
 			_editorTab = new("Editor");
 			_saveFilesTab = new("Save Files");
 
+			///	ADD LOGIC
+			_editorTab.RegisterCallbackSaveGridData(_saveFilesTab.SaveGridData);
+			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
+
 			///	ADD UI
 			rootVisualElement.Add(tabView);
 
@@ -48,24 +50,12 @@ namespace ABB.Grid.Editor.Windows
 			tabView.contentContainer.Add(_saveFilesTab);
 
 			tabView.activeTab = _editorTab;
-
-			guiBuilt = true;
-		}
-
-		private void OnDisable()
-		{
-			if (!guiBuilt) return;
-
-			_editorTab?.SaveSessionFile();
-			_editorTab?.SaveTerrainColorsFile();
 		}
 
 		private void OnDestroy()
 		{
-			if (!guiBuilt) return;
-
-			_editorTab?.SaveSessionFile();
-			_editorTab?.SaveTerrainColorsFile();
+			_editorTab.Dispose();
+			_saveFilesTab.Dispose();
 		}
 	}
 }

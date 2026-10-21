@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 
 using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
@@ -13,14 +12,15 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class EditorTab : Tab
+	public class EditorTab : Tab, IDisposable
 	{
-		private readonly string SESSION_FILE_NAME = "gridEditorSession.bin";
-
-		private SessionData sessionFile;
+		private SessionData sessionData;
+		private GridData gridSaveData;
 
 		private ToolsView _toolsView = null;
 		private CanvasView _cellGridCanvas = null;
+
+		private event Action<GridData> SaveGridData;
 
 
 		public EditorTab(string label)
@@ -28,6 +28,7 @@ namespace ABB.Grid.Editor.VisualElements
 			try
 			{
 				LoadSessionFile();
+				gridSaveData = new();
 			}
 			catch (Exception exception)
 			{
@@ -47,8 +48,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			///	CREATE UI
 			_toolsView = new();
-			Vector2Int gridSize = new Vector2Int((int)sessionFile.columns, (int)sessionFile.rows);
-			_cellGridCanvas = new(gridSize);
+			_cellGridCanvas = new();
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -62,29 +62,39 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
 			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
+			_toolsView.OnSaveGrid += OnSaveGridClicked;
 
 			///	INJECT DATA
+			Vector2Int gridSize = new Vector2Int(gridSaveData?.columns ?? 0, gridSaveData?.rows ?? 0);
 			_toolsView.GridSize = gridSize;
 
-			_cellGridCanvas.Grid = sessionFile.grid;
-			_cellGridCanvas.CellSize = sessionFile.cellSize;
-			_toolsView.LeftColor = sessionFile.leftColor;
-			_toolsView.RightColor = sessionFile.rightColor;
+			_cellGridCanvas.Grid = gridSaveData.grid;
+			_cellGridCanvas.CellSize = sessionData.cellSize;
+			_toolsView.LeftColor = sessionData.leftColor;
+			_toolsView.RightColor = sessionData.rightColor;
 		}
 
+		public void RegisterCallbackSaveGridData(Action<GridData> saveGridDataEvent)
+		{
+			if (saveGridDataEvent == null) return;
+
+			SaveGridData += saveGridDataEvent;
+		}
+
+		#region ACTIONS
 
 		private void OnExportGrid()
 		{
 			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
-			ExportWindow.OpenWindow(sessionFile, OnDestroyExportWindow);
-		}
+			ExportWindow.OpenWindow(gridSaveData.grid, OnDestroyExportWindow);
 
-		private void OnDestroyExportWindow()
-		{
-			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
-			gridEditorWindow.tabView.SetEnabled(true);
+			void OnDestroyExportWindow()
+			{
+				GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
+				gridEditorWindow.tabView.SetEnabled(true);
+			}
 		}
 
 		private void OnLeftTerrainChanged(int terrain)
@@ -99,47 +109,55 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnGridSizeChanged(Vector2Int newValue)
 		{
-			sessionFile.columns = (uint)newValue.x;
-			sessionFile.rows = (uint)newValue.y;
+			gridSaveData.columns = newValue.x;
+			gridSaveData.rows = newValue.y;
 			_cellGridCanvas.GridSize = newValue;
 		}
 
+		#endregion
+
 		#region LOAD & SAVE DATA
 
-		public void LoadSessionFile()
+		private void LoadSessionFile()
 		{
-			sessionFile = BinarySerialization.ReadFromBinaryFile<SessionData>($"{Constants.PATH}\\{SESSION_FILE_NAME}");
+			sessionData = Load.LoadSessionFile();
 		}
 
-		public void SaveSessionFile()
+		private void SaveSessionFile()
 		{
-			if (!Directory.Exists(Constants.PATH))
-			{
-				Directory.CreateDirectory(Constants.PATH);
-			}
+			sessionData.cellSize = _cellGridCanvas.CellSize;
+			sessionData.leftColor = _toolsView.LeftColor;
+			sessionData.rightColor = _toolsView.RightColor;
 
-			try
-			{
-				if (sessionFile == null) sessionFile = new SessionData();
-
-				sessionFile.cellSize = _cellGridCanvas.CellSize;
-				sessionFile.grid = _cellGridCanvas.Grid;
-				sessionFile.leftColor = _toolsView.LeftColor;
-				sessionFile.rightColor = _toolsView.RightColor;
-
-				BinarySerialization.WriteToBinary<SessionData>($"{Constants.PATH}\\{SESSION_FILE_NAME}", sessionFile);
-			}
-			catch (Exception)
-			{
-				//Debug.Log("Could not serialize session file data");
-				//Debug.LogException(exception);
-			}
+			Save.SaveSessionFile(sessionData);
 		}
 
-		public void LoadTerrainColorsFile() => _toolsView?.LoadTerrainColorsFile();
+		public void LoadGridClicked(GridData gridData)
+		{
+			gridSaveData = gridData;
+			_cellGridCanvas.Grid = gridData.grid;
 
-		public void SaveTerrainColorsFile() => _toolsView?.SaveTerrainColorsFile();
+			Vector2Int gridSize = new Vector2Int(gridData.columns, gridData.rows);
+			_cellGridCanvas.GridSize = gridSize;
+			_toolsView.GridSize = gridSize;
+		}
+
+		public void OnSaveGridClicked()
+		{
+			gridSaveData.columns = _cellGridCanvas.GridSize.x;
+			gridSaveData.rows = _cellGridCanvas.GridSize.y;
+			gridSaveData.grid = _cellGridCanvas.Grid;
+			gridSaveData.fileName = "grid";
+
+			SaveGridData?.Invoke(gridSaveData);
+		}
 
 		#endregion
+
+		public void Dispose()
+		{
+			SaveSessionFile();
+			_toolsView?.Dispose();
+		}
 	}
 }

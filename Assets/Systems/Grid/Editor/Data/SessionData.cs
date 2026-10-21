@@ -1,21 +1,15 @@
 using System;
 
-using UnityEngine;
-
 namespace ABB.Grid.Editor.Data
 {
 	[Serializable]
 	public class SessionData
 	{
-		public uint columns;
-		public uint rows;
-
-		public int[][] grid;
+		public int saveFileIndex;
 
 		public float cellSize;
 
 		public uint leftColor;
-
 		public uint rightColor;
 
 
@@ -23,18 +17,15 @@ namespace ABB.Grid.Editor.Data
 
 		public SessionData(SessionData sessionFile)
 		{
-			columns = sessionFile.columns;
-			rows = sessionFile.rows;
-			grid = sessionFile.grid;
+			saveFileIndex = sessionFile.saveFileIndex;
+			cellSize = sessionFile.cellSize;
 			leftColor = sessionFile.leftColor;
 			rightColor = sessionFile.rightColor;
 		}
 
-		public SessionData(Vector2Int gridSize, int[][] grid, float cellSize, string cellGameObjectId, uint leftColor, uint rightColor)
+		public SessionData(int saveFileIndex, float cellSize, uint leftColor, uint rightColor)
 		{
-			columns = (uint)gridSize.x;
-			rows = (uint)gridSize.y;
-			this.grid = grid;
+			this.saveFileIndex = saveFileIndex;
 			this.cellSize = cellSize;
 			this.leftColor = leftColor;
 			this.rightColor = rightColor;

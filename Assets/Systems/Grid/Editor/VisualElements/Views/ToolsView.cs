@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class ToolsView : VisualElement
+	public class ToolsView : VisualElement, IDisposable
 	{
 		private TerrainColorData terrainColorsFile;
 
@@ -24,6 +24,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button fillGridButton = null;
 
 		private Button exportGridButton = null;
+		private Button saveGridButton = null;
 
 		public static Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
 
@@ -78,6 +79,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			add => exportGridButton.clicked += value;
 			remove => exportGridButton.clicked -= value;
+		}
+		public event Action OnSaveGrid
+		{
+			add => saveGridButton.clicked += value;
+			remove => saveGridButton.clicked -= value;
 		}
 
 
@@ -288,6 +294,35 @@ namespace ABB.Grid.Editor.VisualElements
 			exportGridButton.Add(exportGridButtonLabel);
 			///-------------------
 
+			///	Export Grid Button
+			saveGridButton = new()
+			{
+				name = "tools-view--save-grid__button",
+				tooltip = "Save grid",
+				style =
+				{
+					minWidth = 100,
+					maxWidth = 100,
+					minHeight = 50,
+					maxHeight = 50,
+					paddingLeft = 4
+				}
+			};
+
+			Label saveGridButtonLabel = new("Save")
+			{
+				name = "tools-view--export-grid__label",
+				style =
+				{
+					flexGrow = 1,
+					fontSize = 24
+				}
+			};
+
+			saveGridButton.Add(saveGridButtonLabel);
+			///-------------------
+
+
 			///	ADD TO UI
 			Add(rootOptionsElement);
 
@@ -327,6 +362,7 @@ namespace ABB.Grid.Editor.VisualElements
 			rootOptionsElement.Add(rightOptionsElement);
 
 			rightOptionsElement.Add(exportGridButton);
+			rightOptionsElement.Add(saveGridButton);
 		}
 
 		private void AddStyle()
@@ -342,12 +378,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#region LOAD & SAVE DATA
 
-		public void LoadTerrainColorsFile()
+		private void LoadTerrainColorsFile()
 		{
 			terrainColorsFile = Utils.Load.LoadTerrainColorsFile();
 		}
 
-		public void SaveTerrainColorsFile()
+		private void SaveTerrainColorsFile()
 		{
 			TerrainColor[] terrainColors = new TerrainColor[leftTerrainTypeSelector.Length];
 			int i = 0;
@@ -366,6 +402,11 @@ namespace ABB.Grid.Editor.VisualElements
 			terrainColorsFile.terrainColors = terrainColors;
 
 			Utils.Save.SaveTerrainColorsFile(terrainColorsFile);
+		}
+
+		public void Dispose()
+		{
+			SaveTerrainColorsFile();
 		}
 
 		#endregion

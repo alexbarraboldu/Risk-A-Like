@@ -3,6 +3,7 @@ using System.Linq;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
+using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
 
@@ -12,17 +13,18 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class SaveFilesView : VisualElement, IDisposable
 	{
-		private GridData[] gridsData;
+		public GridData[] gridsData;
 
 		private ListView listView = null;
 
-		public event Action<GridData> OnSelected;
+		public event Action<GridData, int> OnGridDataSelected;
 
 
 		public SaveFilesView()
 		{
 			try
 			{
+				gridsData = new GridData[0];
 				LoadGridsSaveFile();
 			}
 			catch
@@ -39,7 +41,12 @@ namespace ABB.Grid.Editor.VisualElements
 				object obj = x.First();
 				GridData gridData = (GridData)obj;
 
-				OnSelected?.Invoke(gridData);
+				GridEditorWindow window = EditorWindow.GetWindow<GridEditorWindow>();
+
+				int index = listView.itemsSource.IndexOf(obj);
+
+				OnGridDataSelected?.Invoke(gridData, index);
+				window.ChangeToEditorTab();
 			};
 			listView.makeItem = () =>
 			{
@@ -83,7 +90,7 @@ namespace ABB.Grid.Editor.VisualElements
 			index = selectedIndex;
 		}
 
-		public void SaveGridData(GridData gridSave, int index)
+		public void AddEntry(GridData gridSave, int index)
 		{
 			if (index < 0)
 			{
@@ -104,6 +111,8 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 
 			listView.itemsSource = gridsData;
+
+			SaveGridSavesFiles();
 		}
 
 

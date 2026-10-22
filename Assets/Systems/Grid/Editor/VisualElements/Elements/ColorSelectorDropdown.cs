@@ -24,10 +24,10 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				if (_value == value) return;
 
+				_value = value;
 				colorField.value = TerrainColors[(TerrainType)value];
 				dropdownField.index = value;
 				OnValueChanged?.Invoke(value);
-				_value = value;
 			}
 		}
 

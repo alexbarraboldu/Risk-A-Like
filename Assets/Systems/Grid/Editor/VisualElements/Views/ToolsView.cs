@@ -13,8 +13,8 @@ namespace ABB.Grid.Editor.VisualElements
 	{
 		private TerrainColorData terrainColorsFile;
 
-		private static ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
-		private static ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
+		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
+		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
 
 		private Vector2IntField gridSizeElement = null;
 
@@ -26,7 +26,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button exportGridButton = null;
 		private Button saveGridButton = null;
 
-		public static Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
+		public Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
 
 		public uint LeftColor
 		{
@@ -89,6 +89,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public ToolsView()
 		{
+			BuildUI();
+			AddStyle();
+			AddLogic();
+
+			///	INJECT DATA
 			try
 			{
 				LoadTerrainColorsFile();
@@ -101,9 +106,8 @@ namespace ABB.Grid.Editor.VisualElements
 				Debug.LogException(exception);
 			}
 
-			BuildUI();
-			AddStyle();
-			AddLogic();
+			leftTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
+			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
 		}
 
 
@@ -173,10 +177,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			leftTerrainTypeSelector.OnColorChanged += (value, color) => rightTerrainTypeSelector.ChangeColor(value, color);
 			rightTerrainTypeSelector.OnColorChanged += (value, color) => leftTerrainTypeSelector.ChangeColor(value, color);
-
-			///	INJECT DATA
-			leftTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
-			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
 			///----------------------
 
 			///	Delete Cell Button

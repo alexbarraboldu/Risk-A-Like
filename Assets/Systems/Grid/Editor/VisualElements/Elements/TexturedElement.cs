@@ -1,3 +1,5 @@
+using System;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -7,6 +9,7 @@ namespace ABB.Grid.Editor.VisualElements
 	///	This VisualElement is extracted from https://docs.unity.com/en-us/engine/6000.6/script-reference/unityengine/uielements/meshgenerationcontext
 	///	as an example on how generateVisualContent works.
 	/// </summary>
+	[Obsolete("This class is not used yet", true)]
 	public class TexturedElement : VisualElement
 	{
 		static readonly Vertex[] k_Vertices = new Vertex[4];

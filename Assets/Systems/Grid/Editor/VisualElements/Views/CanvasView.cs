@@ -7,6 +7,8 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class CanvasView : VisualElement
 	{
+		public ToolsView toolsView;
+
 		private Vector2 gridPosition = Vector2.zero;
 
 		private Vector2Int _gridSize = Vector2Int.zero;
@@ -32,11 +34,10 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				_grid = value;
 
-				EnsureGrid();
-
 				_gridSize.x = _grid != null ? _grid.Length : 0;
 				_gridSize.y = _grid != null ? _grid[0].Length : 0;
 
+				EnsureGrid();
 				MarkDirtyRepaint();
 			}
 		}
@@ -94,12 +95,6 @@ namespace ABB.Grid.Editor.VisualElements
 			DrawPointerRectangle(context, localMousePosition);
 		}
 
-		public void LoadGrid(int[][] grid, float cellSize)
-		{
-			this.Grid = grid;
-			this.CellSize = cellSize;
-		}
-
 		private bool EnsureGrid()
 		{
 			if (_gridSize.x <= 0 || _gridSize.y <= 0)
@@ -111,7 +106,7 @@ namespace ABB.Grid.Editor.VisualElements
 			uint columns = (uint)_gridSize.x;
 			uint rows = (uint)_gridSize.y;
 
-			bool needsRebuild = Grid == null || Grid.Length != columns;
+			bool needsRebuild = _grid == null || _grid.Length != columns;
 			if (!needsRebuild)
 			{
 				for (int x = 0; x < columns; x++)
@@ -125,11 +120,40 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 			if (!needsRebuild) return true;
 
-			_grid = new int[columns][];
-			for (int x = 0; x < columns; x++)
+			if (_grid == null)
 			{
-				_grid[x] = new int[rows];
+				_grid = new int[columns][];
+				for (int x = 0; x < columns; x++)
+				{
+					_grid[x] = new int[rows];
+				}
+
+				return true;
 			}
+
+			int[][] aux = new int[columns][];
+			int gridColumns = _grid.Length, gridRows = _grid[0].Length;
+			for (int auxC = 0, c = 0; auxC < columns; auxC++, c++)
+			{
+				aux[auxC] = new int[rows];
+				for (int auxR = 0, r = 0; auxR < rows; auxR++, r++)
+				{
+					if (auxC >= gridColumns)
+					{
+						aux[auxC][auxR] = -1;
+						continue;
+					}
+					else if (auxR >= gridRows)
+					{
+						aux[auxC][auxR] = -1;
+						continue;
+					}
+
+					aux[auxC][auxR] = _grid[c][r];
+				}
+			}
+
+			_grid = aux;
 
 			return true;
 		}
@@ -150,7 +174,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 					Vector2 position = gridPosition + new Vector2(xPos, yPos);
 
-					int cellValue = Grid[x][y];
+					int cellValue = _grid[x][y];
 					if (cellValue != -1)
 						AllocateHexagon(context, position, cellValue);
 					else
@@ -260,7 +284,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private Color SelectCellTint(int cellValue)
 		{
-			Color color = ToolsView.TerrainColors[(TerrainType)cellValue];
+			Color color = toolsView.TerrainColors[(TerrainType)cellValue];
 
 			return color;
 		}

@@ -14,31 +14,17 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class EditorTab : Tab, IDisposable
 	{
-		private SessionData sessionData;
-		private GridData gridSaveData;
+		public SessionData sessionData { get; private set; }
+		public GridData gridSaveData { get; private set; }
 
 		private ToolsView _toolsView = null;
 		private CanvasView _cellGridCanvas = null;
 
-		private event Action<GridData> SaveGridData;
+		private event Action<GridData, int> SaveGridData;
 
 
 		public EditorTab(string label)
 		{
-			try
-			{
-				LoadSessionFile();
-				gridSaveData = new();
-			}
-			catch (Exception exception)
-			{
-				SaveSessionFile();
-
-				Debug.LogWarning("Could not deserialize session file data");
-				Debug.LogException(exception);
-			}
-
-
 			base.label = label;
 			closeable = false;
 
@@ -49,6 +35,7 @@ namespace ABB.Grid.Editor.VisualElements
 			///	CREATE UI
 			_toolsView = new();
 			_cellGridCanvas = new();
+			_cellGridCanvas.toolsView = _toolsView;
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -65,20 +52,32 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnSaveGrid += OnSaveGridClicked;
 
 			///	INJECT DATA
-			Vector2Int gridSize = new Vector2Int(gridSaveData?.columns ?? 0, gridSaveData?.rows ?? 0);
-			_toolsView.GridSize = gridSize;
+			try
+			{
+				LoadSessionFile();
+			}
+			catch (Exception exception)
+			{
+				SaveSessionFile();
 
-			_cellGridCanvas.Grid = gridSaveData.grid;
+				Debug.LogWarning("Could not deserialize session file data");
+				Debug.LogException(exception);
+			}
+			gridSaveData = new();
+
 			_cellGridCanvas.CellSize = sessionData.cellSize;
 			_toolsView.LeftColor = sessionData.leftColor;
 			_toolsView.RightColor = sessionData.rightColor;
 		}
 
-		public void RegisterCallbackSaveGridData(Action<GridData> saveGridDataEvent)
+		public void RegisterCallbackSaveGridData(Action<GridData, int> saveGridDataEvent)
 		{
 			if (saveGridDataEvent == null) return;
 
-			SaveGridData += saveGridDataEvent;
+			SaveGridData += (x, y) =>
+			{
+				saveGridDataEvent.Invoke(x, sessionData.saveFileIndex);
+			};
 		}
 
 		#region ACTIONS
@@ -88,7 +87,7 @@ namespace ABB.Grid.Editor.VisualElements
 			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
-			ExportWindow.OpenWindow(gridSaveData.grid, OnDestroyExportWindow);
+			ExportWindow.OpenWindow(_cellGridCanvas.Grid, OnDestroyExportWindow);
 
 			void OnDestroyExportWindow()
 			{
@@ -132,14 +131,22 @@ namespace ABB.Grid.Editor.VisualElements
 			Save.SaveSessionFile(sessionData);
 		}
 
-		public void LoadGridClicked(GridData gridData)
+		public void LoadGridClicked(GridData gridData, int index)
 		{
 			gridSaveData = gridData;
-			_cellGridCanvas.Grid = gridData.grid;
+			sessionData.saveFileIndex = index;
 
-			Vector2Int gridSize = new Vector2Int(gridData.columns, gridData.rows);
-			_cellGridCanvas.GridSize = gridSize;
-			_toolsView.GridSize = gridSize;
+			_cellGridCanvas.Grid = gridData.grid;
+			_toolsView.GridSize = _cellGridCanvas.GridSize;
+		}
+
+		public void LoadCurrentGrid(GridData[] gridsData)
+		{
+			int index = sessionData.saveFileIndex;
+			if (index < 0 || index >= gridsData.Length) return;
+
+			_cellGridCanvas.Grid = gridsData[index].grid;
+			_toolsView.GridSize = _cellGridCanvas.GridSize;
 		}
 
 		public void OnSaveGridClicked()
@@ -149,7 +156,7 @@ namespace ABB.Grid.Editor.VisualElements
 			gridSaveData.grid = _cellGridCanvas.Grid;
 			gridSaveData.fileName = "grid";
 
-			SaveGridData?.Invoke(gridSaveData);
+			SaveGridData?.Invoke(gridSaveData, sessionData.saveFileIndex);
 		}
 
 		#endregion

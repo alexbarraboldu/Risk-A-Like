@@ -40,7 +40,8 @@ namespace ABB.Grid.Editor.Windows
 			_saveFilesTab = new("Save Files");
 
 			///	ADD LOGIC
-			_editorTab.RegisterCallbackSaveGridData(_saveFilesTab.SaveGridData);
+			_editorTab.LoadCurrentGrid(_saveFilesTab.GridsData);
+			_editorTab.RegisterCallbackSaveGridData(_saveFilesTab.AddEntry);
 			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
 
 			///	ADD UI
@@ -57,5 +58,10 @@ namespace ABB.Grid.Editor.Windows
 			_editorTab.Dispose();
 			_saveFilesTab.Dispose();
 		}
+
+
+		public void ChangeToEditorTab() => tabView.activeTab = _editorTab;
+
+		public void ChangeToSaveFilesTab() => tabView.activeTab = _saveFilesTab;
 	}
 }

@@ -3,6 +3,8 @@ using System.IO;
 
 using ABB.Grid.Editor.Data;
 
+using UnityEngine;
+
 namespace ABB.Grid.Editor.Utils
 {
 	public static class Constants
@@ -51,10 +53,10 @@ namespace ABB.Grid.Editor.Utils
 
 				BinarySerialization.WriteToBinary<TerrainColorData>($"{Constants.PATH}\\{Constants.TERRAIN_COLORS_FILE_NAME}", terrainColorsFile);
 			}
-			catch //(Exception exception)
+			catch (Exception exception)
 			{
-				//Debug.Log("Could not serialize session file data");
-				//Debug.LogException(exception);
+				Debug.LogError("Could not serialize terrain colors file data");
+				Debug.LogException(exception);
 			}
 		}
 
@@ -71,10 +73,10 @@ namespace ABB.Grid.Editor.Utils
 
 				BinarySerialization.WriteToBinary<SessionData>($"{Constants.PATH}\\{Constants.SESSION_FILE_NAME}", sessionData);
 			}
-			catch //(Exception exception)
+			catch (Exception exception)
 			{
-				//Debug.Log("Could not serialize session file data");
-				//Debug.LogException(exception);
+				Debug.LogError("Could not serialize session file data");
+				Debug.LogException(exception);
 			}
 		}
 
@@ -91,10 +93,10 @@ namespace ABB.Grid.Editor.Utils
 
 				BinarySerialization.WriteToBinary<GridData[]>($"{Constants.PATH}\\{Constants.GRIDS_FILE_NAME}", gridsData);
 			}
-			catch //(Exception exception)
+			catch (Exception exception)
 			{
-				//Debug.Log("Could not serialize session file data");
-				//Debug.LogException(exception);
+				Debug.LogError("Could not serialize grid file data");
+				Debug.LogException(exception);
 			}
 		}
 	}

@@ -69,14 +69,19 @@ namespace ABB.Grid.Editor.VisualElements
 			xField.RegisterValueChangedCallback(evt =>
 			{
 				Value = new Vector2Int(evt.newValue, Value.y);
-				ValueChanged?.Invoke(Value);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
 				Value = new Vector2Int(Value.x, evt.newValue);
-				ValueChanged?.Invoke(Value);
 			});
+		}
+
+		public void SetValueWithoutModify(Vector2Int newValue)
+		{
+			xField.SetValueWithoutNotify(newValue.x);
+			yField.SetValueWithoutNotify(newValue.y);
+			_value = newValue;
 		}
 
 		private static void ConfigureIntegerField(IntegerField field, float labelWidth, float totalWidth)

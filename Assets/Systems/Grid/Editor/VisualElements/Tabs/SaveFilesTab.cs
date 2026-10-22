@@ -10,11 +10,14 @@ namespace ABB.Grid.Editor.VisualElements
 	{
 		private SaveFilesView _saveFilesView = null;
 
-		public event Action<GridData> OnGridDataSelected
+
+		public event Action<GridData, int> OnGridDataSelected
 		{
-			add => _saveFilesView.OnSelected += value;
-			remove => _saveFilesView.OnSelected += value;
+			add => _saveFilesView.OnGridDataSelected += value;
+			remove => _saveFilesView.OnGridDataSelected += value;
 		}
+
+		public GridData[] GridsData => _saveFilesView.gridsData;
 
 
 		public SaveFilesTab(string label)
@@ -27,9 +30,9 @@ namespace ABB.Grid.Editor.VisualElements
 			Add(_saveFilesView);
 		}
 
-		internal void SaveGridData(GridData data)
+		internal void AddEntry(GridData data, int index)
 		{
-			_saveFilesView.SaveGridData(data, -1);
+			_saveFilesView.AddEntry(data, index);
 		}
 
 		public void Dispose()

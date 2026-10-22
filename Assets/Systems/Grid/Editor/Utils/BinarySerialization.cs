@@ -2,6 +2,8 @@ using System.IO;
 
 namespace ABB.Grid.Editor.Utils
 {
+	///	Consider using a temporary file to prevent data loss.
+	///	FileStream.Flush(true), File.Repalce
 	public class BinarySerialization
 	{
 		public static void WriteToBinary<T>(string filePath, T objectToWrite, bool append = false)

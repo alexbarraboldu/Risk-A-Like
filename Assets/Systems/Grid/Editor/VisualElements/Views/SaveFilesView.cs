@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 
 using ABB.Grid.Editor.Data;
-using ABB.Grid.Editor.Utils;
-using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
 
@@ -11,26 +9,18 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class SaveFilesView : VisualElement, IDisposable
+	public class SaveFilesView : VisualElement
 	{
-		public GridData[] gridsData;
+		private GridData[] grids;
 
 		private ListView listView = null;
 
 		public event Action<GridData, int> OnGridDataSelected;
 
 
-		public SaveFilesView()
+		public SaveFilesView(ref GridData[] gridsData)
 		{
-			try
-			{
-				gridsData = new GridData[0];
-				LoadGridsSaveFile();
-			}
-			catch
-			{
-				SaveGridSavesFiles();
-			}
+			this.grids = gridsData;
 
 			listView = new();
 
@@ -41,12 +31,9 @@ namespace ABB.Grid.Editor.VisualElements
 				object obj = x.First();
 				GridData gridData = (GridData)obj;
 
-				GridEditorWindow window = EditorWindow.GetWindow<GridEditorWindow>();
-
 				int index = listView.itemsSource.IndexOf(obj);
 
 				OnGridDataSelected?.Invoke(gridData, index);
-				window.ChangeToEditorTab();
 			};
 			listView.makeItem = () =>
 			{
@@ -69,7 +56,7 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 			listView.bindItem = (element, index) =>
 			{
-				var gridSave = gridsData[index];
+				var gridSave = this.grids[index];
 
 				Image icon = element.Q<Image>("icon");
 				icon.image = EditorGUIUtility.IconContent("DefaultAsset Icon").image;
@@ -79,6 +66,7 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			listView.itemsSource = gridsData;
+			listView.RefreshItems();
 		}
 
 
@@ -86,53 +74,15 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			int selectedIndex = 0;
 
-			gridSave = gridsData[selectedIndex];
+			gridSave = grids[selectedIndex];
 			index = selectedIndex;
 		}
 
-		public void AddEntry(GridData gridSave, int index)
+		public void SetEntries(GridData[] grids)
 		{
-			if (index < 0)
-			{
-				int newLength = gridsData.Length + 1;
-
-				GridData[] aux = gridsData;
-				gridsData = new GridData[newLength];
-
-				for (int i = 0; i < aux.Length; i++)
-				{
-					gridsData[i] = aux[i];
-				}
-				gridsData[newLength - 1] = gridSave;
-			}
-			else
-			{
-				gridsData[index] = gridSave;
-			}
-
-			listView.itemsSource = gridsData;
-
-			SaveGridSavesFiles();
-		}
-
-
-		#region LOAD & SAVE DATA
-
-		private void LoadGridsSaveFile()
-		{
-			gridsData = Load.LoadGridsDataFile();
-		}
-
-		private void SaveGridSavesFiles()
-		{
-			Save.SaveGridDataFile(gridsData);
-		}
-
-		#endregion
-
-		public void Dispose()
-		{
-			SaveGridSavesFiles();
+			this.grids = grids;
+			listView.itemsSource = grids;
+			listView.RefreshItems();
 		}
 	}
 }

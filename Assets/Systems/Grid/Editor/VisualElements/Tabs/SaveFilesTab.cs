@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class SaveFilesTab : Tab, IDisposable
+	public class SaveFilesTab : Tab
 	{
 		private SaveFilesView _saveFilesView = null;
 
@@ -14,30 +14,23 @@ namespace ABB.Grid.Editor.VisualElements
 		public event Action<GridData, int> OnGridDataSelected
 		{
 			add => _saveFilesView.OnGridDataSelected += value;
-			remove => _saveFilesView.OnGridDataSelected += value;
+			remove => _saveFilesView.OnGridDataSelected -= value;
 		}
 
-		public GridData[] GridsData => _saveFilesView.gridsData;
 
-
-		public SaveFilesTab(string label)
+		public SaveFilesTab(string label, ref GridData[] gridSaves)
 		{
 			base.label = label;
 			closeable = false;
 
-			_saveFilesView = new();
+			_saveFilesView = new(ref gridSaves);
 
 			Add(_saveFilesView);
 		}
 
-		internal void AddEntry(GridData data, int index)
+		internal void SetEntries(GridData[] grids)
 		{
-			_saveFilesView.AddEntry(data, index);
-		}
-
-		public void Dispose()
-		{
-			_saveFilesView.Dispose();
+			_saveFilesView.SetEntries(grids);
 		}
 	}
 }

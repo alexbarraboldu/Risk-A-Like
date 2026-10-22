@@ -114,7 +114,7 @@ namespace ABB.Grid.Editor.VisualElements
 			colorField.value = TerrainColors[(TerrainType)_value];
 		}
 
-		public void ChangeColor(int value, Color color)
+		public void ChangeColorWithoutNotify(int value, Color color)
 		{
 			TerrainColors[(TerrainType)value] = color;
 		}

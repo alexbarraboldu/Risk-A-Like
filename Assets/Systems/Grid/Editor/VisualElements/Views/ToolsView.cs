@@ -9,9 +9,10 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class ToolsView : VisualElement, IDisposable
+	public class ToolsView : VisualElement
 	{
-		private TerrainColorData terrainColorsFile;
+		private SessionData session;
+		private TerrainColorData terrainColors;
 
 		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
 		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
@@ -27,17 +28,6 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button saveGridButton = null;
 
 		public Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
-
-		public uint LeftColor
-		{
-			get => (uint)leftTerrainTypeSelector.Value;
-			set => leftTerrainTypeSelector.Value = (int)value;
-		}
-		public uint RightColor
-		{
-			get => (uint)rightTerrainTypeSelector.Value;
-			set => rightTerrainTypeSelector.Value = (int)value;
-		}
 
 		public Vector2Int GridSize
 		{
@@ -87,28 +77,29 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		public ToolsView()
+		public ToolsView(ref SessionData session, ref TerrainColorData terrainColors)
 		{
 			BuildUI();
 			AddStyle();
 			AddLogic();
 
 			///	INJECT DATA
-			try
-			{
-				LoadTerrainColorsFile();
-			}
-			catch (Exception exception)
-			{
-				SaveTerrainColorsFile();
+			this.session = session;
+			this.terrainColors = terrainColors;
 
-				Debug.LogWarning("Could not deserialize terrain colors file data");
-				Debug.LogException(exception);
-			}
+			leftTerrainTypeSelector.SetColors(this.terrainColors.terrainColors);
+			rightTerrainTypeSelector.SetColors(this.terrainColors.terrainColors);
 
-			leftTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
-			rightTerrainTypeSelector.SetColors(terrainColorsFile.terrainColors);
+			leftTerrainTypeSelector.Value = (int)session.leftColor;
+			rightTerrainTypeSelector.Value = (int)session.rightColor;
+
+			leftTerrainTypeSelector.OnValueChanged += LeftColorChanged;
+			rightTerrainTypeSelector.OnValueChanged += RightColorChanged;
 		}
+
+
+		private void LeftColorChanged(int value) => session.leftColor = (uint)value;
+		private void RightColorChanged(int value) => session.rightColor = (uint)value;
 
 
 		private void BuildUI()
@@ -175,8 +166,20 @@ namespace ABB.Grid.Editor.VisualElements
 			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 
-			leftTerrainTypeSelector.OnColorChanged += (value, color) => rightTerrainTypeSelector.ChangeColor(value, color);
-			rightTerrainTypeSelector.OnColorChanged += (value, color) => leftTerrainTypeSelector.ChangeColor(value, color);
+			leftTerrainTypeSelector.OnColorChanged += (value, color) =>
+			{
+				rightTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+
+				TerrainColor newTerrainColor = new((TerrainType)value, color);
+				terrainColors.terrainColors[value] = newTerrainColor;
+			};
+			rightTerrainTypeSelector.OnColorChanged += (value, color) =>
+			{
+				leftTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+
+				TerrainColor newTerrainColor = new((TerrainType)value, color);
+				terrainColors.terrainColors[value] = newTerrainColor;
+			};
 			///----------------------
 
 			///	Delete Cell Button
@@ -374,41 +377,5 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 
 		}
-
-
-		#region LOAD & SAVE DATA
-
-		private void LoadTerrainColorsFile()
-		{
-			terrainColorsFile = Utils.Load.LoadTerrainColorsFile();
-		}
-
-		private void SaveTerrainColorsFile()
-		{
-			TerrainColor[] terrainColors = new TerrainColor[leftTerrainTypeSelector.Length];
-			int i = 0;
-			foreach (var terrainColor in leftTerrainTypeSelector.TerrainColors)
-			{
-				terrainColors[i].terrain = (int)terrainColor.Key;
-
-				var value = terrainColor.Value;
-				terrainColors[i].r = value.r;
-				terrainColors[i].g = value.g;
-				terrainColors[i].b = value.b;
-				terrainColors[i].a = value.a;
-
-				i++;
-			}
-			terrainColorsFile.terrainColors = terrainColors;
-
-			Utils.Save.SaveTerrainColorsFile(terrainColorsFile);
-		}
-
-		public void Dispose()
-		{
-			SaveTerrainColorsFile();
-		}
-
-		#endregion
 	}
 }

@@ -1,8 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
 
 using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
-using ABB.Grid.Editor.Utils;
 using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
@@ -12,9 +12,9 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class EditorTab : Tab, IDisposable
+	public class EditorTab : Tab
 	{
-		public SessionData sessionData { get; private set; }
+		private SessionData session;
 		public GridData gridSaveData { get; private set; }
 
 		private ToolsView _toolsView = null;
@@ -23,7 +23,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private event Action<GridData, int> SaveGridData;
 
 
-		public EditorTab(string label)
+		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors)
 		{
 			base.label = label;
 			closeable = false;
@@ -32,9 +32,11 @@ namespace ABB.Grid.Editor.VisualElements
 			style.flexGrow = 1;
 			contentContainer.style.flexGrow = 1;
 
+			this.session = session;
+
 			///	CREATE UI
-			_toolsView = new();
-			_cellGridCanvas = new();
+			_toolsView = new(ref session, ref terrainColors);
+			_cellGridCanvas = new(ref session/*terrainColors*/);
 			_cellGridCanvas.toolsView = _toolsView;
 
 			///	ADD UI
@@ -52,23 +54,9 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnSaveGrid += OnSaveGridClicked;
 
 			///	INJECT DATA
-			try
-			{
-				LoadSessionFile();
-			}
-			catch (Exception exception)
-			{
-				SaveSessionFile();
-
-				Debug.LogWarning("Could not deserialize session file data");
-				Debug.LogException(exception);
-			}
 			gridSaveData = new();
-
-			_cellGridCanvas.CellSize = sessionData.cellSize;
-			_toolsView.LeftColor = sessionData.leftColor;
-			_toolsView.RightColor = sessionData.rightColor;
 		}
+
 
 		public void RegisterCallbackSaveGridData(Action<GridData, int> saveGridDataEvent)
 		{
@@ -76,7 +64,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			SaveGridData += (x, y) =>
 			{
-				saveGridDataEvent.Invoke(x, sessionData.saveFileIndex);
+				saveGridDataEvent.Invoke(x, session.saveFileIndex);
 			};
 		}
 
@@ -99,11 +87,13 @@ namespace ABB.Grid.Editor.VisualElements
 		private void OnLeftTerrainChanged(int terrain)
 		{
 			_cellGridCanvas.LeftSelectedTerrain = (TerrainType)terrain;
+			session.leftColor = (uint)terrain;
 		}
 
 		private void OnRightTerrainChanged(int terrain)
 		{
 			_cellGridCanvas.RightSelectedTerrain = (TerrainType)terrain;
+			session.rightColor = (uint)terrain;
 		}
 
 		private void OnGridSizeChanged(Vector2Int newValue)
@@ -115,35 +105,19 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#endregion
 
-		#region LOAD & SAVE DATA
-
-		private void LoadSessionFile()
-		{
-			sessionData = Load.LoadSessionFile();
-		}
-
-		private void SaveSessionFile()
-		{
-			sessionData.cellSize = _cellGridCanvas.CellSize;
-			sessionData.leftColor = _toolsView.LeftColor;
-			sessionData.rightColor = _toolsView.RightColor;
-
-			Save.SaveSessionFile(sessionData);
-		}
-
 		public void LoadGridClicked(GridData gridData, int index)
 		{
 			gridSaveData = gridData;
-			sessionData.saveFileIndex = index;
+			session.saveFileIndex = index;
 
 			_cellGridCanvas.Grid = gridData.grid;
 			_toolsView.GridSize = _cellGridCanvas.GridSize;
 		}
 
-		public void LoadCurrentGrid(GridData[] gridsData)
+		public void LoadCurrentGrid(ReadOnlyCollection<GridData> gridsData)
 		{
-			int index = sessionData.saveFileIndex;
-			if (index < 0 || index >= gridsData.Length) return;
+			int index = session.saveFileIndex;
+			if (index < 0 || index >= gridsData.Count) return;
 
 			_cellGridCanvas.Grid = gridsData[index].grid;
 			_toolsView.GridSize = _cellGridCanvas.GridSize;
@@ -156,15 +130,7 @@ namespace ABB.Grid.Editor.VisualElements
 			gridSaveData.grid = _cellGridCanvas.Grid;
 			gridSaveData.fileName = "grid";
 
-			SaveGridData?.Invoke(gridSaveData, sessionData.saveFileIndex);
-		}
-
-		#endregion
-
-		public void Dispose()
-		{
-			SaveSessionFile();
-			_toolsView?.Dispose();
+			SaveGridData?.Invoke(gridSaveData, session.saveFileIndex);
 		}
 	}
 }

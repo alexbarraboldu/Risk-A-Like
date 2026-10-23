@@ -92,14 +92,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			leftTerrainTypeSelector.Value = (int)session.leftColor;
 			rightTerrainTypeSelector.Value = (int)session.rightColor;
-
-			leftTerrainTypeSelector.OnValueChanged += LeftColorChanged;
-			rightTerrainTypeSelector.OnValueChanged += RightColorChanged;
 		}
-
-
-		private void LeftColorChanged(int value) => session.leftColor = (uint)value;
-		private void RightColorChanged(int value) => session.rightColor = (uint)value;
 
 
 		private void BuildUI()
@@ -132,7 +125,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows");
+			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows", false);
 			gridSizeElement.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
 			gridSizeElement.Q("vector2int-field").style.flexGrow = 1;
 
@@ -165,21 +158,6 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Terrain type selector
 			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
-
-			leftTerrainTypeSelector.OnColorChanged += (value, color) =>
-			{
-				rightTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
-
-				TerrainColor newTerrainColor = new((TerrainType)value, color);
-				terrainColors.terrainColors[value] = newTerrainColor;
-			};
-			rightTerrainTypeSelector.OnColorChanged += (value, color) =>
-			{
-				leftTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
-
-				TerrainColor newTerrainColor = new((TerrainType)value, color);
-				terrainColors.terrainColors[value] = newTerrainColor;
-			};
 			///----------------------
 
 			///	Delete Cell Button
@@ -194,13 +172,6 @@ namespace ABB.Grid.Editor.VisualElements
 					minHeight = 35,
 					maxHeight = 35,
 				}
-			};
-			deleteCellButton.clicked += () =>
-			{
-				if (deleteCellButton.style.backgroundColor == Color.gray3)
-					deleteCellButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
-				else
-					deleteCellButton.style.backgroundColor = Color.gray3;
 			};
 
 			Label deleteCellButtonLabel = new("Delete")
@@ -375,7 +346,37 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic()
 		{
+			leftTerrainTypeSelector.OnValueChanged += LeftSelectorValueChanged;
+			rightTerrainTypeSelector.OnValueChanged += RightSelectorValueChanged;
 
+			leftTerrainTypeSelector.OnColorChanged += LeftSelectorColorChanged;
+			rightTerrainTypeSelector.OnColorChanged += RightSelectorColorChanged;
+
+			deleteCellButton.clicked += () =>
+			{
+				if (deleteCellButton.style.backgroundColor == Color.gray3)
+					deleteCellButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				else
+					deleteCellButton.style.backgroundColor = Color.gray3;
+			};
+		}
+
+		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
+		private void RightSelectorValueChanged(int value) => session.rightColor = (uint)value;
+
+		private void LeftSelectorColorChanged(int value, Color color)
+		{
+			rightTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+
+			TerrainColor newTerrainColor = new((TerrainType)value, color);
+			terrainColors.terrainColors[value] = newTerrainColor;
+		}
+		private void RightSelectorColorChanged(int value, Color color)
+		{
+			leftTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+
+			TerrainColor newTerrainColor = new((TerrainType)value, color);
+			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 	}
 }

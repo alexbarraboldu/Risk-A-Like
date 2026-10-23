@@ -28,6 +28,8 @@ namespace ABB.Grid.Editor.Data
 		public float b;
 		public float a;
 
+		public Color color => new Color(r, g, b, a);
+
 		public TerrainColor(TerrainType terrain, Color color)
 		{
 			this.terrain = (int)terrain;

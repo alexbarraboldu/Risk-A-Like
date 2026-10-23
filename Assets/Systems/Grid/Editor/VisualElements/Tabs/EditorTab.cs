@@ -1,13 +1,11 @@
 using System;
 using System.Collections.ObjectModel;
 
-using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
 
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
@@ -36,8 +34,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			///	CREATE UI
 			_toolsView = new(ref session, ref terrainColors);
-			_cellGridCanvas = new(ref session/*terrainColors*/);
-			_cellGridCanvas.toolsView = _toolsView;
+			_cellGridCanvas = new(ref session, ref terrainColors);
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -46,12 +43,12 @@ namespace ABB.Grid.Editor.VisualElements
 			///	ADD LOGIC
 			_toolsView.OnLeftTerrainChanged += OnLeftTerrainChanged;
 			_toolsView.OnRightTerrainChanged += OnRightTerrainChanged;
-			_toolsView.OnGridSizeChanged += OnGridSizeChanged;
+			_toolsView.OnGridSizeChanged += _cellGridCanvas.SetGridSize;
 			_toolsView.OnDeleteCell += _cellGridCanvas.DeleteCell;
 			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
 			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
-			_toolsView.OnSaveGrid += OnSaveGridClicked;
+			_toolsView.OnSaveGrid += OnSaveGrid;
 
 			///	INJECT DATA
 			gridSaveData = new();
@@ -84,24 +81,22 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 		}
 
-		private void OnLeftTerrainChanged(int terrain)
+		private void OnSaveGrid()
 		{
-			_cellGridCanvas.LeftSelectedTerrain = (TerrainType)terrain;
-			session.leftColor = (uint)terrain;
+			///	FIRST OPTION
+			/// Swap to SaveFiles tab and add an entrance with the name change enabled.
+			///	SECOND OPTION
+			///	Open SaveWindow and write there the name then save the file.
+
+			///	By now this:
+			gridSaveData.fileName = "grid";
+
+			SaveGridData?.Invoke(gridSaveData, session.saveFileIndex);
 		}
 
-		private void OnRightTerrainChanged(int terrain)
-		{
-			_cellGridCanvas.RightSelectedTerrain = (TerrainType)terrain;
-			session.rightColor = (uint)terrain;
-		}
+		private void OnLeftTerrainChanged(int terrain) => session.leftColor = (uint)terrain;
 
-		private void OnGridSizeChanged(Vector2Int newValue)
-		{
-			gridSaveData.columns = newValue.x;
-			gridSaveData.rows = newValue.y;
-			_cellGridCanvas.GridSize = newValue;
-		}
+		private void OnRightTerrainChanged(int terrain) => session.rightColor = (uint)terrain;
 
 		#endregion
 
@@ -110,7 +105,7 @@ namespace ABB.Grid.Editor.VisualElements
 			gridSaveData = gridData;
 			session.saveFileIndex = index;
 
-			_cellGridCanvas.Grid = gridData.grid;
+			_cellGridCanvas.SetGridData(gridData);
 			_toolsView.GridSize = _cellGridCanvas.GridSize;
 		}
 
@@ -119,18 +114,8 @@ namespace ABB.Grid.Editor.VisualElements
 			int index = session.saveFileIndex;
 			if (index < 0 || index >= gridsData.Count) return;
 
-			_cellGridCanvas.Grid = gridsData[index].grid;
+			_cellGridCanvas.SetGridData(gridsData[index]);
 			_toolsView.GridSize = _cellGridCanvas.GridSize;
-		}
-
-		public void OnSaveGridClicked()
-		{
-			gridSaveData.columns = _cellGridCanvas.GridSize.x;
-			gridSaveData.rows = _cellGridCanvas.GridSize.y;
-			gridSaveData.grid = _cellGridCanvas.Grid;
-			gridSaveData.fileName = "grid";
-
-			SaveGridData?.Invoke(gridSaveData, session.saveFileIndex);
 		}
 	}
 }

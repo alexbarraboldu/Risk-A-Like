@@ -5,6 +5,8 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class Vector2IntField : VisualElement
 	{
+		private bool allowNegativeValues;
+
 		private Vector2Int _value;
 		public Vector2Int Value
 		{
@@ -21,14 +23,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public event System.Action<Vector2Int> ValueChanged;
 
-		Label _label;
+		///	Visual Elements
+		private Label _label;
 
-		IntegerField xField;
-		IntegerField yField;
+		private IntegerField xField;
+		private IntegerField yField;
 
 
-		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y")
+		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y", bool allowNegativeValues = true)
 		{
+			this.allowNegativeValues = allowNegativeValues;
+
 			BuildUI(label, xLabel, yLabel);
 
 			AddLogic();
@@ -68,12 +73,16 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			xField.RegisterValueChangedCallback(evt =>
 			{
-				Value = new Vector2Int(evt.newValue, Value.y);
+				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
+
+				Value = new Vector2Int(newValue, Value.y);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
-				Value = new Vector2Int(Value.x, evt.newValue);
+				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
+
+				Value = new Vector2Int(Value.x, newValue);
 			});
 		}
 

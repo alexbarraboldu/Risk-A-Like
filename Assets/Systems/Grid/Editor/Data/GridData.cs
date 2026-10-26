@@ -5,11 +5,11 @@ namespace ABB.Grid.Editor.Data
 	[Serializable]
 	public class GridData
 	{
-		public int columns;
-		public int rows;
+		public int columns = 0;
+		public int rows = 0;
 
-		public int[][] grid;
+		public int[][] grid = Array.Empty<int[]>();
 
-		public string fileName;
+		public string fileName = string.Empty;
 	}
 }

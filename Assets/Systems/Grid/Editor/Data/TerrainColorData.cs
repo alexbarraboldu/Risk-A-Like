@@ -9,13 +9,18 @@ namespace ABB.Grid.Editor.Data
 	[Serializable]
 	public class TerrainColorData
 	{
-		public TerrainColor[] terrainColors;
+		public TerrainColor[] terrainColors = Array.Empty<TerrainColor>();
 
-		public TerrainColorData() { }
 
-		public TerrainColorData(TerrainColor[] terrainColors)
+		public TerrainColorData()
 		{
-			this.terrainColors = terrainColors;
+			int size = Enum.GetValues(typeof(TerrainType)).Length;
+			terrainColors = new TerrainColor[size];
+
+			for (int i = 0; i < size; i++)
+			{
+				terrainColors[i] = new TerrainColor((TerrainType)i, Color.black);
+			}
 		}
 	}
 

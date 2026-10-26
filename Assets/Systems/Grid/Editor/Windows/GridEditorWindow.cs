@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
@@ -48,17 +49,20 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
-			_editorTab = new("Editor", ref session, ref terrainColors);
+			currentGrid = grids.Length != 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
+			_editorTab = new("Editor", ref session, ref terrainColors, currentGrid);
 			_saveFilesTab = new("Save Files", ref grids);
 
 			///	ADD LOGIC
-			_editorTab.LoadCurrentGrid(Array.AsReadOnly(grids));
 			_editorTab.RegisterCallbackSaveGridData(AddEntry);
 			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
 			_saveFilesTab.OnGridDataSelected += (gridData, index) =>
 			{
 				tabView.activeTab = _editorTab;
 			};
+
+			///	SET DATA
+
 
 			///	ADD UI
 			rootVisualElement.Add(tabView);
@@ -71,48 +75,56 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDestroy()
 		{
-			SaveTerrainColorsFile();
-			SaveSessionFile();
-			SaveGridSavesFiles();
+			Save.SaveTerrainColorsFile(terrainColors);
+			Save.SaveSessionFile(session);
+			Save.SaveGridDataFile(grids);
 		}
 
 
 		private void LoadAllData()
 		{
-			try
+			bool pathExists = Directory.Exists(Constants.PATH);
+			if (!pathExists)
 			{
-				LoadTerrainColorsFile();
-			}
-			catch (Exception exception)
-			{
-				SaveTerrainColorsFile();
-
-				Debug.LogWarning("Could not deserialize terrain colors file data");
-				Debug.LogException(exception);
+				Directory.CreateDirectory(Constants.PATH);
+				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
 			}
 
-			try
-			{
-				LoadSessionFile();
-			}
-			catch (Exception exception)
-			{
-				SaveSessionFile();
 
-				Debug.LogWarning("Could not deserialize session file data");
-				Debug.LogException(exception);
+			if (pathExists)
+			{
+				terrainColors = Load.LoadTerrainColorsFile();
+			}
+			else
+			{
+				//Debug.LogWarning("Could not deserialize terrain colors file data");
+
+				if (terrainColors == null) terrainColors = new();
+				Save.SaveTerrainColorsFile(terrainColors);
 			}
 
-			try
+			if (pathExists)
 			{
-				LoadGridsSaveFile();
+				session = Load.LoadSessionFile();
 			}
-			catch (Exception exception)
+			else
 			{
-				SaveGridSavesFiles();
+				//Debug.LogWarning("Could not deserialize session file data");
 
-				Debug.LogWarning("Could not deserialize grid saves file data");
-				Debug.LogException(exception);
+				if (session == null) session = new();
+				Save.SaveSessionFile(session);
+			}
+
+			if (pathExists)
+			{
+				grids = Load.LoadGridsDataFile();
+			}
+			else
+			{
+				//Debug.LogWarning("Could not deserialize grid saves file data");
+
+				if (grids == null) grids = Array.Empty<GridData>();
+				Save.SaveGridDataFile(grids);
 			}
 		}
 
@@ -130,41 +142,5 @@ namespace ABB.Grid.Editor.Windows
 
 			_saveFilesTab.SetEntries(grids);
 		}
-
-
-		#region LOAD & SAVE DATA
-
-		private void LoadTerrainColorsFile()
-		{
-			terrainColors = Utils.Load.LoadTerrainColorsFile();
-		}
-
-		private void SaveTerrainColorsFile()
-		{
-			Utils.Save.SaveTerrainColorsFile(terrainColors);
-		}
-
-		private void LoadSessionFile()
-		{
-			session = Load.LoadSessionFile();
-		}
-
-		private void SaveSessionFile()
-		{
-			Save.SaveSessionFile(session);
-		}
-
-		private void LoadGridsSaveFile()
-		{
-			grids = Load.LoadGridsDataFile();
-		}
-
-		private void SaveGridSavesFiles()
-		{
-			Save.SaveGridDataFile(grids);
-		}
-
-
-		#endregion
 	}
 }

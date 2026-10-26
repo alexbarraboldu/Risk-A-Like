@@ -7,12 +7,11 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class CanvasView : VisualElement
 	{
-		private SessionData session;
-		private TerrainColorData terrainColors;
-		private GridData gridData;
+		private SessionData session = null;
+		private TerrainColorData terrainColors = null;
+		private GridData gridData = new();
 
 		public Vector2Int GridSize => new(gridData.columns, gridData.rows);
-		public int[][] Grid => gridData.grid;
 
 
 		private bool _deleteCell;
@@ -415,7 +414,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnResizeWindow(GeometryChangedEvent evt)
 		{
-			if (gridData.grid == null) return;
+			if (gridData?.columns <= 0) return;
 
 			float width = evt.newRect.width;
 			float height = evt.newRect.height;

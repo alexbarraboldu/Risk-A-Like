@@ -17,48 +17,35 @@ namespace ABB.Grid.Editor.Windows
 	{
 		private bool guiBuilt = false;
 
-		private readonly string FILE_NAME = "exportSettings.bin";
-
-		private int[][] _grid;
-
 		private ExportSettingsData exportSettings;
+		private GridData grid;
 
 		private IExportGrid _exporter;
 
 
 		private Button exportButton = null;
 
-		///	Add directory save path field
-		string soPath = string.Empty;
-
-		///	Add file name save field
-		string soName = string.Empty;
+		private string destinationPath = string.Empty;
+		private string fileName = string.Empty;
 
 		private Action onDestroy;
 
 
-		public static void OpenWindow(int[][] grid, Action onDestroy)
+		public static void OpenWindow(GridData grid, Action onDestroy)
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
 			window.minSize = new Vector2(500, 200);
 
-			window._grid = grid;
+			window.grid = grid;
+			window.fileName = grid.fileName;
+
 			window.onDestroy = onDestroy;
 		}
 
-
 		public void CreateGUI()
 		{
-			try
-			{
-				LoadExportSettingsFile();
-			}
-			catch (Exception)
-			{
-				SaveExportSettingsFile();
-			}
-
+			LoadExportSettings();
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
@@ -133,18 +120,41 @@ namespace ABB.Grid.Editor.Windows
 		{
 			if (!guiBuilt) return;
 
-			SaveExportSettingsFile();
+			Save.SaveExportSettingsFile(exportSettings);
 		}
 
 		private void OnDestroy()
 		{
 			if (!guiBuilt) return;
 
-			SaveExportSettingsFile();
+			Save.SaveExportSettingsFile(exportSettings);
 
 			onDestroy?.Invoke();
 		}
 
+
+		private void LoadExportSettings()
+		{
+			bool pathExists = Directory.Exists(Constants.PATH);
+			if (!pathExists)
+			{
+				Directory.CreateDirectory(Constants.PATH);
+			}
+
+			try
+			{
+				if (pathExists)
+					exportSettings = Load.LoadExportSettingsFile();
+			}
+			catch
+			{
+				if (exportSettings == null) exportSettings = new();
+
+				Save.SaveExportSettingsFile(exportSettings);
+
+				Debug.Log("Successfully created save files");
+			}
+		}
 
 		private TypeField<IExportGrid> CreateTypeField()
 		{
@@ -166,12 +176,16 @@ namespace ABB.Grid.Editor.Windows
 
 		private void CreateExporterInstance(Type type)
 		{
-			if (type == null) return;
+			if (type == null)
+			{
+				_exporter = null;
+				return;
+			}
 
 			_exporter = (IExportGrid)Activator.CreateInstance(type);
 			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
 
-			//Debug.Log($"Successfully assigned {exporterType} as the exporter");
+			Debug.Log($"Successfully assigned {type} as the exporter");
 		}
 
 		private void RestoreExporterInstance(TypeField<IExportGrid> typeField)
@@ -199,35 +213,6 @@ namespace ABB.Grid.Editor.Windows
 			exportSettings.fileName = fileName.newValue;
 		}
 
-		#region LOAD & SAVE DATA
-
-		public void LoadExportSettingsFile()
-		{
-			exportSettings = BinarySerialization.ReadFromBinaryFile<ExportSettingsData>($"{Constants.PATH}\\{FILE_NAME}");
-		}
-
-		public void SaveExportSettingsFile()
-		{
-			if (!Directory.Exists(Constants.PATH))
-			{
-				Directory.CreateDirectory(Constants.PATH);
-			}
-
-			try
-			{
-				if (exportSettings == null) exportSettings = new ExportSettingsData();
-
-				BinarySerialization.WriteToBinary<ExportSettingsData>($"{Constants.PATH}\\{FILE_NAME}", exportSettings);
-			}
-			catch (Exception)
-			{
-				//Debug.Log("Could not serialize session file data");
-				//Debug.LogException(exception);
-			}
-		}
-
-		#endregion
-
 		private void Export()
 		{
 			if (string.IsNullOrEmpty(exportSettings.folderPath))
@@ -241,28 +226,29 @@ namespace ABB.Grid.Editor.Windows
 				return;
 			}
 
-			soPath = ParseFolderPath();
-			soName = exportSettings.fileName;
-			soName += ".asset";
+			destinationPath = ParseFolderPath();
+			fileName = exportSettings.fileName;
+			fileName += ".asset";
 
-			string finalPath = $"{soPath}/{soName}";
+			string finalPath = $"{destinationPath}/{fileName}";
 
 			try
 			{
-				if (AssetDatabase.AssetPathExists(soPath))
+				if (AssetDatabase.AssetPathExists(destinationPath))
 				{
-					int[][] parsedGrid = ParseGridTerrainData(_grid);
+					int[][] parsedGrid = ParseGridTerrainData(grid.grid);
 					_exporter.ExportGrid(finalPath, parsedGrid);
 				}
 				else
 				{
-					Debug.LogError($"Asset path does not exists. {soPath}");
+					Debug.LogError($"Asset path does not exists. {destinationPath}");
 					return;
 				}
 			}
-			catch
+			catch (Exception exception)
 			{
-				Debug.LogError("Unexpected error when creating gridTerrainDataSO");
+				Debug.LogError("Unexpected error when creating grid data");
+				Debug.LogException(exception);
 				return;
 			}
 		}

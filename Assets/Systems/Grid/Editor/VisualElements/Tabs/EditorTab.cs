@@ -1,5 +1,4 @@
 using System;
-using System.Collections.ObjectModel;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
@@ -12,8 +11,8 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class EditorTab : Tab
 	{
-		private SessionData session;
-		public GridData gridSaveData { get; private set; }
+		private SessionData session = null;
+		private GridData gridData = null;
 
 		private ToolsView _toolsView = null;
 		private CanvasView _cellGridCanvas = null;
@@ -21,7 +20,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private event Action<GridData, int> SaveGridData;
 
 
-		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors)
+		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors, GridData gridData)
 		{
 			base.label = label;
 			closeable = false;
@@ -50,8 +49,9 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnSaveGrid += OnSaveGrid;
 
-			///	INJECT DATA
-			gridSaveData = new();
+			///	ADD DATA
+			_cellGridCanvas.SetGridData(gridData);
+			_toolsView.SetGridSize(_cellGridCanvas.GridSize);
 		}
 
 
@@ -72,7 +72,7 @@ namespace ABB.Grid.Editor.VisualElements
 			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
-			ExportWindow.OpenWindow(_cellGridCanvas.Grid, OnDestroyExportWindow);
+			ExportWindow.OpenWindow(gridData, OnDestroyExportWindow);
 
 			void OnDestroyExportWindow()
 			{
@@ -89,9 +89,9 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Open SaveWindow and write there the name then save the file.
 
 			///	By now this:
-			gridSaveData.fileName = "grid";
+			gridData.fileName = "grid";
 
-			SaveGridData?.Invoke(gridSaveData, session.saveFileIndex);
+			SaveGridData?.Invoke(gridData, session.saveFileIndex);
 		}
 
 		private void OnLeftTerrainChanged(int terrain) => session.leftColor = (uint)terrain;
@@ -102,20 +102,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void LoadGridClicked(GridData gridData, int index)
 		{
-			gridSaveData = gridData;
+			this.gridData = gridData;
 			session.saveFileIndex = index;
 
 			_cellGridCanvas.SetGridData(gridData);
-			_toolsView.GridSize = _cellGridCanvas.GridSize;
-		}
-
-		public void LoadCurrentGrid(ReadOnlyCollection<GridData> gridsData)
-		{
-			int index = session.saveFileIndex;
-			if (index < 0 || index >= gridsData.Count) return;
-
-			_cellGridCanvas.SetGridData(gridsData[index]);
-			_toolsView.GridSize = _cellGridCanvas.GridSize;
+			_toolsView.SetGridSize(_cellGridCanvas.GridSize);
 		}
 	}
 }

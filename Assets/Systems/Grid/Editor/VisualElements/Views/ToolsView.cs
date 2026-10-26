@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
@@ -27,13 +26,6 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button exportGridButton = null;
 		private Button saveGridButton = null;
 
-		public Dictionary<TerrainType, Color> TerrainColors => leftTerrainTypeSelector.TerrainColors;
-
-		public Vector2Int GridSize
-		{
-			get => gridSizeElement.Value;
-			set => gridSizeElement.Value = value;
-		}
 
 		public event Action<int> OnLeftTerrainChanged
 		{
@@ -360,6 +352,8 @@ namespace ABB.Grid.Editor.VisualElements
 					deleteCellButton.style.backgroundColor = Color.gray3;
 			};
 		}
+
+		public void SetGridSize(Vector2Int size) => gridSizeElement.Value = size;
 
 		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
 		private void RightSelectorValueChanged(int value) => session.rightColor = (uint)value;

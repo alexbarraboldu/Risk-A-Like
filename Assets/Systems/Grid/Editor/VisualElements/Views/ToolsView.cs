@@ -263,7 +263,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement rowSelectorParent = new();
 			rowSelectorParent.style.flexDirection = FlexDirection.Row;
-			rowSelectorParent.style.alignSelf = Align.Center;
+			rowSelectorParent.style.alignSelf = Align.FlexStart;
 
 			rowSelectorParent.Add(leftTerrainTypeSelector);
 			rowSelectorParent.Add(rightTerrainTypeSelector);
@@ -312,10 +312,10 @@ namespace ABB.Grid.Editor.VisualElements
 
 			deleteCellButton.clicked += () =>
 			{
-				if (deleteCellButton.style.backgroundColor == Color.gray3)
+				if (deleteCellButton.style.backgroundColor == Color.gray5)
 					deleteCellButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
 				else
-					deleteCellButton.style.backgroundColor = Color.gray3;
+					deleteCellButton.style.backgroundColor = Color.gray5;
 			};
 		}
 

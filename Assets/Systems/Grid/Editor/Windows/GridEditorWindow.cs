@@ -14,8 +14,12 @@ namespace ABB.Grid.Editor.Windows
 {
 	public class GridEditorWindow : EditorWindow
 	{
+		private const int minWidth = 400;
+		private const int minHeight = 400;
 		private const string StylePath = "Assets/";
 		public StyleSheet uss;
+
+		private GridEditorWindow This = null;
 
 		private EditorTab _editorTab = null;
 		private SaveFilesTab _saveFilesTab = null;
@@ -34,13 +38,18 @@ namespace ABB.Grid.Editor.Windows
 		{
 			GridEditorWindow window = GetWindow<GridEditorWindow>();
 			window.titleContent = new GUIContent("Grid Editor");
-			window.minSize = new Vector2(500, 500);
+			window.minSize = new Vector2(minWidth, minHeight);
+
+			window.This = window;
 		}
 
 		public void CreateGUI()
 		{
 			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
 			if (uss != null) rootVisualElement.styleSheets.Add(uss);
+
+			rootVisualElement.style.minWidth = minWidth;
+			rootVisualElement.style.minHeight = minHeight;
 
 			LoadAllData();
 
@@ -60,8 +69,6 @@ namespace ABB.Grid.Editor.Windows
 			{
 				tabView.activeTab = _editorTab;
 			};
-			///	SET DATA
-
 
 			///	ADD UI
 			rootVisualElement.Add(tabView);

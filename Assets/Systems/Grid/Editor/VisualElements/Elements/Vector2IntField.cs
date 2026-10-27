@@ -13,10 +13,9 @@ namespace ABB.Grid.Editor.VisualElements
 			get => _value;
 			set
 			{
-				_value = value;
-				xField.value = value.x;
-				yField.value = value.y;
-				ValueChanged?.Invoke(value);
+				bool changed = _value != value;
+				SetValueWithoutNotify(value);
+				if (changed) ValueChanged?.Invoke(value);
 			}
 
 		}
@@ -71,22 +70,28 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic()
 		{
+			xField.isDelayed = true;
+			yField.isDelayed = true;
+
 			xField.RegisterValueChangedCallback(evt =>
 			{
 				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
 
-				Value = new Vector2Int(newValue, Value.y);
+				SetValueWithoutNotify(new Vector2Int(newValue, Value.y));
+				ValueChanged?.Invoke(_value);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
 				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
 
-				Value = new Vector2Int(Value.x, newValue);
+				SetValueWithoutNotify(new Vector2Int(Value.x, newValue));
+				ValueChanged?.Invoke(_value);
 			});
 		}
 
-		public void SetValueWithoutModify(Vector2Int newValue)
+
+		public void SetValueWithoutNotify(Vector2Int newValue)
 		{
 			xField.SetValueWithoutNotify(newValue.x);
 			yField.SetValueWithoutNotify(newValue.y);
@@ -102,6 +107,5 @@ namespace ABB.Grid.Editor.VisualElements
 			field.labelElement.style.flexGrow = 1;
 			field.labelElement.style.flexShrink = 1;
 		}
-
 	}
 }

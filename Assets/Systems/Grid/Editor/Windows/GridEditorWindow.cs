@@ -49,7 +49,7 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
-			currentGrid = grids.Length != 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
+			currentGrid = grids.Length != 0 && session.saveFileIndex >= 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
 			_editorTab = new("Editor", ref session, ref terrainColors, currentGrid);
 			_saveFilesTab = new("Save Files", ref grids);
 
@@ -60,7 +60,6 @@ namespace ABB.Grid.Editor.Windows
 			{
 				tabView.activeTab = _editorTab;
 			};
-
 			///	SET DATA
 
 
@@ -91,7 +90,7 @@ namespace ABB.Grid.Editor.Windows
 			}
 
 
-			if (pathExists)
+			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.TERRAIN_COLORS_FILE_NAME)))
 			{
 				terrainColors = Load.LoadTerrainColorsFile();
 			}
@@ -103,7 +102,7 @@ namespace ABB.Grid.Editor.Windows
 				Save.SaveTerrainColorsFile(terrainColors);
 			}
 
-			if (pathExists)
+			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME)))
 			{
 				session = Load.LoadSessionFile();
 			}
@@ -115,7 +114,7 @@ namespace ABB.Grid.Editor.Windows
 				Save.SaveSessionFile(session);
 			}
 
-			if (pathExists)
+			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.GRIDS_FILE_NAME)))
 			{
 				grids = Load.LoadGridsDataFile();
 			}
@@ -132,15 +131,18 @@ namespace ABB.Grid.Editor.Windows
 		{
 			if (index < 0)
 			{
-				index = grids.Length + 1;
+				index = grids.Length;
 
-				Array.Resize(ref grids, index);
+				Array.Resize(ref grids, index + 1);
 			}
 
 			grids[index] = gridSave;
 			session.saveFileIndex = index;
 
 			_saveFilesTab.SetEntries(grids);
+
+			Save.SaveSessionFile(session);
+			Save.SaveGridDataFile(grids);
 		}
 	}
 }

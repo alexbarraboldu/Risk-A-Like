@@ -39,6 +39,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			RegisterCallback<PointerDownEvent>(OnPointerDown);
 			RegisterCallback<PointerMoveEvent>(OnPointerMove);
+			RegisterCallback<PointerLeaveEvent>(OnPointerLeave);
 			RegisterCallback<PointerUpEvent>(OnPointerUp);
 			RegisterCallback<WheelEvent>(OnWheelScroll);
 			RegisterCallback<GeometryChangedEvent>(OnResizeWindow);
@@ -71,7 +72,8 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			if (gridData.columns <= 0 || gridData.rows <= 0)
 			{
-				gridData.grid = null;
+				gridData.grid = new int[1][];
+				gridData.grid[0] = new int[1];
 				return false;
 			}
 
@@ -88,17 +90,6 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			}
 			if (!needsRebuild) return true;
-
-			if (gridData.grid == null)
-			{
-				gridData.grid = new int[gridData.columns][];
-				for (int x = 0; x < gridData.columns; x++)
-				{
-					gridData.grid[x] = new int[gridData.rows];
-				}
-
-				return true;
-			}
 
 			int[][] aux = new int[gridData.columns][];
 			int gridColumns = gridData.grid.Length, gridRows = gridData.grid[0].Length;
@@ -280,6 +271,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void EditGridCells()
 		{
+			if (session.cellSize <= 0f)
+			{
+				Debug.LogError("Cell size must be positive");
+				return;
+			}
+
 			float radius = session.cellSize * 0.5f;
 			float inRadius = Mathf.Sqrt(radius * radius * 0.75f);
 			float spacingX = xOffset * session.cellSize;
@@ -310,6 +307,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void Zoom(float scrollWheelDelta)
 		{
+			if (session.cellSize <= 0f)
+			{
+				Debug.LogError("Cell size must be positive");
+				return;
+			}
+
 			float previousCellSize = session.cellSize;
 
 			session.cellSize += scrollWheelDelta > 0 ? -10 : 10;
@@ -414,12 +417,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnResizeWindow(GeometryChangedEvent evt)
 		{
-			if (gridData?.columns <= 0) return;
+			if (gridData.columns <= 0 || gridData.rows <= 0) return;
 
 			float width = evt.newRect.width;
 			float height = evt.newRect.height;
 			gridPosition.x = (width / 2f) - ((gridData.grid.Length * session.cellSize) / 2f) * xOffset;
 			gridPosition.y = (height / 2f) - ((gridData.grid[0].Length * session.cellSize) / 2f) * cellHeight;
+		}
+
+		private void OnPointerLeave(PointerLeaveEvent evt)
+		{
+			isPainting = false;
 		}
 
 		#endregion

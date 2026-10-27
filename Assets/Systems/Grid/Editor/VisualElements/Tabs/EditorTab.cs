@@ -15,7 +15,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private GridData gridData = null;
 
 		private ToolsView _toolsView = null;
-		private CanvasView _cellGridCanvas = null;
+		private CanvasView _canvasView = null;
 
 		private event Action<GridData, int> SaveGridData;
 
@@ -30,28 +30,31 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.style.flexGrow = 1;
 
 			this.session = session;
+			this.gridData = gridData;
 
 			///	CREATE UI
 			_toolsView = new(ref session, ref terrainColors);
-			_cellGridCanvas = new(ref session, ref terrainColors);
+			_canvasView = new(ref session, ref terrainColors);
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
-			contentContainer.Add(_cellGridCanvas);
+			contentContainer.Add(_canvasView);
 
 			///	ADD LOGIC
 			_toolsView.OnLeftTerrainChanged += OnLeftTerrainChanged;
 			_toolsView.OnRightTerrainChanged += OnRightTerrainChanged;
-			_toolsView.OnGridSizeChanged += _cellGridCanvas.SetGridSize;
-			_toolsView.OnDeleteCell += _cellGridCanvas.DeleteCell;
-			_toolsView.OnResetGrid += _cellGridCanvas.ResetGrid;
-			_toolsView.OnFillGrid += _cellGridCanvas.FillGrid;
+			_toolsView.OnLeftColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
+			_toolsView.OnRightColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
+			_toolsView.OnGridSizeChanged += _canvasView.SetGridSize;
+			_toolsView.OnDeleteCell += _canvasView.DeleteCell;
+			_toolsView.OnResetGrid += _canvasView.ResetGrid;
+			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnSaveGrid += OnSaveGrid;
 
 			///	ADD DATA
-			_cellGridCanvas.SetGridData(gridData);
-			_toolsView.SetGridSize(_cellGridCanvas.GridSize);
+			_canvasView.SetGridData(gridData);
+			_toolsView.SetGridSize(_canvasView.GridSize);
 		}
 
 
@@ -105,8 +108,8 @@ namespace ABB.Grid.Editor.VisualElements
 			this.gridData = gridData;
 			session.saveFileIndex = index;
 
-			_cellGridCanvas.SetGridData(gridData);
-			_toolsView.SetGridSize(_cellGridCanvas.GridSize);
+			_canvasView.SetGridData(gridData);
+			_toolsView.SetGridSize(_canvasView.GridSize);
 		}
 	}
 }

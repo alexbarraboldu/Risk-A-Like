@@ -26,8 +26,8 @@ namespace ABB.Grid.Data
 
 			set
 			{
-				columns = value.Length;
-				rows = value[0].Length;
+				columns = value?.Length ?? 0;
+				rows = value != null && value.Length > 0 ? value[0]?.Length ?? 0 : 0;
 				int length = columns * rows;
 
 				inlineGrid = new int[length];

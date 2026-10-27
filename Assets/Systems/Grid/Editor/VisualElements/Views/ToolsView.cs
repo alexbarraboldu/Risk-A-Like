@@ -27,6 +27,16 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button saveGridButton = null;
 
 
+		public event Action<int, Color> OnLeftColorChanged
+		{
+			add => leftTerrainTypeSelector.OnColorChanged += value;
+			remove => leftTerrainTypeSelector.OnColorChanged -= value;
+		}
+		public event Action<int, Color> OnRightColorChanged
+		{
+			add => rightTerrainTypeSelector.OnColorChanged += value;
+			remove => rightTerrainTypeSelector.OnColorChanged -= value;
+		}
 		public event Action<int> OnLeftTerrainChanged
 		{
 			add => leftTerrainTypeSelector.OnValueChanged += value;
@@ -79,8 +89,8 @@ namespace ABB.Grid.Editor.VisualElements
 			this.session = session;
 			this.terrainColors = terrainColors;
 
-			leftTerrainTypeSelector.SetColors(this.terrainColors.terrainColors);
-			rightTerrainTypeSelector.SetColors(this.terrainColors.terrainColors);
+			leftTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
+			rightTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
 
 			leftTerrainTypeSelector.Value = (int)session.leftColor;
 			rightTerrainTypeSelector.Value = (int)session.rightColor;
@@ -360,14 +370,18 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void LeftSelectorColorChanged(int value, Color color)
 		{
-			rightTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+			rightTerrainTypeSelector.SetPaletteColor(value, color);
+			if (rightTerrainTypeSelector.Value == value)
+				rightTerrainTypeSelector.SetColor(value, color);
 
 			TerrainColor newTerrainColor = new((TerrainType)value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 		private void RightSelectorColorChanged(int value, Color color)
 		{
-			leftTerrainTypeSelector.ChangeColorWithoutNotify(value, color);
+			leftTerrainTypeSelector.SetPaletteColor(value, color);
+			if (leftTerrainTypeSelector.Value == value)
+				leftTerrainTypeSelector.SetColor(value, color);
 
 			TerrainColor newTerrainColor = new((TerrainType)value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;

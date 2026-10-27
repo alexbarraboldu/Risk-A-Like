@@ -14,9 +14,9 @@ namespace ABB.Grid.Editor.Utils
 
 		public static readonly string PATH = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), COMPANY_NAME, APPLICATION_NAME);
 
-		public static readonly string TERRAIN_COLORS_FILE_NAME = "gridEditorTerrainColors.bin";
-		public static readonly string GRIDS_FILE_NAME = "gridEditorSessions.bin";
-		public static readonly string SESSION_FILE_NAME = "gridEditorSession.bin";
+		public static readonly string TERRAIN_COLORS_FILE_NAME = "terrainColors.bin";
+		public static readonly string GRIDS_FILE_NAME = "grids.bin";
+		public static readonly string SESSION_FILE_NAME = "session.bin";
 		public static readonly string EXPORT_SETTINGS_FILE_NAME = "exportSettings.bin";
 	}
 

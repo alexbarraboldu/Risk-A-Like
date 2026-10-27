@@ -31,7 +31,7 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 		}
 
-		public int Length = 0;
+		public int Length => dropdownField.choices.Count;
 
 		public event Action<int> OnValueChanged;
 		public event Action<int, Color> OnColorChanged;
@@ -39,21 +39,25 @@ namespace ABB.Grid.Editor.VisualElements
 		private DropdownField dropdownField = null;
 		private ColorField colorField = null;
 
+
 		public ColorSelectorDropdown()
 		{
 			style.flexDirection = FlexDirection.Row;
 
+			VisualElement popupInput;
+			BuildUI(out popupInput);
+
+			AddLogic(popupInput);
+		}
+
+
+		private void BuildUI(out VisualElement popupInput)
+		{
 			colorField = new();
 			colorField.style.width = 25;
 			colorField.style.height = 20;
 			colorField.style.marginRight = 0;
 			colorField.Q<VisualElement>("unity-eyedropper").style.display = DisplayStyle.None;
-
-			colorField.RegisterValueChangedCallback(evt =>
-			{
-				TerrainColors[(TerrainType)_value] = evt.newValue;
-				OnColorChanged(_value, evt.newValue);
-			});
 
 			dropdownField = new DropdownField()
 			{
@@ -67,13 +71,11 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			List<string> choices = new();
-
 			Type terrainType = typeof(E);
 			foreach (var terrain in Enum.GetValues(terrainType))
 			{
 				string terrainStr = terrain.ToString();
 				choices.Add(terrainStr);
-				Length++;
 			}
 
 			dropdownField.choices = choices;
@@ -81,24 +83,36 @@ namespace ABB.Grid.Editor.VisualElements
 			E e = (E)Enum.Parse(terrainType, dropdownField.value);
 			_value = (int)(object)e;
 			dropdownField.tooltip = dropdownField.value;
+
+			popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");
+
+			Add(colorField);
+			Add(dropdownField);
+		}
+
+		private void AddLogic(VisualElement popupInput)
+		{
+			colorField.RegisterValueChangedCallback(evt =>
+			{
+				TerrainColors[(TerrainType)_value] = evt.newValue;
+				OnColorChanged(_value, evt.newValue);
+			});
+
 			dropdownField.RegisterValueChangedCallback(evt =>
 			{
 				Value = (int)dropdownField.index;
 			});
 
-			VisualElement popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");
 			dropdownField.RegisterCallback<TooltipEvent>(evt =>
 			{
 				evt.tooltip = dropdownField.value;
 				evt.rect = popupInput.worldBound;
 				evt.StopPropagation();
 			}, TrickleDown.TrickleDown);
-
-			Add(colorField);
-			Add(dropdownField);
 		}
 
-		public void SetColors(TerrainColor[] terrainColors)
+
+		public void SetColorsPalette(TerrainColor[] terrainColors)
 		{
 			TerrainColors = new();
 
@@ -115,9 +129,14 @@ namespace ABB.Grid.Editor.VisualElements
 				colorField.value = TerrainColors[(TerrainType)_value];
 		}
 
-		public void ChangeColorWithoutNotify(int value, Color color)
+		public void SetPaletteColor(int value, Color color)
 		{
 			TerrainColors[(TerrainType)value] = color;
+		}
+
+		public void SetColor(int value, Color color)
+		{
+			colorField.value = TerrainColors[(TerrainType)value];
 		}
 	}
 }

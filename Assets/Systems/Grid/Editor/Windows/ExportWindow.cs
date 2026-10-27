@@ -22,11 +22,7 @@ namespace ABB.Grid.Editor.Windows
 
 		private IExportGrid _exporter;
 
-
 		private Button exportButton = null;
-
-		private string destinationPath = string.Empty;
-		private string fileName = string.Empty;
 
 		private Action onDestroy;
 
@@ -38,7 +34,6 @@ namespace ABB.Grid.Editor.Windows
 			window.minSize = new Vector2(500, 200);
 
 			window.grid = grid;
-			window.fileName = grid.fileName;
 
 			window.onDestroy = onDestroy;
 		}
@@ -136,23 +131,20 @@ namespace ABB.Grid.Editor.Windows
 		private void LoadExportSettings()
 		{
 			bool pathExists = Directory.Exists(Constants.PATH);
-			if (!pathExists)
-			{
-				Directory.CreateDirectory(Constants.PATH);
-			}
+			if (!pathExists) Directory.CreateDirectory(Constants.PATH);
 
-			try
+			bool fileExists = File.Exists(Path.Combine(Constants.PATH, Constants.EXPORT_SETTINGS_FILE_NAME));
+			if (fileExists)
 			{
-				if (pathExists)
-					exportSettings = Load.LoadExportSettingsFile();
+				exportSettings = Load.LoadExportSettingsFile();
 			}
-			catch
+			else
 			{
 				if (exportSettings == null) exportSettings = new();
 
 				Save.SaveExportSettingsFile(exportSettings);
 
-				Debug.Log("Successfully created save files");
+				Debug.Log("Successfully created export settings file");
 			}
 		}
 
@@ -179,8 +171,24 @@ namespace ABB.Grid.Editor.Windows
 			if (type == null)
 			{
 				_exporter = null;
+				exportSettings.assemblyQualifiedName = string.Empty;
 				return;
 			}
+
+			if (type == null ||
+				!typeof(MonoScript).IsAssignableFrom(type) ||
+				!type.IsClass ||
+				type.IsAbstract ||
+				type.ContainsGenericParameters ||
+				type.GetConstructor(Type.EmptyTypes) == null ||
+				type.IsInterface)
+			{
+				Debug.LogWarning("Exporter type changed or is malformed. Choose again an exporter");
+				_exporter = null;
+				exportSettings.assemblyQualifiedName = string.Empty;
+				return;
+			}
+
 
 			_exporter = (IExportGrid)Activator.CreateInstance(type);
 			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
@@ -226,24 +234,10 @@ namespace ABB.Grid.Editor.Windows
 				return;
 			}
 
-			destinationPath = ParseFolderPath();
-			fileName = exportSettings.fileName;
-			fileName += ".asset";
-
-			string finalPath = $"{destinationPath}/{fileName}";
-
 			try
 			{
-				if (AssetDatabase.AssetPathExists(destinationPath))
-				{
-					int[][] parsedGrid = ParseGridTerrainData(grid.grid);
-					_exporter.ExportGrid(finalPath, parsedGrid);
-				}
-				else
-				{
-					Debug.LogError($"Asset path does not exists. {destinationPath}");
-					return;
-				}
+				//int[][] parsedGrid = ParseGridTerrainData(grid);
+				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, grid.grid);
 			}
 			catch (Exception exception)
 			{
@@ -253,51 +247,16 @@ namespace ABB.Grid.Editor.Windows
 			}
 		}
 
-		///	Divide into FindString() & ParseFolderPath()
-		private string ParseFolderPath()
+		private int[][] ParseGridTerrainData(GridData grid)
 		{
-			string toFind = "Assets";
-			string cStr = exportSettings.folderPath;
-			int toFindIndex = 0;
-			int startIndex = 0;
-			foreach (char c in cStr)
+			int[][] result = new int[grid.columns][];
+
+			for (int c = 0, C = grid.columns - 1; c < grid.columns; c++, --C)
 			{
-				if (c == toFind[toFindIndex])
+				result[c] = new int[grid.rows];
+				for (int r = 0, R = grid.rows - 1; r < grid.rows; r++, --R)
 				{
-					toFindIndex++;
-
-					if (toFindIndex == toFind.Length)
-						break;
-				}
-				else
-				{
-					toFindIndex = 0;
-				}
-
-				startIndex++;
-			}
-			startIndex++;
-			startIndex -= toFind.Length;
-
-			int subStrLength = cStr.Length - startIndex;
-			string subStr = cStr.Substring(startIndex, subStrLength);
-
-			return subStr;
-		}
-
-		private int[][] ParseGridTerrainData(int[][] grid)
-		{
-			int columns = grid.Length;
-			int rows = grid[0].Length;
-
-			int[][] result = new int[columns][];
-
-			for (int c = 0, C = columns - 1; c < columns; c++, --C)
-			{
-				result[c] = new int[rows];
-				for (int r = 0, R = rows - 1; r < rows; r++, --R)
-				{
-					result[c][r] = grid[c][R];
+					result[c][r] = grid.grid[c][R];
 				}
 			}
 

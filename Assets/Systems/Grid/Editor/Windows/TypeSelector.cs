@@ -207,7 +207,14 @@ namespace ABB.Grid.Editor.Windows
 					if (script == null) continue;
 
 					Type @class = script.GetClass();
-					if (@class == null || !_type.IsAssignableFrom(@class) || @class.IsInterface || @class.Name == _type.Name)
+					if (@class == null ||
+						!_type.IsAssignableFrom(@class) ||
+						!@class.IsClass ||
+						@class.IsAbstract ||
+						@class.ContainsGenericParameters ||
+						@class.GetConstructor(Type.EmptyTypes) == null ||
+						@class.IsInterface ||
+						@class.Name == _type.Name)
 						continue;
 
 					if (script != null)

@@ -1,3 +1,5 @@
+using System;
+
 using ABB.Grid.Editor.Data;
 
 using UnityEngine;
@@ -72,8 +74,7 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			if (gridData.columns <= 0 || gridData.rows <= 0)
 			{
-				gridData.grid = new int[1][];
-				gridData.grid[0] = new int[1];
+				gridData.grid = Array.Empty<int[]>();
 				return false;
 			}
 
@@ -92,7 +93,8 @@ namespace ABB.Grid.Editor.VisualElements
 			if (!needsRebuild) return true;
 
 			int[][] aux = new int[gridData.columns][];
-			int gridColumns = gridData.grid.Length, gridRows = gridData.grid[0].Length;
+			int gridColumns = gridData.grid.Length;
+			int gridRows = gridData.grid != null && gridData.grid.Length > 0 ? gridData.grid[0]?.Length ?? gridData.rows : gridData.rows;
 			for (int auxC = 0, c = 0; auxC < gridData.columns; auxC++, c++)
 			{
 				aux[auxC] = new int[gridData.rows];

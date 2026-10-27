@@ -44,8 +44,6 @@ namespace ABB.Grid.Editor.Windows
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
-			RestoreExporterInstance(typeField);
-
 			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder")
 			{
 				style = {
@@ -108,6 +106,9 @@ namespace ABB.Grid.Editor.Windows
 			rootVisualElement.Add(spacer);
 			rootVisualElement.Add(exportButton);
 
+			bool exporterExists = RestoreExporterInstance(typeField);
+			exportButton.SetEnabled(exporterExists);
+
 			guiBuilt = true;
 		}
 
@@ -161,42 +162,49 @@ namespace ABB.Grid.Editor.Windows
 				},
 			};
 
-			typeField.RegisterValueChanged((monoScript) => CreateExporterInstance(monoScript?.GetClass()));
+			typeField.RegisterValueChanged((monoScript) =>
+			{
+				bool exporterExists = CreateExporterInstance(monoScript?.GetClass());
+				exportButton.SetEnabled(exporterExists);
+			});
 
 			return typeField;
 		}
 
-		private void CreateExporterInstance(Type type)
+		private bool CreateExporterInstance(Type type)
 		{
 			if (type == null)
 			{
 				_exporter = null;
 				exportSettings.assemblyQualifiedName = string.Empty;
-				return;
+
+				return false;
 			}
 
-			if (type == null ||
-				!typeof(MonoScript).IsAssignableFrom(type) ||
+			if (!typeof(IExportGrid).IsAssignableFrom(type) ||
 				!type.IsClass ||
 				type.IsAbstract ||
 				type.ContainsGenericParameters ||
 				type.GetConstructor(Type.EmptyTypes) == null ||
 				type.IsInterface)
 			{
-				Debug.LogWarning("Exporter type changed or is malformed. Choose again an exporter");
 				_exporter = null;
 				exportSettings.assemblyQualifiedName = string.Empty;
-				return;
-			}
 
+				Debug.LogWarning("Exporter type changed or is malformed. Choose again an exporter");
+
+				return false;
+			}
 
 			_exporter = (IExportGrid)Activator.CreateInstance(type);
 			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
 
 			Debug.Log($"Successfully assigned {type} as the exporter");
+
+			return true;
 		}
 
-		private void RestoreExporterInstance(TypeField<IExportGrid> typeField)
+		private bool RestoreExporterInstance(TypeField<IExportGrid> typeField)
 		{
 			string assemblyQualifiedName = exportSettings?.assemblyQualifiedName ?? string.Empty;
 
@@ -205,10 +213,10 @@ namespace ABB.Grid.Editor.Windows
 
 			typeField.SetTypeName(typeName);
 
-			if (string.IsNullOrEmpty(assemblyQualifiedName)) return;
+			if (string.IsNullOrEmpty(assemblyQualifiedName)) return false;
 
 			Type exporterType = Type.GetType(assemblyQualifiedName);
-			CreateExporterInstance(exporterType);
+			return CreateExporterInstance(exporterType);
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)
@@ -236,8 +244,8 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				//int[][] parsedGrid = ParseGridTerrainData(grid);
-				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, grid.grid);
+				int[][] parsedGrid = ParseGridTerrainData(grid);
+				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, parsedGrid);
 			}
 			catch (Exception exception)
 			{

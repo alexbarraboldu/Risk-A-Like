@@ -28,6 +28,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button saveGridButton = null;
 		private Button newGridButton = null;
 
+		private TextField gridTextField = null;
+
 		///	ACTIONS
 		public event Action<int, Color> OnLeftColorChanged
 		{
@@ -158,8 +160,10 @@ namespace ABB.Grid.Editor.VisualElements
 				name = "tools-view--right-options",
 				style =
 				{
-					flexDirection = FlexDirection.Row,
+					flexDirection = FlexDirection.Column,
 					alignItems = Align.Center,
+					alignSelf = Align.Stretch,
+					justifyContent = Justify.SpaceAround,
 					maxWidth = 300
 				}
 			};
@@ -255,6 +259,10 @@ namespace ABB.Grid.Editor.VisualElements
 			newGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Toolbar Plus").image;
 			///-------------------
 
+			///	Grid Text Field
+			gridTextField = new();
+			gridTextField.style.alignSelf = Align.Stretch;
+
 			///	ADD TO UI
 			Add(rootOptionsElement);
 
@@ -263,7 +271,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement rowSelectorParent = new();
 			rowSelectorParent.style.flexDirection = FlexDirection.Row;
-			rowSelectorParent.style.alignSelf = Align.FlexStart;
 
 			rowSelectorParent.Add(leftTerrainTypeSelector);
 			rowSelectorParent.Add(rightTerrainTypeSelector);
@@ -292,9 +299,15 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Right
 			rootOptionsElement.Add(rightOptionsElement);
 
-			rightOptionsElement.Add(newGridButton);
-			rightOptionsElement.Add(saveGridButton);
-			rightOptionsElement.Add(exportGridButton);
+			VisualElement rightButtonsParent = new();
+			rightButtonsParent.style.flexDirection = FlexDirection.Row;
+
+			rightOptionsElement.Add(gridTextField);
+			rightOptionsElement.Add(rightButtonsParent);
+
+			rightButtonsParent.Add(newGridButton);
+			rightButtonsParent.Add(saveGridButton);
+			rightButtonsParent.Add(exportGridButton);
 		}
 
 		private void AddStyle()

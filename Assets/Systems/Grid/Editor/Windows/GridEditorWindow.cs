@@ -64,6 +64,7 @@ namespace ABB.Grid.Editor.Windows
 
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackSaveGridData(AddEntry);
+			_editorTab.RegisterCallbackNewGridData(NewEntry);
 			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
 			_saveFilesTab.OnGridDataSelected += (gridData, index) =>
 			{
@@ -150,6 +151,13 @@ namespace ABB.Grid.Editor.Windows
 
 			Save.SaveSessionFile(session);
 			Save.SaveGridDataFile(grids);
+		}
+
+		private void NewEntry(GridData gridSave, int index)
+		{
+			gridSave.fileName = "grid_" + grids.Length;
+
+			AddEntry(gridSave, index);
 		}
 	}
 }

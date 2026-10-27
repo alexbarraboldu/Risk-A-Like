@@ -18,6 +18,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private CanvasView _canvasView = null;
 
 		private event Action<GridData, int> SaveGridData;
+		private event Action<GridData, int> NewGridData;
 
 
 		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors, GridData gridData)
@@ -51,6 +52,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnSaveGrid += OnSaveGrid;
+			_toolsView.OnNewGrid += OnNewGrid;
 
 			///	ADD DATA
 			_canvasView.SetGridData(gridData);
@@ -58,15 +60,8 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		public void RegisterCallbackSaveGridData(Action<GridData, int> saveGridDataEvent)
-		{
-			if (saveGridDataEvent == null) return;
-
-			SaveGridData += (x, y) =>
-			{
-				saveGridDataEvent.Invoke(x, session.saveFileIndex);
-			};
-		}
+		public void RegisterCallbackSaveGridData(Action<GridData, int> action) => SaveGridData += action;
+		public void RegisterCallbackNewGridData(Action<GridData, int> action) => NewGridData += action;
 
 		#region ACTIONS
 
@@ -91,10 +86,12 @@ namespace ABB.Grid.Editor.VisualElements
 			///	SECOND OPTION
 			///	Open SaveWindow and write there the name then save the file.
 
-			///	By now this:
-			gridData.fileName = "grid";
-
 			SaveGridData?.Invoke(gridData, session.saveFileIndex);
+		}
+
+		private void OnNewGrid()
+		{
+			NewGridData?.Invoke(gridData, -1);
 		}
 
 		private void OnLeftTerrainChanged(int terrain) => session.leftColor = (uint)terrain;

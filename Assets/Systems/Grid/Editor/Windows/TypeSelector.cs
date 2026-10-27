@@ -213,8 +213,7 @@ namespace ABB.Grid.Editor.Windows
 						@class.IsAbstract ||
 						@class.ContainsGenericParameters ||
 						@class.GetConstructor(Type.EmptyTypes) == null ||
-						@class.IsInterface ||
-						@class.Name == _type.Name)
+						@class.IsInterface)
 						continue;
 
 					if (script != null)

@@ -10,23 +10,25 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
+		///	DATA
 		private SessionData session;
 		private TerrainColorData terrainColors;
 
+		///	VISUAL ELEMENTS
 		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
 		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
 
 		private Vector2IntField gridSizeElement = null;
 
 		private Button deleteCellButton = null;
-
 		private Button resetGridButton = null;
 		private Button fillGridButton = null;
 
 		private Button exportGridButton = null;
 		private Button saveGridButton = null;
+		private Button newGridButton = null;
 
-
+		///	ACTIONS
 		public event Action<int, Color> OnLeftColorChanged
 		{
 			add => leftTerrainTypeSelector.OnColorChanged += value;
@@ -76,6 +78,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			add => saveGridButton.clicked += value;
 			remove => saveGridButton.clicked -= value;
+		}
+		public event Action OnNewGrid
+		{
+			add => newGridButton.clicked += value;
+			remove => newGridButton.clicked -= value;
 		}
 
 
@@ -141,7 +148,7 @@ namespace ABB.Grid.Editor.VisualElements
 				style =
 				{
 					flexGrow = 1,
-					flexDirection = FlexDirection.Row,
+					flexDirection = FlexDirection.Column,
 					justifyContent = Justify.Center
 				}
 			};
@@ -152,10 +159,10 @@ namespace ABB.Grid.Editor.VisualElements
 				style =
 				{
 					flexDirection = FlexDirection.Row,
+					alignItems = Align.Center,
 					maxWidth = 300
 				}
 			};
-
 
 			///	Terrain type selector
 			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
@@ -169,25 +176,13 @@ namespace ABB.Grid.Editor.VisualElements
 				tooltip = "Delete grid",
 				style =
 				{
-					minWidth = 80,
-					maxWidth = 80,
+					minWidth = 35,
+					maxWidth = 35,
 					minHeight = 35,
 					maxHeight = 35,
 				}
 			};
-
-			Label deleteCellButtonLabel = new("Delete")
-			{
-				style =
-				{
-					flexGrow = 1,
-					fontSize = 22
-				}
-			};
-
-			deleteCellButton.Add(deleteCellButtonLabel);
-			///------------------
-
+			deleteCellButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.EraserTool").image;
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
@@ -195,26 +190,13 @@ namespace ABB.Grid.Editor.VisualElements
 				tooltip = "Reset grid",
 				style =
 				{
-					minWidth = 100,
-					maxWidth = 100,
-					minHeight = 50,
-					maxHeight = 50,
-					paddingLeft = 4
+					minWidth = 35,
+					maxWidth = 35,
+					minHeight = 35,
+					maxHeight = 35,
 				}
 			};
-
-			Label resetGridButtonLabel = new("Reset")
-			{
-				style =
-				{
-					flexGrow = 1,
-					fontSize = 24
-				}
-			};
-
-			resetGridButton.Add(resetGridButtonLabel);
-			///------------------
-
+			resetGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Refresh").image;
 			///	Fill Grid Button
 			fillGridButton = new()
 			{
@@ -222,26 +204,13 @@ namespace ABB.Grid.Editor.VisualElements
 				tooltip = "Fill grid",
 				style =
 				{
-					minWidth = 100,
-					maxWidth = 100,
-					minHeight = 50,
-					maxHeight = 50,
-					paddingLeft = 4
+					minWidth = 35,
+					maxWidth = 35,
+					minHeight = 35,
+					maxHeight = 35,
 				}
 			};
-
-			Label fillGridButtonLabel = new("Fill")
-			{
-				style =
-				{
-					flexGrow = 1,
-					fontSize = 24
-				}
-			};
-
-			fillGridButton.Add(fillGridButtonLabel);
-			///------------------
-
+			fillGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.FillTool").image;
 			///	Export Grid Button
 			exportGridButton = new()
 			{
@@ -249,55 +218,42 @@ namespace ABB.Grid.Editor.VisualElements
 				tooltip = "Export grid",
 				style =
 				{
-					minWidth = 100,
-					maxWidth = 100,
-					minHeight = 50,
-					maxHeight = 50,
-					paddingLeft = 4
+					minWidth = 35,
+					maxWidth = 35,
+					minHeight = 35,
+					maxHeight = 35,
 				}
 			};
-
-			Label exportGridButtonLabel = new("Export")
-			{
-				name = "tools-view--export-grid__label",
-				style =
-				{
-					flexGrow = 1,
-					fontSize = 24
-				}
-			};
-
-			exportGridButton.Add(exportGridButtonLabel);
-			///-------------------
-
-			///	Export Grid Button
+			exportGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SceneLoadOut").image;
+			///	Save Grid Button
 			saveGridButton = new()
 			{
 				name = "tools-view--save-grid__button",
 				tooltip = "Save grid",
 				style =
 				{
-					minWidth = 100,
-					maxWidth = 100,
-					minHeight = 50,
-					maxHeight = 50,
-					paddingLeft = 4
+					minWidth = 35,
+					maxWidth = 35,
+					minHeight = 35,
+					maxHeight = 35,
 				}
 			};
-
-			Label saveGridButtonLabel = new("Save")
+			saveGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SaveActive").image;
+			///	New Grid Button
+			newGridButton = new()
 			{
-				name = "tools-view--export-grid__label",
+				name = "tools-view--new-grid__button",
+				tooltip = "New grid",
 				style =
 				{
-					flexGrow = 1,
-					fontSize = 24
+					minWidth = 35,
+					maxWidth = 35,
+					minHeight = 35,
+					maxHeight = 35,
 				}
 			};
-
-			saveGridButton.Add(saveGridButtonLabel);
+			newGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Toolbar Plus").image;
 			///-------------------
-
 
 			///	ADD TO UI
 			Add(rootOptionsElement);
@@ -316,14 +272,16 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				style =
 				{
-					paddingTop = 4
+					paddingTop = 4,
+					alignSelf = Align.FlexStart,
+					flexDirection = FlexDirection.Row,
+					alignItems = Align.Center
 				}
 			};
-			rowGridSizeDeleteParent.style.flexDirection = FlexDirection.Row;
-			rowGridSizeDeleteParent.style.alignItems = Align.Center;
-
 			rowGridSizeDeleteParent.Add(gridSizeElement);
 			rowGridSizeDeleteParent.Add(deleteCellButton);
+			rowGridSizeDeleteParent.Add(resetGridButton);
+			rowGridSizeDeleteParent.Add(fillGridButton);
 
 			leftOptionsElement.Add(rowSelectorParent);
 			leftOptionsElement.Add(rowGridSizeDeleteParent);
@@ -331,14 +289,12 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Middle
 			rootOptionsElement.Add(middleOptionsElement);
 
-			middleOptionsElement.Add(resetGridButton);
-			middleOptionsElement.Add(fillGridButton);
-
 			///	Right
 			rootOptionsElement.Add(rightOptionsElement);
 
-			rightOptionsElement.Add(exportGridButton);
+			rightOptionsElement.Add(newGridButton);
 			rightOptionsElement.Add(saveGridButton);
+			rightOptionsElement.Add(exportGridButton);
 		}
 
 		private void AddStyle()

@@ -6,6 +6,7 @@ namespace ABB.Grid.Editor.VisualElements
 	public class Vector2IntField : VisualElement
 	{
 		private bool allowNegativeValues;
+		private int maxIntegerSize = 0;
 
 		private Vector2Int _value;
 		public Vector2Int Value
@@ -29,9 +30,12 @@ namespace ABB.Grid.Editor.VisualElements
 		private IntegerField yField;
 
 
-		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y", bool allowNegativeValues = true)
+		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y", int maxVectorSizeAllocation = 256, bool allowNegativeValues = true)
 		{
 			this.allowNegativeValues = allowNegativeValues;
+
+			long maxVectorCount = (long)maxVectorSizeAllocation * 1_000_000 / sizeof(int);
+			maxIntegerSize = (int)System.Math.Sqrt(maxVectorCount);
 
 			BuildUI(label, xLabel, yLabel);
 
@@ -75,17 +79,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 			xField.RegisterValueChangedCallback(evt =>
 			{
-				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
+				int x = Mathf.Clamp(evt.newValue, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
 
-				SetValueWithoutNotify(new Vector2Int(newValue, Value.y));
+				SetValueWithoutNotify(new Vector2Int(x, Value.y));
 				ValueChanged?.Invoke(_value);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
-				int newValue = !allowNegativeValues && evt.newValue <= 0 ? 0 : evt.newValue;
+				int y = Mathf.Clamp(evt.newValue, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
 
-				SetValueWithoutNotify(new Vector2Int(Value.x, newValue));
+				SetValueWithoutNotify(new Vector2Int(Value.x, y));
 				ValueChanged?.Invoke(_value);
 			});
 		}
@@ -95,6 +99,7 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			xField.SetValueWithoutNotify(newValue.x);
 			yField.SetValueWithoutNotify(newValue.y);
+
 			_value = newValue;
 		}
 

@@ -14,6 +14,10 @@ namespace ABB.Grid.Editor.Windows
 {
 	public class GridEditorWindow : EditorWindow
 	{
+		/// <summary>
+		///	Maximum grid size by Mega Bytes
+		/// </summary>
+		private const int maxGridSizeAllocation = 2000;
 		private const int minWidth = 400;
 		private const int minHeight = 400;
 		private const string StylePath = "Assets/";
@@ -58,8 +62,9 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
+			if (session.saveFileIndex >= grids.Length) session.saveFileIndex = -1;
 			currentGrid = grids.Length != 0 && session.saveFileIndex >= 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
-			_editorTab = new("Editor", ref session, ref terrainColors, currentGrid);
+			_editorTab = new("Editor", ref session, ref terrainColors, currentGrid, maxGridSizeAllocation);
 			_saveFilesTab = new("Save Files", ref grids);
 
 			///	ADD LOGIC
@@ -80,9 +85,14 @@ namespace ABB.Grid.Editor.Windows
 			tabView.activeTab = _editorTab;
 		}
 
-		private void OnDestroy()
+
+		private void OnDisable()
 		{
 			Save.SaveTerrainColorsFile(terrainColors);
+		}
+
+		private void OnDestroy()
+		{
 			Save.SaveSessionFile(session);
 			Save.SaveGridDataFile(grids);
 		}
@@ -98,39 +108,27 @@ namespace ABB.Grid.Editor.Windows
 			}
 
 
-			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.TERRAIN_COLORS_FILE_NAME)))
-			{
+			if (File.Exists(Path.Combine(Constants.PATH, Constants.TERRAIN_COLORS_FILE_NAME)))
 				terrainColors = Load.LoadTerrainColorsFile();
-			}
 			else
 			{
-				//Debug.LogWarning("Could not deserialize terrain colors file data");
-
-				if (terrainColors == null) terrainColors = new();
+				terrainColors = new();
 				Save.SaveTerrainColorsFile(terrainColors);
 			}
 
-			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME)))
-			{
+			if (File.Exists(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME)))
 				session = Load.LoadSessionFile();
-			}
 			else
 			{
-				//Debug.LogWarning("Could not deserialize session file data");
-
-				if (session == null) session = new();
+				session = new();
 				Save.SaveSessionFile(session);
 			}
 
-			if (pathExists && File.Exists(Path.Combine(Constants.PATH, Constants.GRIDS_FILE_NAME)))
-			{
+			if (File.Exists(Path.Combine(Constants.PATH, Constants.GRIDS_FILE_NAME)))
 				grids = Load.LoadGridsDataFile();
-			}
 			else
 			{
-				//Debug.LogWarning("Could not deserialize grid saves file data");
-
-				if (grids == null) grids = Array.Empty<GridData>();
+				grids = Array.Empty<GridData>();
 				Save.SaveGridDataFile(grids);
 			}
 		}

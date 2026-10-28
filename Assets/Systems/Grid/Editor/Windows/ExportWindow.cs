@@ -24,18 +24,17 @@ namespace ABB.Grid.Editor.Windows
 
 		private Button exportButton = null;
 
-		private Action onDestroy;
+		private GridEditorWindow editorInstance = null;
 
 
-		public static void OpenWindow(GridData grid, Action onDestroy)
+		public static void OpenWindow(GridData grid, GridEditorWindow gridEditorWindow)
 		{
 			ExportWindow window = GetWindow<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
 			window.minSize = new Vector2(500, 200);
 
 			window.grid = grid;
-
-			window.onDestroy = onDestroy;
+			window.editorInstance = gridEditorWindow;
 		}
 
 		public void CreateGUI()
@@ -125,7 +124,7 @@ namespace ABB.Grid.Editor.Windows
 
 			Save.SaveExportSettingsFile(exportSettings);
 
-			onDestroy?.Invoke();
+			editorInstance?.tabView.SetEnabled(true);
 		}
 
 
@@ -173,15 +172,8 @@ namespace ABB.Grid.Editor.Windows
 
 		private bool CreateExporterInstance(Type type)
 		{
-			if (type == null)
-			{
-				_exporter = null;
-				exportSettings.assemblyQualifiedName = string.Empty;
-
-				return false;
-			}
-
-			if (!typeof(IExportGrid).IsAssignableFrom(type) ||
+			if (type == null ||
+				!typeof(IExportGrid).IsAssignableFrom(type) ||
 				!type.IsClass ||
 				type.IsAbstract ||
 				type.ContainsGenericParameters ||
@@ -191,17 +183,27 @@ namespace ABB.Grid.Editor.Windows
 				_exporter = null;
 				exportSettings.assemblyQualifiedName = string.Empty;
 
-				Debug.LogWarning("Exporter type changed or is malformed. Choose again an exporter");
-
 				return false;
 			}
 
-			_exporter = (IExportGrid)Activator.CreateInstance(type);
-			exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
+			try
+			{
+				_exporter = (IExportGrid)Activator.CreateInstance(type);
+				exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
 
-			Debug.Log($"Successfully assigned {type} as the exporter");
+				Debug.Log($"Successfully assigned {type} as the exporter");
 
-			return true;
+				return true;
+			}
+			catch (Exception exception)
+			{
+				_exporter = null;
+				exportSettings.assemblyQualifiedName = null;
+
+				Debug.LogException(exception);
+
+				return false;
+			}
 		}
 
 		private bool RestoreExporterInstance(TypeField<IExportGrid> typeField)
@@ -241,34 +243,23 @@ namespace ABB.Grid.Editor.Windows
 				Debug.LogError("File name is null or empty. Please introduce a file name");
 				return;
 			}
+			if (_exporter == null)
+			{
+				Debug.LogError("Exporter is null and this should have not happened");
+			}
 
 			try
 			{
-				int[][] parsedGrid = ParseGridTerrainData(grid);
+				int[][] parsedGrid = grid.grid;
 				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, parsedGrid);
+
+				Debug.Log("Grid data exported successfully!");
 			}
 			catch (Exception exception)
 			{
-				Debug.LogError("Unexpected error when creating grid data");
 				Debug.LogException(exception);
 				return;
 			}
-		}
-
-		private int[][] ParseGridTerrainData(GridData grid)
-		{
-			int[][] result = new int[grid.columns][];
-
-			for (int c = 0, C = grid.columns - 1; c < grid.columns; c++, --C)
-			{
-				result[c] = new int[grid.rows];
-				for (int r = 0, R = grid.rows - 1; r < grid.rows; r++, --R)
-				{
-					result[c][r] = grid.grid[c][R];
-				}
-			}
-
-			return result;
 		}
 	}
 }

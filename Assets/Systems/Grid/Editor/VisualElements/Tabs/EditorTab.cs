@@ -5,6 +5,7 @@ using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
 
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
@@ -21,7 +22,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private event Action<GridData, int> NewGridData;
 
 
-		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors, GridData gridData)
+		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors, GridData gridData, int maxGridSizeAllocation)
 		{
 			base.label = label;
 			closeable = false;
@@ -34,7 +35,7 @@ namespace ABB.Grid.Editor.VisualElements
 			this.gridData = gridData;
 
 			///	CREATE UI
-			_toolsView = new(ref session, ref terrainColors);
+			_toolsView = new(ref session, ref terrainColors, maxGridSizeAllocation);
 			_canvasView = new(ref session, ref terrainColors);
 
 			///	ADD UI
@@ -70,13 +71,10 @@ namespace ABB.Grid.Editor.VisualElements
 			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
-			ExportWindow.OpenWindow(gridData, OnDestroyExportWindow);
+			//parent.Q<GridEditorWindow>();
+			Debug.Log(panel.visualTree.name);
 
-			void OnDestroyExportWindow()
-			{
-				GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
-				gridEditorWindow.tabView.SetEnabled(true);
-			}
+			ExportWindow.OpenWindow(gridData, gridEditorWindow);
 		}
 
 		private void OnSaveGrid()

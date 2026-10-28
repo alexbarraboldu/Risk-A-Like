@@ -88,9 +88,9 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		public ToolsView(ref SessionData session, ref TerrainColorData terrainColors)
+		public ToolsView(ref SessionData session, ref TerrainColorData terrainColors, int maxGridSizeAllocation)
 		{
-			BuildUI();
+			BuildUI(maxGridSizeAllocation);
 			AddStyle();
 			AddLogic();
 
@@ -106,7 +106,7 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		private void BuildUI()
+		private void BuildUI(int maxGridSizeAllocation)
 		{
 			name = "tools_view";
 
@@ -136,7 +136,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows", false);
+			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows", maxGridSizeAllocation, false);
 			gridSizeElement.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
 			gridSizeElement.Q("vector2int-field").style.flexGrow = 1;
 

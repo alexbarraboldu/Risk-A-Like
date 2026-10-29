@@ -10,10 +10,10 @@ namespace ABB.Grid.Editor.VisualElements
 	public class CanvasView : VisualElement
 	{
 		private SessionData session = null;
+		private GridData currentGrid = new();
 		private TerrainColorData terrainColors = null;
-		private GridData gridData = new();
 
-		public Vector2Int GridSize => new(gridData.columns, gridData.rows);
+		public Vector2Int GridSize => new(currentGrid.columns, currentGrid.rows);
 
 
 		private bool _deleteCell;
@@ -31,7 +31,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellHeight = yOffset * 2f;
 
 
-		public CanvasView(ref SessionData session, ref TerrainColorData terrainColors)
+		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors)
 		{
 			focusable = true;
 
@@ -47,6 +47,7 @@ namespace ABB.Grid.Editor.VisualElements
 			RegisterCallback<GeometryChangedEvent>(OnResizeWindow);
 
 			this.session = session;
+			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
 		}
 
@@ -65,25 +66,22 @@ namespace ABB.Grid.Editor.VisualElements
 		private void OnGenerateVisualContent(MeshGenerationContext context)
 		{
 			DrawGrid(context);
-
-			DrawPointerGridLines(context, localMousePosition);
-			DrawPointerRectangle(context, localMousePosition);
 		}
 
 		private bool EnsureGrid()
 		{
-			if (gridData.columns <= 0 || gridData.rows <= 0)
+			if (currentGrid.columns <= 0 || currentGrid.rows <= 0)
 			{
-				gridData.grid = Array.Empty<int[]>();
+				currentGrid.grid = Array.Empty<int[]>();
 				return false;
 			}
 
-			bool needsRebuild = gridData.grid == null || gridData.grid.Length != gridData.columns;
+			bool needsRebuild = currentGrid.grid == null || currentGrid.grid.Length != currentGrid.columns;
 			if (!needsRebuild)
 			{
-				for (int x = 0; x < gridData.columns; x++)
+				for (int x = 0; x < currentGrid.columns; x++)
 				{
-					if (gridData.grid[x] == null || gridData.grid[x].Length != gridData.rows)
+					if (currentGrid.grid[x] == null || currentGrid.grid[x].Length != currentGrid.rows)
 					{
 						needsRebuild = true;
 						break;
@@ -92,13 +90,13 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 			if (!needsRebuild) return true;
 
-			int[][] aux = new int[gridData.columns][];
-			int gridColumns = gridData.grid.Length;
-			int gridRows = gridData.grid != null && gridData.grid.Length > 0 ? gridData.grid[0]?.Length ?? gridData.rows : gridData.rows;
-			for (int auxC = 0, c = 0; auxC < gridData.columns; auxC++, c++)
+			int[][] aux = new int[currentGrid.columns][];
+			int gridColumns = currentGrid.grid.Length;
+			int gridRows = currentGrid.grid != null && currentGrid.grid.Length > 0 ? currentGrid.grid[0]?.Length ?? currentGrid.rows : currentGrid.rows;
+			for (int auxC = 0, c = 0; auxC < currentGrid.columns; auxC++, c++)
 			{
-				aux[auxC] = new int[gridData.rows];
-				for (int auxR = 0, r = 0; auxR < gridData.rows; auxR++, r++)
+				aux[auxC] = new int[currentGrid.rows];
+				for (int auxR = 0, r = 0; auxR < currentGrid.rows; auxR++, r++)
 				{
 					if (auxC >= gridColumns)
 					{
@@ -111,18 +109,18 @@ namespace ABB.Grid.Editor.VisualElements
 						continue;
 					}
 
-					aux[auxC][auxR] = gridData.grid[c][r];
+					aux[auxC][auxR] = currentGrid.grid[c][r];
 				}
 			}
 
-			gridData.grid = aux;
+			currentGrid.grid = aux;
 
 			return true;
 		}
 
-		public void SetGridData(GridData gridData)
+		public void SetCurrentGrid(GridData gridData)
 		{
-			this.gridData = gridData;
+			this.currentGrid = gridData;
 
 			EnsureGrid();
 			MarkDirtyRepaint();
@@ -130,8 +128,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void SetGridSize(Vector2Int value)
 		{
-			gridData.columns = value.x;
-			gridData.rows = value.y;
+			currentGrid.columns = value.x;
+			currentGrid.rows = value.y;
 
 			EnsureGrid();
 			MarkDirtyRepaint();
@@ -141,9 +139,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void DrawGrid(MeshGenerationContext context)
 		{
-			for (int c = 0; c < gridData.columns; c++)
+			for (int c = 0; c < currentGrid.columns; c++)
 			{
-				for (int r = 0; r < gridData.rows; r++)
+				for (int r = 0; r < currentGrid.rows; r++)
 				{
 					float oddColumnOffset = (c & 1) != 0 ? yOffset * session.cellSize : 0f;
 
@@ -152,7 +150,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 					Vector2 position = gridPosition + new Vector2(xPos, yPos);
 
-					int cellValue = gridData.grid[c][r];
+					int cellValue = currentGrid.grid[c][r];
 					if (cellValue != -1)
 						AllocateHexagon(context, position, cellValue);
 					else
@@ -271,7 +269,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#region ACTIONS
 
-		private void EditGridCells()
+		private void EditGridCells(Vector2 pointerPosition)
 		{
 			if (session.cellSize <= 0f)
 			{
@@ -284,7 +282,7 @@ namespace ABB.Grid.Editor.VisualElements
 			float spacingX = xOffset * session.cellSize;
 			float spacingY = cellHeight * session.cellSize;
 
-			Vector2 mouse = localMousePosition - new Vector2(radius + 2f, inRadius + 2f) - gridPosition;
+			Vector2 mouse = pointerPosition - new Vector2(radius + 2f, inRadius + 2f) - gridPosition;
 
 			int evenColumn = 2 * Mathf.RoundToInt(mouse.x / (2f * spacingX));
 			int evenRow = Mathf.RoundToInt(mouse.y / spacingY);
@@ -300,11 +298,25 @@ namespace ABB.Grid.Editor.VisualElements
 			int column = evenIsCloser ? evenColumn : oddColumn;
 			int row = evenIsCloser ? evenRow : oddRow;
 
-			if (column < 0 || column >= gridData.grid.Length || row < 0 || row >= gridData.grid[column].Length)
+			if (column < 0 || column >= currentGrid.grid.Length || row < 0 || row >= currentGrid.grid[column].Length)
 				return;
 
-			if (button == 0) gridData.grid[column][row] = _deleteCell ? -1 : (int)session.leftColor;
-			else if (button == 1) gridData.grid[column][row] = _deleteCell ? -1 : (int)session.rightColor;
+			if (button == 0) currentGrid.grid[column][row] = _deleteCell ? -1 : (int)session.leftColor;
+			else if (button == 1) currentGrid.grid[column][row] = _deleteCell ? -1 : (int)session.rightColor;
+		}
+
+		private void PaintStroke(Vector2 from, Vector2 to)
+		{
+			if (session.cellSize <= 0f) return;
+
+			float spacing = session.cellSize * 0.25f;
+			int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / spacing));
+
+			for (int i = 1; i <= steps; i++)
+			{
+				Vector2 position = Vector2.Lerp(from, to, i / (float)steps);
+				EditGridCells(position);
+			}
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -318,7 +330,7 @@ namespace ABB.Grid.Editor.VisualElements
 			float previousCellSize = session.cellSize;
 
 			session.cellSize += scrollWheelDelta > 0 ? -10 : 10;
-			session.cellSize = Mathf.Clamp(session.cellSize, 10f, 300f);
+			session.cellSize = Mathf.Clamp(session.cellSize, 5f, 300f);
 
 			Vector2 mouse = localMousePosition - Vector2.one * 2f;
 			Vector2 gridPoint = (mouse - gridPosition) / previousCellSize;
@@ -340,11 +352,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			EnsureGrid();
 
-			for (int c = 0; c < gridData.columns; c++)
+			for (int c = 0; c < currentGrid.columns; c++)
 			{
-				for (int r = 0; r < gridData.rows; r++)
+				for (int r = 0; r < currentGrid.rows; r++)
 				{
-					gridData.grid[c][r] = (int)session.leftColor;
+					currentGrid.grid[c][r] = (int)session.leftColor;
 				}
 			}
 
@@ -355,11 +367,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			EnsureGrid();
 
-			for (int c = 0; c < gridData.columns; c++)
+			for (int c = 0; c < currentGrid.columns; c++)
 			{
-				for (int r = 0; r < gridData.rows; r++)
+				for (int r = 0; r < currentGrid.rows; r++)
 				{
-					gridData.grid[c][r] = -1;
+					currentGrid.grid[c][r] = -1;
 				}
 			}
 
@@ -372,9 +384,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerDown(PointerDownEvent evt)
 		{
-			if (session.cellSize <= 0f || gridData.columns <= 0f || gridData.rows <= 0f /*|| !EnsureGrid()*/) return;
-
-			MarkDirtyRepaint();
+			if (session.cellSize <= 0f || currentGrid.columns <= 0f || currentGrid.rows <= 0f) return;
 
 			localMousePosition = evt.localPosition;
 			localMouseStartPosition = (Vector2)evt.localPosition - gridPosition;
@@ -383,14 +393,16 @@ namespace ABB.Grid.Editor.VisualElements
 			button = evt.button;
 
 			if (button != 2)
-				EditGridCells();
+				EditGridCells(localMousePosition);
+
+			MarkDirtyRepaint();
 		}
 
 		private void OnPointerMove(PointerMoveEvent evt)
 		{
 			if (!isPainting) return;
 
-			MarkDirtyRepaint();
+			Vector2 previousPosition = localMousePosition;
 
 			localMousePosition = evt.localPosition;
 			localMouseDeltaPosition = localMousePosition - localMouseStartPosition;
@@ -398,7 +410,9 @@ namespace ABB.Grid.Editor.VisualElements
 			if (button == 2)
 				Pan();
 			else
-				EditGridCells();
+				PaintStroke(previousPosition, localMousePosition);
+
+			MarkDirtyRepaint();
 		}
 
 		private void OnPointerUp(PointerUpEvent evt)
@@ -413,18 +427,36 @@ namespace ABB.Grid.Editor.VisualElements
 
 			Zoom(evt.delta.y);
 
+			if (isPainting && button == 2)
+				localMouseStartPosition = localMousePosition - gridPosition;
+
 			MarkDirtyRepaint();
 			evt.StopPropagation();
 		}
 
 		private void OnResizeWindow(GeometryChangedEvent evt)
 		{
-			if (gridData.columns <= 0 || gridData.rows <= 0) return;
+			if (currentGrid.columns <= 0 || currentGrid.rows <= 0) return;
 
-			float width = evt.newRect.width;
-			float height = evt.newRect.height;
-			gridPosition.x = (width / 2f) - ((gridData.grid.Length * session.cellSize) / 2f) * xOffset;
-			gridPosition.y = (height / 2f) - ((gridData.grid[0].Length * session.cellSize) / 2f) * cellHeight;
+			float size = session.cellSize;
+
+			float gridWidth = (currentGrid.columns - 1) * xOffset * size + size;
+			float gridHeight = currentGrid.rows * cellHeight * size;
+
+			// Odd columns extend half a hex further down.
+			if (currentGrid.columns > 1) gridHeight += yOffset * size;
+
+			Vector2 drawnOffset = new(2f, 2f);
+			Vector2 gridExtent = new(gridWidth, gridHeight);
+
+			gridPosition = (evt.newRect.size - gridExtent) / 2f - drawnOffset;
+
+			MarkDirtyRepaint();
+
+			//float width = evt.newRect.width;
+			//float height = evt.newRect.height;
+			//gridPosition.x = (width / 2f) - ((currentGrid.grid.Length * session.cellSize) / 2f) * xOffset;
+			//gridPosition.y = (height / 2f) - ((currentGrid.grid[0].Length * session.cellSize) / 2f) * cellHeight;
 		}
 
 		private void OnPointerLeave(PointerLeaveEvent evt)
@@ -436,6 +468,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#region VISUAL HELPERS
 
+		[Obsolete("This method is not longer used", true)]
 		private void DrawPointerGridLines(MeshGenerationContext context, Vector2 pointerPos)
 		{
 			float lineWidth = 1f;
@@ -460,6 +493,7 @@ namespace ABB.Grid.Editor.VisualElements
 			painter.Stroke();
 		}
 
+		[Obsolete("This method is not longer used", true)]
 		private void DrawPointerRectangle(MeshGenerationContext context, Vector2 mousePos)
 		{
 			float lineWidth = 2f;

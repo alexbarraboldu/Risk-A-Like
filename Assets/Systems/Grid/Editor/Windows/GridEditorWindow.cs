@@ -15,11 +15,11 @@ namespace ABB.Grid.Editor.Windows
 	public class GridEditorWindow : EditorWindow
 	{
 		/// <summary>
-		///	Maximum grid size by Mega Bytes
+		///	Maximum grid memory allocation in MB
 		/// </summary>
-		private const int maxGridSizeAllocation = 2000;
-		private const int minWidth = 400;
-		private const int minHeight = 400;
+		private const int maxGridMemoryAllocation = 1;
+		private const int minWindowWidth = 400;
+		private const int minWindowHeight = 400;
 		private const string StylePath = "Assets/";
 		public StyleSheet uss;
 
@@ -31,10 +31,10 @@ namespace ABB.Grid.Editor.Windows
 		public TabView tabView = null;
 
 		///	DATA
-		private SessionData session;
-		private TerrainColorData terrainColors;
-		private GridData currentGrid;
-		private GridData[] grids;
+		private SessionData session = null;
+		private TerrainColorData terrainColors = null;
+		private GridData currentGrid = new();
+		private GridData[] grids = null;
 
 
 		[MenuItem("Window/Custom Tools/Grid Editor")]
@@ -42,7 +42,7 @@ namespace ABB.Grid.Editor.Windows
 		{
 			GridEditorWindow window = GetWindow<GridEditorWindow>();
 			window.titleContent = new GUIContent("Grid Editor");
-			window.minSize = new Vector2(minWidth, minHeight);
+			window.minSize = new Vector2(minWindowWidth, minWindowHeight);
 
 			window.This = window;
 		}
@@ -52,8 +52,8 @@ namespace ABB.Grid.Editor.Windows
 			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
 			if (uss != null) rootVisualElement.styleSheets.Add(uss);
 
-			rootVisualElement.style.minWidth = minWidth;
-			rootVisualElement.style.minHeight = minHeight;
+			rootVisualElement.style.minWidth = minWindowWidth;
+			rootVisualElement.style.minHeight = minWindowHeight;
 
 			LoadAllData();
 
@@ -62,13 +62,12 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
-			if (session.saveFileIndex >= grids.Length) session.saveFileIndex = -1;
-			currentGrid = grids.Length != 0 && session.saveFileIndex >= 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
-			_editorTab = new("Editor", ref session, ref terrainColors, currentGrid, maxGridSizeAllocation);
+			//if (session.saveFileIndex >= grids.Length) session.saveFileIndex = -1;
+			//currentGrid = grids.Length != 0 && session.saveFileIndex >= 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
+			_editorTab = new("Editor", session, terrainColors, currentGrid, maxGridMemoryAllocation);
 			_saveFilesTab = new("Save Files", ref grids);
 
 			///	ADD LOGIC
-			_editorTab.RegisterCallbackSaveGridData(AddEntry);
 			_editorTab.RegisterCallbackNewGridData(NewEntry);
 			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
 			_saveFilesTab.OnGridDataSelected += (gridData, index) =>
@@ -88,11 +87,23 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDisable()
 		{
+			if (!Directory.Exists(Constants.PATH))
+			{
+				Directory.CreateDirectory(Constants.PATH);
+				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
+			}
+
 			Save.SaveTerrainColorsFile(terrainColors);
 		}
 
 		private void OnDestroy()
 		{
+			if (!Directory.Exists(Constants.PATH))
+			{
+				Directory.CreateDirectory(Constants.PATH);
+				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
+			}
+
 			Save.SaveSessionFile(session);
 			Save.SaveGridDataFile(grids);
 		}
@@ -133,29 +144,39 @@ namespace ABB.Grid.Editor.Windows
 			}
 		}
 
-		private void AddEntry(GridData gridSave, int index)
+		private void NewEntry()
 		{
-			if (index < 0)
+			///	CHECK FOR NO NAME
+			///	Could disable NewGrid button (?)
+			if (currentGrid.fileName == string.Empty)
+				currentGrid.fileName = "grid_" + grids.Length;
+
+			///	SAVE CURRENT GRID INTO GRIDS
+			int index = session.saveFileIndex;
+			if (session.saveFileIndex < 0)
 			{
 				index = grids.Length;
-
 				Array.Resize(ref grids, index + 1);
 			}
+			grids[index] = currentGrid;
 
-			grids[index] = gridSave;
+			///	GENERATE NEW GRID & SAVE NEW GRID INTO GRIDS
+			if (session.saveFileIndex != -1)
+			{
+				currentGrid = new();
+				index++;
+				Array.Resize(ref grids, index + 1);
+				grids[index] = currentGrid;
+			}
 			session.saveFileIndex = index;
 
+			///	REFRESH & SAVE
 			_saveFilesTab.SetEntries(grids);
 
+			if (!Save.SaveGridDataFile(grids))
+				return;
+
 			Save.SaveSessionFile(session);
-			Save.SaveGridDataFile(grids);
-		}
-
-		private void NewEntry(GridData gridSave, int index)
-		{
-			gridSave.fileName = "grid_" + grids.Length;
-
-			AddEntry(gridSave, index);
 		}
 	}
 }

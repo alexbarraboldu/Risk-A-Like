@@ -11,21 +11,21 @@ namespace ABB.Grid.Editor.VisualElements
 	public class ToolsView : VisualElement
 	{
 		///	DATA
-		private SessionData session;
-		private TerrainColorData terrainColors;
+		private SessionData session = null;
+		private GridData currentGrid = null;
+		private TerrainColorData terrainColors = null;
 
 		///	VISUAL ELEMENTS
 		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
 		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
 
-		private Vector2IntField gridSizeElement = null;
+		private Vector2IntField gridSizeField = null;
 
-		private Button deleteCellButton = null;
+		private Button eraserButton = null;
 		private Button resetGridButton = null;
 		private Button fillGridButton = null;
 
 		private Button exportGridButton = null;
-		private Button saveGridButton = null;
 		private Button newGridButton = null;
 
 		private TextField gridTextField = null;
@@ -53,13 +53,13 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
-			add => gridSizeElement.ValueChanged += value;
-			remove => gridSizeElement.ValueChanged -= value;
+			add => gridSizeField.ValueChanged += value;
+			remove => gridSizeField.ValueChanged -= value;
 		}
 		public event Action OnDeleteCell
 		{
-			add => deleteCellButton.clicked += value;
-			remove => deleteCellButton.clicked -= value;
+			add => eraserButton.clicked += value;
+			remove => eraserButton.clicked -= value;
 		}
 		public event Action OnResetGrid
 		{
@@ -76,11 +76,6 @@ namespace ABB.Grid.Editor.VisualElements
 			add => exportGridButton.clicked += value;
 			remove => exportGridButton.clicked -= value;
 		}
-		public event Action OnSaveGrid
-		{
-			add => saveGridButton.clicked += value;
-			remove => saveGridButton.clicked -= value;
-		}
 		public event Action OnNewGrid
 		{
 			add => newGridButton.clicked += value;
@@ -88,7 +83,7 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		public ToolsView(ref SessionData session, ref TerrainColorData terrainColors, int maxGridSizeAllocation)
+		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxGridSizeAllocation)
 		{
 			BuildUI(maxGridSizeAllocation);
 			AddStyle();
@@ -96,6 +91,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			///	INJECT DATA
 			this.session = session;
+			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
 
 			leftTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
@@ -136,13 +132,13 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			gridSizeElement = new Vector2IntField("Grid Size", "Columns", "Rows", maxGridSizeAllocation, false);
-			gridSizeElement.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
-			gridSizeElement.Q("vector2int-field").style.flexGrow = 1;
+			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", maxGridSizeAllocation, false);
+			gridSizeField.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
+			gridSizeField.Q("vector2int-field").style.flexGrow = 1;
 
 			VisualElement visualElement = new();
-			gridSizeElement.Q("vector2int-field__fields-xField").style.width = 118;
-			gridSizeElement.Q("vector2int-field__fields-yField").style.width = 118;
+			gridSizeField.Q("vector2int-field__fields-xField").style.width = 118;
+			gridSizeField.Q("vector2int-field__fields-yField").style.width = 118;
 
 			VisualElement middleOptionsElement = new()
 			{
@@ -173,11 +169,11 @@ namespace ABB.Grid.Editor.VisualElements
 			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
 			///----------------------
 
-			///	Delete Cell Button
-			deleteCellButton = new()
+			///	Eraser Button
+			eraserButton = new()
 			{
-				name = "tools-view--delete-grid__button",
-				tooltip = "Delete grid",
+				name = "tools-view--eraser__button",
+				tooltip = "Eraser",
 				style =
 				{
 					minWidth = 35,
@@ -186,7 +182,7 @@ namespace ABB.Grid.Editor.VisualElements
 					maxHeight = 35,
 				}
 			};
-			deleteCellButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.EraserTool").image;
+			eraserButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.EraserTool").image;
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
@@ -229,20 +225,6 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 			exportGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SceneLoadOut").image;
-			///	Save Grid Button
-			saveGridButton = new()
-			{
-				name = "tools-view--save-grid__button",
-				tooltip = "Save grid",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
-			};
-			saveGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SaveActive").image;
 			///	New Grid Button
 			newGridButton = new()
 			{
@@ -285,8 +267,8 @@ namespace ABB.Grid.Editor.VisualElements
 					alignItems = Align.Center
 				}
 			};
-			rowGridSizeDeleteParent.Add(gridSizeElement);
-			rowGridSizeDeleteParent.Add(deleteCellButton);
+			rowGridSizeDeleteParent.Add(gridSizeField);
+			rowGridSizeDeleteParent.Add(eraserButton);
 			rowGridSizeDeleteParent.Add(resetGridButton);
 			rowGridSizeDeleteParent.Add(fillGridButton);
 
@@ -306,7 +288,6 @@ namespace ABB.Grid.Editor.VisualElements
 			rightOptionsElement.Add(rightButtonsParent);
 
 			rightButtonsParent.Add(newGridButton);
-			rightButtonsParent.Add(saveGridButton);
 			rightButtonsParent.Add(exportGridButton);
 		}
 
@@ -323,16 +304,55 @@ namespace ABB.Grid.Editor.VisualElements
 			leftTerrainTypeSelector.OnColorChanged += LeftSelectorColorChanged;
 			rightTerrainTypeSelector.OnColorChanged += RightSelectorColorChanged;
 
-			deleteCellButton.clicked += () =>
+			eraserButton.clicked += () =>
 			{
-				if (deleteCellButton.style.backgroundColor == Color.gray5)
-					deleteCellButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				if (eraserButton.style.backgroundColor == Color.gray5)
+					eraserButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
 				else
-					deleteCellButton.style.backgroundColor = Color.gray5;
+					eraserButton.style.backgroundColor = Color.gray5;
 			};
+
+			gridSizeField.SetEnabled(false);
+
+			eraserButton.SetEnabled(false);
+			resetGridButton.SetEnabled(false);
+			fillGridButton.SetEnabled(false);
+
+			exportGridButton.SetEnabled(false);
+
+			OnNewGrid += () =>
+			{
+				gridSizeField.SetEnabled(true);
+
+				eraserButton.SetEnabled(true);
+				resetGridButton.SetEnabled(true);
+				fillGridButton.SetEnabled(true);
+
+				exportGridButton.SetEnabled(true);
+			};
+
+			gridTextField.isDelayed = true;
+			gridTextField.RegisterValueChangedCallback(evt =>
+			{
+				currentGrid.fileName = evt.newValue;
+			});
 		}
 
-		public void SetGridSize(Vector2Int size) => gridSizeElement.Value = size;
+
+		public void SetCurrentGrid(GridData currentGrid)
+		{
+			this.currentGrid = currentGrid;
+			gridSizeField.Value = new Vector2Int(currentGrid.columns, currentGrid.rows);
+			gridTextField.value = currentGrid.fileName;
+
+			gridSizeField.SetEnabled(true);
+
+			eraserButton.SetEnabled(true);
+			resetGridButton.SetEnabled(true);
+			fillGridButton.SetEnabled(true);
+
+			exportGridButton.SetEnabled(true);
+		}
 
 		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
 		private void RightSelectorValueChanged(int value) => session.rightColor = (uint)value;

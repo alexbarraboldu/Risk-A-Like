@@ -165,11 +165,9 @@ namespace ABB.Grid.Editor.Windows
 			{
 				MonoScript script = currentScripts[i];
 				if (script == null) continue;
-				if (script.name.Contains(evt.newValue))
-				{
+
+				if (script.name.IndexOf(evt.newValue, StringComparison.OrdinalIgnoreCase) >= 0)
 					newScripts.Add(script);
-					Debug.Log(script.name);
-				}
 			}
 
 			_listView.itemsSource = newScripts.ToArray();

@@ -5,7 +5,6 @@ using ABB.Grid.Editor.Windows;
 
 using UnityEditor;
 
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
@@ -13,16 +12,15 @@ namespace ABB.Grid.Editor.VisualElements
 	public class EditorTab : Tab
 	{
 		private SessionData session = null;
-		private GridData gridData = null;
+		private GridData currentGrid = null;
 
 		private ToolsView _toolsView = null;
 		private CanvasView _canvasView = null;
 
-		private event Action<GridData, int> SaveGridData;
-		private event Action<GridData, int> NewGridData;
+		private event Action NewGridData;
 
 
-		public EditorTab(string label, ref SessionData session, ref TerrainColorData terrainColors, GridData gridData, int maxGridSizeAllocation)
+		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, int maxGridSizeAllocation)
 		{
 			base.label = label;
 			closeable = false;
@@ -32,11 +30,11 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.style.flexGrow = 1;
 
 			this.session = session;
-			this.gridData = gridData;
+			this.currentGrid = currentGrid;
 
 			///	CREATE UI
-			_toolsView = new(ref session, ref terrainColors, maxGridSizeAllocation);
-			_canvasView = new(ref session, ref terrainColors);
+			_toolsView = new(session, currentGrid, terrainColors, maxGridSizeAllocation);
+			_canvasView = new(session, currentGrid, terrainColors);
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -52,17 +50,10 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnResetGrid += _canvasView.ResetGrid;
 			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
-			_toolsView.OnSaveGrid += OnSaveGrid;
 			_toolsView.OnNewGrid += OnNewGrid;
-
-			///	ADD DATA
-			_canvasView.SetGridData(gridData);
-			_toolsView.SetGridSize(_canvasView.GridSize);
 		}
 
-
-		public void RegisterCallbackSaveGridData(Action<GridData, int> action) => SaveGridData += action;
-		public void RegisterCallbackNewGridData(Action<GridData, int> action) => NewGridData += action;
+		public void RegisterCallbackNewGridData(Action action) => NewGridData += action;
 
 		#region ACTIONS
 
@@ -71,25 +62,12 @@ namespace ABB.Grid.Editor.VisualElements
 			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
-			//parent.Q<GridEditorWindow>();
-			Debug.Log(panel.visualTree.name);
-
-			ExportWindow.OpenWindow(gridData, gridEditorWindow);
-		}
-
-		private void OnSaveGrid()
-		{
-			///	FIRST OPTION
-			/// Swap to SaveFiles tab and add an entrance with the name change enabled.
-			///	SECOND OPTION
-			///	Open SaveWindow and write there the name then save the file.
-
-			SaveGridData?.Invoke(gridData, session.saveFileIndex);
+			ExportWindow.OpenWindow(currentGrid, gridEditorWindow);
 		}
 
 		private void OnNewGrid()
 		{
-			NewGridData?.Invoke(gridData, -1);
+			NewGridData?.Invoke();
 		}
 
 		private void OnLeftTerrainChanged(int terrain) => session.leftColor = (uint)terrain;
@@ -98,13 +76,13 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#endregion
 
-		public void LoadGridClicked(GridData gridData, int index)
+		public void LoadGridClicked(GridData newGrid, int index)
 		{
-			this.gridData = gridData;
+			this.currentGrid = newGrid;
 			session.saveFileIndex = index;
 
-			_canvasView.SetGridData(gridData);
-			_toolsView.SetGridSize(_canvasView.GridSize);
+			_canvasView.SetCurrentGrid(newGrid);
+			_toolsView.SetCurrentGrid(newGrid);
 		}
 	}
 }

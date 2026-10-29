@@ -14,9 +14,8 @@ namespace ABB.Grid.Editor.VisualElements
 			get => _value;
 			set
 			{
-				bool changed = _value != value;
 				SetValueWithoutNotify(value);
-				if (changed) ValueChanged?.Invoke(value);
+				ValueChanged?.Invoke(_value);
 			}
 
 		}
@@ -79,28 +78,27 @@ namespace ABB.Grid.Editor.VisualElements
 
 			xField.RegisterValueChangedCallback(evt =>
 			{
-				int x = Mathf.Clamp(evt.newValue, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
-
-				SetValueWithoutNotify(new Vector2Int(x, Value.y));
+				SetValueWithoutNotify(new Vector2Int(evt.newValue, Value.y));
 				ValueChanged?.Invoke(_value);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
-				int y = Mathf.Clamp(evt.newValue, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
-
-				SetValueWithoutNotify(new Vector2Int(Value.x, y));
+				SetValueWithoutNotify(new Vector2Int(Value.x, evt.newValue));
 				ValueChanged?.Invoke(_value);
 			});
 		}
 
-
 		public void SetValueWithoutNotify(Vector2Int newValue)
 		{
-			xField.SetValueWithoutNotify(newValue.x);
-			yField.SetValueWithoutNotify(newValue.y);
+			int x = Mathf.Clamp(newValue.x, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
+			int y = Mathf.Clamp(newValue.y, allowNegativeValues ? -maxIntegerSize : 0, maxIntegerSize);
 
-			_value = newValue;
+			xField.SetValueWithoutNotify(x);
+			yField.SetValueWithoutNotify(y);
+
+			_value.x = x;
+			_value.y = y;
 		}
 
 		private static void ConfigureIntegerField(IntegerField field, float labelWidth, float totalWidth)

@@ -213,12 +213,14 @@ namespace ABB.Grid.Editor.Windows
 			int commaIndex = assemblyQualifiedName.IndexOf(',');
 			string typeName = commaIndex >= 0 ? assemblyQualifiedName.Substring(0, commaIndex) : assemblyQualifiedName;
 
-			typeField.SetTypeName(typeName);
-
 			if (string.IsNullOrEmpty(assemblyQualifiedName)) return false;
 
 			Type exporterType = Type.GetType(assemblyQualifiedName);
-			return CreateExporterInstance(exporterType);
+			bool result = CreateExporterInstance(exporterType);
+
+			if (result) typeField.SetTypeName(typeName);
+
+			return result;
 		}
 
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)
@@ -246,12 +248,12 @@ namespace ABB.Grid.Editor.Windows
 			if (_exporter == null)
 			{
 				Debug.LogError("Exporter is null and this should have not happened");
+				return;
 			}
 
 			try
 			{
-				int[][] parsedGrid = grid.grid;
-				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, parsedGrid);
+				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, grid.grid);
 
 				Debug.Log("Grid data exported successfully!");
 			}

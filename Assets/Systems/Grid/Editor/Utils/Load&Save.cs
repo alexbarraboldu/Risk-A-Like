@@ -79,59 +79,75 @@ namespace ABB.Grid.Editor.Utils
 
 	public static class Save
 	{
-		public static void SaveSessionFile(SessionData sessionData)
+		public static bool SaveSessionFile(SessionData sessionData)
 		{
 			try
 			{
 				if (sessionData == null) sessionData = new();
 
 				BinarySerialization.WriteToBinary<SessionData>(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME), sessionData);
+
+				return true;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
+
+				return false;
 			}
 		}
 
-		public static void SaveTerrainColorsFile(TerrainColorData terrainColorsData)
+		public static bool SaveTerrainColorsFile(TerrainColorData terrainColorsData)
 		{
 			try
 			{
 				if (terrainColorsData == null) terrainColorsData = new();
 
 				BinarySerialization.WriteToBinary<TerrainColorData>(Path.Combine(Constants.PATH, Constants.TERRAIN_COLORS_FILE_NAME), terrainColorsData);
+
+				return true;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
+
+				return false;
 			}
 		}
 
-		public static void SaveGridDataFile(GridData[] gridsData)
+		public static bool SaveGridDataFile(GridData[] gridsData)
 		{
 			try
 			{
 				if (gridsData == null) gridsData = Array.Empty<GridData>();
 
 				BinarySerialization.WriteToBinary<GridData[]>(Path.Combine(Constants.PATH, Constants.GRIDS_FILE_NAME), gridsData);
+
+				return true;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
+
+				return false;
 			}
 		}
 
-		public static void SaveExportSettingsFile(ExportSettingsData exportSettingsData)
+		public static bool SaveExportSettingsFile(ExportSettingsData exportSettingsData)
 		{
 			try
 			{
 				if (exportSettingsData == null) exportSettingsData = new();
 
 				BinarySerialization.WriteToBinary<ExportSettingsData>(Path.Combine(Constants.PATH, Constants.EXPORT_SETTINGS_FILE_NAME), exportSettingsData);
+
+				return true;
 			}
 			catch (Exception exception)
 			{
 				Debug.LogException(exception);
+
+				return false;
 			}
 		}
 	}

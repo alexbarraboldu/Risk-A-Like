@@ -9,13 +9,13 @@ public class DirectoryPathBrowser : VisualElement
 {
 	private string folderPanelTitle = string.Empty;
 
-	private TextField folderField = null;
+	private TextField textField = null;
 	private Button browseButton = null;
 
 	public string FolderPath
 	{
-		get => folderField.value;
-		set => folderField.value = value;
+		get => textField.value;
+		set => textField.value = value;
 	}
 
 	public event Action<ChangeEvent<string>> OnFolderFieldValueChanged;
@@ -26,24 +26,25 @@ public class DirectoryPathBrowser : VisualElement
 		this.folderPanelTitle = folderPanelTitle;
 
 		style.flexDirection = FlexDirection.Row;
-		style.paddingLeft = 4;
-		style.paddingRight = 4;
+		style.marginLeft = 6;
+		style.marginRight = 6;
+		style.marginTop = 6;
+		style.marginBottom = 1;
 
-		folderField = new TextField(label)
-		{
-			isReadOnly = true
-		};
-		folderField.RegisterValueChangedCallback(FolderFieldValueChanged);
-		folderField.style.flexGrow = 1;
-		folderField.style.flexShrink = 1;
-		folderField.Children().ToArray()[0].style.minWidth = 100;
+		textField = new TextField(label);
+		textField.isReadOnly = true;
+		textField.RegisterValueChangedCallback(FolderFieldValueChanged);
+		textField.style.marginLeft = 0;
+		textField.style.marginRight = 0;
+		textField.style.flexGrow = 1;
+		textField.style.flexShrink = 1;
+		textField.Children().ToArray()[0].style.minWidth = 100;
 
-		browseButton = new Button(OnBrowseClick)
-		{
-			text = "Browse..."
-		};
+		browseButton = new Button(OnBrowseClick);
+		browseButton.text = "Browse...";
+		browseButton.style.marginRight = 0;
 
-		Add(folderField);
+		Add(textField);
 		Add(browseButton);
 	}
 
@@ -56,12 +57,12 @@ public class DirectoryPathBrowser : VisualElement
 	{
 		string path = EditorUtility.OpenFolderPanel(
 				folderPanelTitle,
-				folderField.value,
+				textField.value,
 				""
 			);
 
 		///	Keep the previous selection if the dialog is cancelled.
 		if (!string.IsNullOrEmpty(path))
-			folderField.value = path;
+			textField.value = path;
 	}
 }

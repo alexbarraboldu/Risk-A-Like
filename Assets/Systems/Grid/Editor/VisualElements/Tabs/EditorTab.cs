@@ -3,8 +3,6 @@ using System;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
 
-using UnityEditor;
-
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
@@ -19,8 +17,10 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private event Action<string> NewGridData;
 
+		private GridEditorWindow gridEditorWindow = null;
 
-		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, int maxGridSizeAllocation)
+
+		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, int maxGridSizeAllocation, GridEditorWindow gridEditorWindow)
 		{
 			base.label = label;
 			closeable = false;
@@ -51,6 +51,8 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnNewGrid += (value) => NewGridData?.Invoke(value);
+
+			this.gridEditorWindow = gridEditorWindow;
 		}
 
 
@@ -60,7 +62,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnExportGrid()
 		{
-			GridEditorWindow gridEditorWindow = EditorWindow.GetWindow<GridEditorWindow>();
 			gridEditorWindow.tabView.SetEnabled(false);
 
 			ExportWindow.OpenWindow(currentGrid, gridEditorWindow);

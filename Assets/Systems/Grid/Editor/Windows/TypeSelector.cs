@@ -35,12 +35,11 @@ namespace ABB.Grid.Editor.Windows
 
 		public static TypeSelector OpenWindow()
 		{
-			TypeSelector window = ScriptableObject.CreateInstance<TypeSelector>();
+			TypeSelector window = CreateInstance<TypeSelector>();
 			window.titleContent = new GUIContent("Select Script");
 			window.minSize = new Vector2(150, 300);
 
 			window.ShowAuxWindow();
-			//window.ShowUtility();
 
 			return window;
 		}

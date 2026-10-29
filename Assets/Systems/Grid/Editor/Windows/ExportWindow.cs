@@ -18,23 +18,27 @@ namespace ABB.Grid.Editor.Windows
 		private bool guiBuilt = false;
 
 		private ExportSettingsData exportSettings;
-		private GridData grid;
-
-		private IExportGrid _exporter;
-
-		private Button exportButton = null;
+		private GridData currentGrid;
 
 		private GridEditorWindow editorInstance = null;
 
+		private IExportGrid _exporter;
 
-		public static void OpenWindow(GridData grid, GridEditorWindow gridEditorWindow)
+		TextField fileNameField = null;
+		private Button exportButton = null;
+
+
+		public static void OpenWindow(GridData currentGrid, GridEditorWindow gridEditorWindow)
 		{
-			ExportWindow window = GetWindow<ExportWindow>();
+			ExportWindow window = CreateInstance<ExportWindow>();
 			window.titleContent = new GUIContent("Export Grid");
 			window.minSize = new Vector2(500, 200);
+			window.maxSize = new Vector2(500, 200);
 
-			window.grid = grid;
+			window.currentGrid = currentGrid;
 			window.editorInstance = gridEditorWindow;
+
+			window.ShowUtility();
 		}
 
 		public void CreateGUI()
@@ -43,29 +47,21 @@ namespace ABB.Grid.Editor.Windows
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
-			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder")
-			{
-				style = {
-					paddingLeft = 4,
-					paddingRight = 4,
-					paddingTop = 4
-				}
-			};
+			DirectoryPathBrowser directoryPathBrowser = new("Export folder", "Choose export folder");
 			directoryPathBrowser.FolderPath = exportSettings?.folderPath ?? string.Empty;
 			directoryPathBrowser.OnFolderFieldValueChanged += OnFolderFieldValueChanged;
 
-			TextField fileNameField = new("File name")
+			fileNameField = new("File name")
 			{
 				style =
 				{
-					paddingLeft = 4,
-					paddingRight = 4,
-					paddingTop = 4
+					marginLeft = 6,
+					marginRight = 6,
+					marginTop = 6
 				}
 			};
 			fileNameField.Children().ToArray()[0].style.minWidth = 100;
-			fileNameField.value = exportSettings?.fileName ?? string.Empty;
-			fileNameField.RegisterValueChangedCallback(OnFileNameFieldValueChanged);
+			fileNameField.value = currentGrid?.fileName ?? string.Empty;
 
 			VisualElement spacer = new();
 			spacer.style.flexGrow = 0.5f;
@@ -111,6 +107,11 @@ namespace ABB.Grid.Editor.Windows
 			guiBuilt = true;
 		}
 
+		private void OnEnable()
+		{
+			EditorWindow.windowFocusChanged += OnWindowFocusChanged;
+		}
+
 		private void OnDisable()
 		{
 			if (!guiBuilt) return;
@@ -120,13 +121,31 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDestroy()
 		{
+			EditorWindow.windowFocusChanged -= OnWindowFocusChanged;
+			EditorApplication.delayCall -= RestoreFocus;
+
+			editorInstance?.tabView.SetEnabled(true);
+
 			if (!guiBuilt) return;
 
 			Save.SaveExportSettingsFile(exportSettings);
-
-			editorInstance?.tabView.SetEnabled(true);
 		}
 
+
+		private void OnWindowFocusChanged()
+		{
+			EditorApplication.delayCall -= RestoreFocus;
+			EditorApplication.delayCall += RestoreFocus;
+		}
+
+		private void RestoreFocus()
+		{
+			if (this == null || editorInstance == null)
+				return;
+
+			if (EditorWindow.focusedWindow == editorInstance)
+				Focus();
+		}
 
 		private void LoadExportSettings()
 		{
@@ -154,10 +173,9 @@ namespace ABB.Grid.Editor.Windows
 			{
 				style =
 				{
-					paddingTop = 4,
-					paddingLeft = 4,
-					paddingRight = 4,
-					paddingBottom = 4
+					marginLeft= 6,
+					marginRight = 6,
+					marginTop = 9
 				},
 			};
 
@@ -228,11 +246,6 @@ namespace ABB.Grid.Editor.Windows
 			exportSettings.folderPath = folderPath.newValue;
 		}
 
-		private void OnFileNameFieldValueChanged(ChangeEvent<string> fileName)
-		{
-			exportSettings.fileName = fileName.newValue;
-		}
-
 		private void Export()
 		{
 			if (string.IsNullOrEmpty(exportSettings.folderPath))
@@ -240,7 +253,7 @@ namespace ABB.Grid.Editor.Windows
 				Debug.LogError("Folder path is null or empty. Please introduce a export path");
 				return;
 			}
-			if (string.IsNullOrEmpty(exportSettings.fileName))
+			if (string.IsNullOrEmpty(fileNameField.text))
 			{
 				Debug.LogError("File name is null or empty. Please introduce a file name");
 				return;
@@ -253,7 +266,7 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				_exporter.ExportGrid(exportSettings.fileName, exportSettings.folderPath, grid.grid);
+				_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid);
 
 				Debug.Log("Grid data exported successfully!");
 			}

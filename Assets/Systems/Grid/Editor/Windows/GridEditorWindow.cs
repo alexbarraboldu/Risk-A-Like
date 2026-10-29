@@ -62,9 +62,7 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
-			//if (session.saveFileIndex >= grids.Length) session.saveFileIndex = -1;
-			//currentGrid = grids.Length != 0 && session.saveFileIndex >= 0 && session.saveFileIndex < grids.Length ? grids[session.saveFileIndex] : new GridData();
-			_editorTab = new("Editor", session, terrainColors, currentGrid, maxGridMemoryAllocation);
+			_editorTab = new("Editor", session, terrainColors, currentGrid, maxGridMemoryAllocation, this);
 			_saveFilesTab = new("Save Files", ref grids);
 
 			///	ADD LOGIC
@@ -85,31 +83,8 @@ namespace ABB.Grid.Editor.Windows
 			else session.saveFileIndex = -1;
 		}
 
-		//private bool _reloading;
-		//private bool _quitting;
-		//private void OnEnable()
-		//{
-		//	_reloading = false;
-		//	_quitting = false;
-
-		//	AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeReload;
-		//	AssemblyReloadEvents.beforeAssemblyReload += OnBeforeReload;
-
-		//	EditorApplication.quitting -= OnEditorQuitting;
-		//	EditorApplication.quitting += OnEditorQuitting;
-		//}
-
-		//private void OnBeforeReload() => _reloading = true;
-		//private void OnEditorQuitting() => _quitting = true;
-
 		private void OnDestroy()
 		{
-			//AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeReload;
-			//EditorApplication.quitting -= OnEditorQuitting;
-
-			//if (_reloading || _quitting)
-			//	return;
-
 			if (!Directory.Exists(Constants.PATH))
 			{
 				Directory.CreateDirectory(Constants.PATH);
@@ -188,7 +163,7 @@ namespace ABB.Grid.Editor.Windows
 			///	CHECK FOR NO NAME
 			if (newFileName == string.Empty)
 			{
-				currentGrid.fileName = "grid_" + grids.Length;
+				newFileName = "grid_" + grids.Length;
 			}
 
 			///	SAVE CURRENT GRID INTO GRIDS

@@ -80,10 +80,6 @@ namespace ABB.Grid.Editor.VisualElements
 			remove => exportGridButton.clicked -= value;
 		}
 		public Action<string> OnNewGrid;
-		//{
-		//	add => newGridButton.clicked += () => { value?.Invoke(gridTextField.value); };
-		//	remove => newGridButton.clicked -= () => { value?.Invoke(gridTextField.value); };
-		//}
 
 
 		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxGridSizeAllocation)
@@ -328,7 +324,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnNewGridButtonClicked()
 		{
-			var windowTextField = TextInputDialog.OpenWindow(
+			TextInputDialog.OpenWindow(
 				"Create new grid",
 				"Grid name",
 				"Create & Edit",
@@ -374,7 +370,7 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			rightTerrainTypeSelector.SetPaletteColor(value, color);
 			if (rightTerrainTypeSelector.Value == value)
-				rightTerrainTypeSelector.SetColor(value, color);
+				rightTerrainTypeSelector.SetColorByValue(value);
 
 			TerrainColor newTerrainColor = new((TerrainType)value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
@@ -383,7 +379,7 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			leftTerrainTypeSelector.SetPaletteColor(value, color);
 			if (leftTerrainTypeSelector.Value == value)
-				leftTerrainTypeSelector.SetColor(value, color);
+				leftTerrainTypeSelector.SetColorByValue(value);
 
 			TerrainColor newTerrainColor = new((TerrainType)value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;

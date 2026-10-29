@@ -95,7 +95,7 @@ namespace ABB.Grid.Editor.VisualElements
 			colorField.RegisterValueChangedCallback(evt =>
 			{
 				TerrainColors[(TerrainType)_value] = evt.newValue;
-				OnColorChanged(_value, evt.newValue);
+				OnColorChanged?.Invoke(_value, evt.newValue);
 			});
 
 			dropdownField.RegisterValueChangedCallback(evt =>
@@ -134,7 +134,7 @@ namespace ABB.Grid.Editor.VisualElements
 			TerrainColors[(TerrainType)value] = color;
 		}
 
-		public void SetColor(int value, Color color)
+		public void SetColorByValue(int value)
 		{
 			colorField.value = TerrainColors[(TerrainType)value];
 		}

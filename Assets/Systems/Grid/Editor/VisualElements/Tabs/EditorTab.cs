@@ -17,7 +17,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private ToolsView _toolsView = null;
 		private CanvasView _canvasView = null;
 
-		private event Action NewGridData;
+		private event Action<string> NewGridData;
 
 
 		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, int maxGridSizeAllocation)
@@ -41,8 +41,8 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.Add(_canvasView);
 
 			///	ADD LOGIC
-			_toolsView.OnLeftTerrainChanged += OnLeftTerrainChanged;
-			_toolsView.OnRightTerrainChanged += OnRightTerrainChanged;
+			_toolsView.OnLeftTerrainChanged += (terrain) => session.leftColor = (uint)terrain;
+			_toolsView.OnRightTerrainChanged += (terrain) => session.rightColor = (uint)terrain;
 			_toolsView.OnLeftColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnRightColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnGridSizeChanged += _canvasView.SetGridSize;
@@ -50,12 +50,13 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnResetGrid += _canvasView.ResetGrid;
 			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
-			_toolsView.OnNewGrid += OnNewGrid;
+			_toolsView.OnNewGrid += (value) => NewGridData?.Invoke(value);
 		}
 
-		public void RegisterCallbackNewGridData(Action action) => NewGridData += action;
 
 		#region ACTIONS
+
+		public void RegisterCallbackNewGridData(Action<string> action) => NewGridData += action;
 
 		private void OnExportGrid()
 		{
@@ -64,15 +65,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			ExportWindow.OpenWindow(currentGrid, gridEditorWindow);
 		}
-
-		private void OnNewGrid()
-		{
-			NewGridData?.Invoke();
-		}
-
-		private void OnLeftTerrainChanged(int terrain) => session.leftColor = (uint)terrain;
-
-		private void OnRightTerrainChanged(int terrain) => session.rightColor = (uint)terrain;
 
 		#endregion
 

@@ -17,7 +17,6 @@ namespace ABB.Grid.Editor.VisualElements
 				SetValueWithoutNotify(value);
 				ValueChanged?.Invoke(_value);
 			}
-
 		}
 
 		public event System.Action<Vector2Int> ValueChanged;

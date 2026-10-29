@@ -69,11 +69,7 @@ namespace ABB.Grid.Editor.Windows
 
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackNewGridData(NewEntry);
-			_saveFilesTab.OnGridDataSelected += _editorTab.LoadGridClicked;
-			_saveFilesTab.OnGridDataSelected += (gridData, index) =>
-			{
-				tabView.activeTab = _editorTab;
-			};
+			_saveFilesTab.OnGridDataSelected += ActivateGrid;
 
 			///	ADD UI
 			rootVisualElement.Add(tabView);
@@ -82,8 +78,47 @@ namespace ABB.Grid.Editor.Windows
 			tabView.contentContainer.Add(_saveFilesTab);
 
 			tabView.activeTab = _editorTab;
+
+			///	RELOAD GRID
+			int index = session.saveFileIndex;
+			if (index >= 0 && index < grids.Length) ActivateGrid(grids[index], index);
+			else session.saveFileIndex = -1;
 		}
 
+		//private bool _reloading;
+		//private bool _quitting;
+		//private void OnEnable()
+		//{
+		//	_reloading = false;
+		//	_quitting = false;
+
+		//	AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeReload;
+		//	AssemblyReloadEvents.beforeAssemblyReload += OnBeforeReload;
+
+		//	EditorApplication.quitting -= OnEditorQuitting;
+		//	EditorApplication.quitting += OnEditorQuitting;
+		//}
+
+		//private void OnBeforeReload() => _reloading = true;
+		//private void OnEditorQuitting() => _quitting = true;
+
+		private void OnDestroy()
+		{
+			//AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeReload;
+			//EditorApplication.quitting -= OnEditorQuitting;
+
+			//if (_reloading || _quitting)
+			//	return;
+
+			if (!Directory.Exists(Constants.PATH))
+			{
+				Directory.CreateDirectory(Constants.PATH);
+				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
+			}
+
+			Save.SaveGridDataFile(grids);
+			EditorApplication.delayCall += ResetSessionIfClosed;
+		}
 
 		private void OnDisable()
 		{
@@ -94,20 +129,15 @@ namespace ABB.Grid.Editor.Windows
 			}
 
 			Save.SaveTerrainColorsFile(terrainColors);
-		}
-
-		private void OnDestroy()
-		{
-			if (!Directory.Exists(Constants.PATH))
-			{
-				Directory.CreateDirectory(Constants.PATH);
-				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
-			}
-
 			Save.SaveSessionFile(session);
-			Save.SaveGridDataFile(grids);
 		}
 
+
+		private static void ResetSessionIfClosed()
+		{
+			if (!EditorWindow.HasOpenInstances<GridEditorWindow>())
+				Save.SaveSessionFile(new());
+		}
 
 		private void LoadAllData()
 		{
@@ -144,17 +174,28 @@ namespace ABB.Grid.Editor.Windows
 			}
 		}
 
-		private void NewEntry()
+		private void ActivateGrid(GridData grid, int index)
+		{
+			currentGrid = grid;
+			session.saveFileIndex = index;
+
+			_editorTab.LoadGridClicked(grid, index);
+			tabView.activeTab = _editorTab;
+		}
+
+		private void NewEntry(string newFileName)
 		{
 			///	CHECK FOR NO NAME
-			///	Could disable NewGrid button (?)
-			if (currentGrid.fileName == string.Empty)
+			if (newFileName == string.Empty)
+			{
 				currentGrid.fileName = "grid_" + grids.Length;
+			}
 
 			///	SAVE CURRENT GRID INTO GRIDS
 			int index = session.saveFileIndex;
 			if (session.saveFileIndex < 0)
 			{
+				currentGrid.fileName = newFileName;
 				index = grids.Length;
 				Array.Resize(ref grids, index + 1);
 			}
@@ -164,9 +205,12 @@ namespace ABB.Grid.Editor.Windows
 			if (session.saveFileIndex != -1)
 			{
 				currentGrid = new();
-				index++;
+				currentGrid.fileName = newFileName;
+				index = grids.Length;
 				Array.Resize(ref grids, index + 1);
 				grids[index] = currentGrid;
+
+				_editorTab.LoadGridClicked(currentGrid, index);
 			}
 			session.saveFileIndex = index;
 

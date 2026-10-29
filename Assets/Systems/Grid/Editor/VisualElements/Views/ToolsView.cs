@@ -2,6 +2,9 @@ using System;
 
 using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
+using ABB.Grid.Editor.Windows;
+
+using UnityEditor;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -28,7 +31,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private Button exportGridButton = null;
 		private Button newGridButton = null;
 
-		private TextField gridTextField = null;
+		private Label gridTextLabel = null;
 
 		///	ACTIONS
 		public event Action<int, Color> OnLeftColorChanged
@@ -76,23 +79,23 @@ namespace ABB.Grid.Editor.VisualElements
 			add => exportGridButton.clicked += value;
 			remove => exportGridButton.clicked -= value;
 		}
-		public event Action OnNewGrid
-		{
-			add => newGridButton.clicked += value;
-			remove => newGridButton.clicked -= value;
-		}
+		public Action<string> OnNewGrid;
+		//{
+		//	add => newGridButton.clicked += () => { value?.Invoke(gridTextField.value); };
+		//	remove => newGridButton.clicked -= () => { value?.Invoke(gridTextField.value); };
+		//}
 
 
 		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxGridSizeAllocation)
 		{
-			BuildUI(maxGridSizeAllocation);
-			AddStyle();
-			AddLogic();
-
 			///	INJECT DATA
 			this.session = session;
 			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
+
+			BuildUI(maxGridSizeAllocation);
+			AddStyle();
+			AddLogic();
 
 			leftTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
 			rightTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
@@ -241,9 +244,9 @@ namespace ABB.Grid.Editor.VisualElements
 			newGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Toolbar Plus").image;
 			///-------------------
 
-			///	Grid Text Field
-			gridTextField = new();
-			gridTextField.style.alignSelf = Align.Stretch;
+			///	Grid Text Label
+			gridTextLabel = new(currentGrid.fileName == string.Empty ? "No grid loaded" : currentGrid.fileName);
+			gridTextLabel.style.alignSelf = Align.Stretch;
 
 			///	ADD TO UI
 			Add(rootOptionsElement);
@@ -284,7 +287,7 @@ namespace ABB.Grid.Editor.VisualElements
 			VisualElement rightButtonsParent = new();
 			rightButtonsParent.style.flexDirection = FlexDirection.Row;
 
-			rightOptionsElement.Add(gridTextField);
+			rightOptionsElement.Add(gridTextLabel);
 			rightOptionsElement.Add(rightButtonsParent);
 
 			rightButtonsParent.Add(newGridButton);
@@ -320,30 +323,40 @@ namespace ABB.Grid.Editor.VisualElements
 
 			exportGridButton.SetEnabled(false);
 
-			OnNewGrid += () =>
-			{
-				gridSizeField.SetEnabled(true);
-
-				eraserButton.SetEnabled(true);
-				resetGridButton.SetEnabled(true);
-				fillGridButton.SetEnabled(true);
-
-				exportGridButton.SetEnabled(true);
-			};
-
-			gridTextField.isDelayed = true;
-			gridTextField.RegisterValueChangedCallback(evt =>
-			{
-				currentGrid.fileName = evt.newValue;
-			});
+			newGridButton.clicked += OnNewGridButtonClicked;
 		}
 
+		private void OnNewGridButtonClicked()
+		{
+			var windowTextField = TextInputDialog.OpenWindow(
+				"Create new grid",
+				"Grid name",
+				"Create & Edit",
+				EditorWindow.GetWindow<GridEditorWindow>().position,
+				OnNewGridConfirmed
+				);
+		}
+
+		private void OnNewGridConfirmed(string value)
+		{
+			gridSizeField.SetEnabled(true);
+
+			eraserButton.SetEnabled(true);
+			resetGridButton.SetEnabled(true);
+			fillGridButton.SetEnabled(true);
+
+			exportGridButton.SetEnabled(true);
+
+			gridTextLabel.text = value;
+
+			OnNewGrid?.Invoke(value);
+		}
 
 		public void SetCurrentGrid(GridData currentGrid)
 		{
 			this.currentGrid = currentGrid;
 			gridSizeField.Value = new Vector2Int(currentGrid.columns, currentGrid.rows);
-			gridTextField.value = currentGrid.fileName;
+			gridTextLabel.text = currentGrid.fileName;
 
 			gridSizeField.SetEnabled(true);
 

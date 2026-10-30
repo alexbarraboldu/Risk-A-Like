@@ -4,8 +4,6 @@ using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
 
-using UnityEditor;
-
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -17,6 +15,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private SessionData session = null;
 		private GridData currentGrid = null;
 		private TerrainColorData terrainColors = null;
+
+		private readonly GridEditorWindow owner = null;
 
 		///	VISUAL ELEMENTS
 		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
@@ -79,17 +79,19 @@ namespace ABB.Grid.Editor.VisualElements
 			add => exportGridButton.clicked += value;
 			remove => exportGridButton.clicked -= value;
 		}
-		public Action<string> OnNewGrid;
+		public event Action<string> OnNewGrid;
 
 
-		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxGridSizeAllocation)
+		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, GridEditorWindow owner, int maxVector2IntFieldSize)
 		{
 			///	INJECT DATA
 			this.session = session;
 			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
 
-			BuildUI(maxGridSizeAllocation);
+			this.owner = owner;
+
+			BuildUI(maxVector2IntFieldSize);
 			AddStyle();
 			AddLogic();
 
@@ -101,7 +103,7 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		private void BuildUI(int maxGridSizeAllocation)
+		private void BuildUI(int maxVector2IntFieldSize)
 		{
 			name = "tools_view";
 
@@ -131,7 +133,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", maxGridSizeAllocation, false);
+			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
 			gridSizeField.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
 			gridSizeField.Q("vector2int-field").style.flexGrow = 1;
 
@@ -311,13 +313,7 @@ namespace ABB.Grid.Editor.VisualElements
 					eraserButton.style.backgroundColor = Color.gray5;
 			};
 
-			gridSizeField.SetEnabled(false);
-
-			eraserButton.SetEnabled(false);
-			resetGridButton.SetEnabled(false);
-			fillGridButton.SetEnabled(false);
-
-			exportGridButton.SetEnabled(false);
+			SetEnableUI(false);
 
 			newGridButton.clicked += OnNewGridButtonClicked;
 		}
@@ -328,39 +324,36 @@ namespace ABB.Grid.Editor.VisualElements
 				"Create new grid",
 				"Grid name",
 				"Create & Edit",
-				EditorWindow.GetWindow<GridEditorWindow>().position,
+				owner.position,
 				OnNewGridConfirmed
 				);
 		}
 
 		private void OnNewGridConfirmed(string value)
 		{
-			gridSizeField.SetEnabled(true);
-
-			eraserButton.SetEnabled(true);
-			resetGridButton.SetEnabled(true);
-			fillGridButton.SetEnabled(true);
-
-			exportGridButton.SetEnabled(true);
-
-			gridTextLabel.text = value;
+			SetEnableUI(true);
 
 			OnNewGrid?.Invoke(value);
+		}
+
+		private void SetEnableUI(bool value)
+		{
+			gridSizeField.SetEnabled(value);
+
+			eraserButton.SetEnabled(value);
+			resetGridButton.SetEnabled(value);
+			fillGridButton.SetEnabled(value);
+
+			exportGridButton.SetEnabled(value);
 		}
 
 		public void SetCurrentGrid(GridData currentGrid)
 		{
 			this.currentGrid = currentGrid;
-			gridSizeField.Value = new Vector2Int(currentGrid.columns, currentGrid.rows);
+			gridSizeField.SetValueWithoutNotify(new Vector2Int(currentGrid.columns, currentGrid.rows));
 			gridTextLabel.text = currentGrid.fileName;
 
-			gridSizeField.SetEnabled(true);
-
-			eraserButton.SetEnabled(true);
-			resetGridButton.SetEnabled(true);
-			fillGridButton.SetEnabled(true);
-
-			exportGridButton.SetEnabled(true);
+			SetEnableUI(!(currentGrid.fileName == string.Empty));
 		}
 
 		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;

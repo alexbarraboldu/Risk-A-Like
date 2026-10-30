@@ -34,7 +34,7 @@ namespace ABB.Grid.Editor.VisualElements
 			typeFieldDisplay = new TypeFieldDisplay();
 
 			typeFieldSelector = new TypeFieldSelector(typeof(T));
-
+			typeFieldSelector.RegisterValueChanged((monoScript) => typeFieldDisplay.OnMonoScriptChanged(monoScript?.name ?? string.Empty));
 
 			AddToClassList("unity-base-field");
 			AddToClassList("unity-object-field");
@@ -53,15 +53,7 @@ namespace ABB.Grid.Editor.VisualElements
 			displaySelectorParent.Add(typeFieldSelector);
 		}
 
-		public bool RegisterValueChanged(Action<MonoScript> action)
-		{
-			if (action == null) return false;
-
-			typeFieldSelector.RegisterValueChanged(action);
-			typeFieldSelector.RegisterValueChanged((monoScript) => typeFieldDisplay.OnMonoScriptChanged(monoScript?.name ?? string.Empty));
-
-			return true;
-		}
+		public void RegisterValueChanged(Action<MonoScript> action) => typeFieldSelector.RegisterValueChanged(action);
 
 		public void SetTypeName(string typeName)
 		{
@@ -91,9 +83,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 			public TypeFieldDisplay(string text)
 			{
-				Initialize();
-
 				this.text = text;
+
+				Initialize();
 			}
 
 

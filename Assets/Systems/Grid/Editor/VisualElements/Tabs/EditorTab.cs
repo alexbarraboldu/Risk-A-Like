@@ -9,18 +9,23 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class EditorTab : Tab
 	{
+		///	DATA
 		private SessionData session = null;
 		private GridData currentGrid = null;
 
+		private GridEditorWindow owner = null;
+
+		///	VISUAL ELEMENTS
 		private ToolsView _toolsView = null;
 		private CanvasView _canvasView = null;
 
+		///	FIELDS
+		private int maxVector2IntFieldSize = 0;
+
 		private event Action<string> NewGridData;
 
-		private GridEditorWindow gridEditorWindow = null;
 
-
-		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, int maxGridSizeAllocation, GridEditorWindow gridEditorWindow)
+		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, GridEditorWindow owner, int maxVector2IntFieldSize)
 		{
 			base.label = label;
 			closeable = false;
@@ -32,9 +37,14 @@ namespace ABB.Grid.Editor.VisualElements
 			this.session = session;
 			this.currentGrid = currentGrid;
 
+			this.owner = owner;
+
+			this.maxVector2IntFieldSize = maxVector2IntFieldSize;
+			ValidateGridSize();
+
 			///	CREATE UI
-			_toolsView = new(session, currentGrid, terrainColors, maxGridSizeAllocation);
-			_canvasView = new(session, currentGrid, terrainColors);
+			_toolsView = new(session, this.currentGrid, terrainColors, owner, maxVector2IntFieldSize);
+			_canvasView = new(session, this.currentGrid, terrainColors);
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -51,8 +61,6 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnFillGrid += _canvasView.FillGrid;
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnNewGrid += (value) => NewGridData?.Invoke(value);
-
-			this.gridEditorWindow = gridEditorWindow;
 		}
 
 
@@ -62,20 +70,31 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnExportGrid()
 		{
-			gridEditorWindow.tabView.SetEnabled(false);
+			owner.tabView.SetEnabled(false);
 
-			ExportWindow.OpenWindow(currentGrid, gridEditorWindow);
+			ExportWindow.OpenWindow(currentGrid, owner);
 		}
 
 		#endregion
 
-		public void LoadGridClicked(GridData newGrid, int index)
+		public void LoadGrid(GridData newGrid, int index)
 		{
-			this.currentGrid = newGrid;
+			currentGrid = newGrid;
 			session.saveFileIndex = index;
 
-			_canvasView.SetCurrentGrid(newGrid);
-			_toolsView.SetCurrentGrid(newGrid);
+			ValidateGridSize();
+
+			_canvasView.SetCurrentGrid(currentGrid);
+			_toolsView.SetCurrentGrid(currentGrid);
+		}
+
+		private void ValidateGridSize()
+		{
+			if (currentGrid.columns > maxVector2IntFieldSize)
+				currentGrid.columns = maxVector2IntFieldSize;
+
+			if (currentGrid.rows > maxVector2IntFieldSize)
+				currentGrid.rows = maxVector2IntFieldSize;
 		}
 	}
 }

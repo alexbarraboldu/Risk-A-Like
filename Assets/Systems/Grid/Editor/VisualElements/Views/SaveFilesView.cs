@@ -18,7 +18,7 @@ namespace ABB.Grid.Editor.VisualElements
 		public event Action<GridData, int> OnGridDataSelected;
 
 
-		public SaveFilesView(ref GridData[] gridsData)
+		public SaveFilesView(GridData[] gridsData)
 		{
 			this.grids = gridsData;
 
@@ -67,15 +67,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			listView.itemsSource = gridsData;
 			listView.RefreshItems();
-		}
-
-
-		public void LoadGridData(out GridData gridSave, out int index)
-		{
-			int selectedIndex = 0;
-
-			gridSave = grids[selectedIndex];
-			index = selectedIndex;
 		}
 
 		public void SetEntries(GridData[] grids)

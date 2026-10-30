@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 
 using UnityEditor;
 
@@ -38,7 +37,7 @@ public class DirectoryPathBrowser : VisualElement
 		textField.style.marginRight = 0;
 		textField.style.flexGrow = 1;
 		textField.style.flexShrink = 1;
-		textField.Children().ToArray()[0].style.minWidth = 100;
+		textField.labelElement.style.minWidth = 100;
 
 		browseButton = new Button(OnBrowseClick);
 		browseButton.text = "Browse...";

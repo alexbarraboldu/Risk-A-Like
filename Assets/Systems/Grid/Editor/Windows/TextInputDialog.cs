@@ -66,8 +66,7 @@ internal class TextInputDialog : EditorWindow
 		textField.style.marginRight = 8;
 		textField.style.alignSelf = Align.Stretch;
 
-		Label label = textField.Q<Label>();
-		label.style.minWidth = 68;
+		textField.labelElement.style.minWidth = 68;
 
 		///	CREATE BUTTON
 		acceptButton.style.marginLeft = 8;
@@ -76,7 +75,7 @@ internal class TextInputDialog : EditorWindow
 		acceptButton.style.minHeight = 30;
 		acceptButton.style.justifyContent = Justify.Center;
 
-		label = acceptButton.Q<Label>();
+		Label label = acceptButton.Q<Label>();
 		label.style.fontSize = 18;
 	}
 

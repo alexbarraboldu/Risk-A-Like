@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
@@ -60,7 +59,7 @@ namespace ABB.Grid.Editor.Windows
 					marginTop = 6
 				}
 			};
-			fileNameField.Children().ToArray()[0].style.minWidth = 100;
+			fileNameField.Q<Label>().style.minWidth = 100;
 			fileNameField.value = currentGrid?.fileName ?? string.Empty;
 
 			VisualElement spacer = new();
@@ -266,9 +265,14 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid);
+				if (_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid))
+					Debug.Log("Grid data exported successfully!");
+				else
+				{
+					Debug.LogError("Grid export failed");
+					return;
+				}
 
-				Debug.Log("Grid data exported successfully!");
 			}
 			catch (Exception exception)
 			{

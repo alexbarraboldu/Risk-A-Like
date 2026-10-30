@@ -7,23 +7,36 @@ using UnityEditor;
 
 using UnityEngine;
 
-public class GridExporter : MonoScript, IExportGrid
+public class GridExporter : IExportGrid
 {
-	public void ExportGrid(string fileName, string path, int[][] grid)
+	public bool ExportGrid(string fileName, string path, int[][] grid)
 	{
-		GridTerrainDataSO gridData = ScriptableObject.CreateInstance<GridTerrainDataSO>();
-		gridData.terrainData = ParseGrid(grid);
-
 		string relativePath = FileUtil.GetProjectRelativePath(path);
-		string finalPath = Path.Combine(relativePath, fileName + ".asset");
-
 		if (!AssetDatabase.AssetPathExists(relativePath))
 		{
 			Debug.LogError($"Asset path does not exists. {relativePath}");
-			return;
+
+			return false;
 		}
 
-		AssetDatabase.CreateAsset(gridData, finalPath);
+		GridTerrainDataSO gridData = ScriptableObject.CreateInstance<GridTerrainDataSO>();
+		gridData.terrainData = ParseGrid(grid);
+
+		string finalPath = Path.Combine(relativePath, fileName + ".asset");
+
+		try
+		{
+			AssetDatabase.CreateAsset(gridData, finalPath);
+		}
+		catch
+		{
+			Object.DestroyImmediate(gridData);
+			Debug.LogError($"Failed on AssetDatabase.CreateAsset. Could not create {fileName}.asset");
+
+			return false;
+		}
+
+		return true;
 	}
 
 	private int[][] ParseGrid(int[][] grid)

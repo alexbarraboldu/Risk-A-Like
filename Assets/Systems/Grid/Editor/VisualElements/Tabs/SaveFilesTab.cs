@@ -18,12 +18,12 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 
-		public SaveFilesTab(string label, ref GridData[] gridSaves)
+		public SaveFilesTab(string label, GridData[] gridSaves)
 		{
 			base.label = label;
 			closeable = false;
 
-			_saveFilesView = new(ref gridSaves);
+			_saveFilesView = new(gridSaves);
 
 			Add(_saveFilesView);
 		}

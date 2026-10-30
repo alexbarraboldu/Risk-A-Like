@@ -6,9 +6,9 @@ namespace ABB.Grid.Editor.Utils
 	///	FileStream.Flush(true), File.Repalce
 	public class BinarySerialization
 	{
-		public static void WriteToBinary<T>(string filePath, T objectToWrite, bool append = false)
+		public static void WriteToBinary<T>(string filePath, T objectToWrite)
 		{
-			using (Stream stream = File.Open(filePath, append ? FileMode.Append : FileMode.Create, FileAccess.Write))
+			using (Stream stream = File.Open(filePath, FileMode.Create, FileAccess.Write))
 			{
 				var binaryFormatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
 				binaryFormatter.Serialize(stream, objectToWrite);

@@ -5,8 +5,9 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class Vector2IntField : VisualElement
 	{
-		private bool allowNegativeValues;
 		private int maxIntegerSize = 0;
+
+		private bool allowNegativeValues;
 
 		private Vector2Int _value;
 		public Vector2Int Value
@@ -28,18 +29,21 @@ namespace ABB.Grid.Editor.VisualElements
 		private IntegerField yField;
 
 
-		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y", int maxVectorSizeAllocation = 256, bool allowNegativeValues = true)
+		public Vector2IntField(string label = "Vector2Int", string xLabel = "X", string yLabel = "Y", bool allowNegativeValues = true, int maxIntegerSize = 256)
 		{
 			this.allowNegativeValues = allowNegativeValues;
 
-			long maxVectorCount = (long)maxVectorSizeAllocation * 1_000_000 / sizeof(int);
-			maxIntegerSize = (int)System.Math.Sqrt(maxVectorCount);
+			if (maxIntegerSize < 0)
+			{
+				maxIntegerSize = 256;
+				Debug.LogError("maxIntegerSize cannot be negative. The default value (256) has been assigned");
+			}
+			this.maxIntegerSize = maxIntegerSize;
 
 			BuildUI(label, xLabel, yLabel);
 
 			AddLogic();
 		}
-
 
 		private void BuildUI(string label, string xLabel, string yLabel)
 		{
@@ -59,8 +63,8 @@ namespace ABB.Grid.Editor.VisualElements
 			xField.value = Value.x;
 			yField.value = Value.y;
 
-			ConfigureIntegerField(xField, 70, 140);
-			ConfigureIntegerField(yField, 70, 140);
+			ConfigureIntegerField(xField, 70);
+			ConfigureIntegerField(yField, 70);
 
 
 			fieldsContainer.Add(xField);
@@ -77,14 +81,18 @@ namespace ABB.Grid.Editor.VisualElements
 
 			xField.RegisterValueChangedCallback(evt =>
 			{
+				Vector2 previousValue = _value;
 				SetValueWithoutNotify(new Vector2Int(evt.newValue, Value.y));
-				ValueChanged?.Invoke(_value);
+
+				if (previousValue != _value) ValueChanged?.Invoke(_value);
 			});
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
+				Vector2 previousValue = _value;
 				SetValueWithoutNotify(new Vector2Int(Value.x, evt.newValue));
-				ValueChanged?.Invoke(_value);
+
+				if (previousValue != _value) ValueChanged?.Invoke(_value);
 			});
 		}
 
@@ -100,7 +108,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_value.y = y;
 		}
 
-		private static void ConfigureIntegerField(IntegerField field, float labelWidth, float totalWidth)
+		private static void ConfigureIntegerField(IntegerField field, float labelWidth)
 		{
 			field.labelElement.style.width = labelWidth;
 			field.labelElement.style.minWidth = labelWidth;

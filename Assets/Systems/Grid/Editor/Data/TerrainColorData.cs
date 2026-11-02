@@ -19,7 +19,7 @@ namespace ABB.Grid.Editor.Data
 
 			for (int i = 0; i < size; i++)
 			{
-				terrainColors[i] = new TerrainColor((TerrainType)i, Color.black);
+				terrainColors[i] = new TerrainColor(i, Color.black);
 			}
 		}
 	}
@@ -35,9 +35,9 @@ namespace ABB.Grid.Editor.Data
 
 		public Color color => new Color(r, g, b, a);
 
-		public TerrainColor(TerrainType terrain, Color color)
+		public TerrainColor(int terrain, Color color)
 		{
-			this.terrain = (int)terrain;
+			this.terrain = terrain;
 			this.r = color.r;
 			this.g = color.g;
 			this.b = color.b;

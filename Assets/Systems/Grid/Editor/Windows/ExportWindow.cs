@@ -59,7 +59,7 @@ namespace ABB.Grid.Editor.Windows
 					marginTop = 6
 				}
 			};
-			fileNameField.Q<Label>().style.minWidth = 100;
+			fileNameField.labelElement.style.minWidth = 100;
 			fileNameField.value = currentGrid?.fileName ?? string.Empty;
 
 			VisualElement spacer = new();
@@ -77,19 +77,10 @@ namespace ABB.Grid.Editor.Windows
 					maxWidth = 100,
 					minHeight = 50,
 					maxHeight = 50,
-				}
-			};
-
-			Label exportGridButtonLabel = new("Export")
-			{
-				style =
-				{
-					flexGrow = 1,
 					fontSize = 24
-				}
+				},
+				text = "Export",
 			};
-
-			exportButton.Add(exportGridButtonLabel);
 
 			exportButton.clicked += Export;
 
@@ -101,7 +92,7 @@ namespace ABB.Grid.Editor.Windows
 			rootVisualElement.Add(exportButton);
 
 			bool exporterExists = RestoreExporterInstance(typeField);
-			exportButton.SetEnabled(exporterExists);
+			exportButton.SetEnabled(exporterExists && !string.IsNullOrEmpty(exportSettings.folderPath));
 
 			guiBuilt = true;
 		}
@@ -113,6 +104,9 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDisable()
 		{
+			EditorWindow.windowFocusChanged -= OnWindowFocusChanged;
+			EditorApplication.delayCall -= RestoreFocus;
+
 			if (!guiBuilt) return;
 
 			Save.SaveExportSettingsFile(exportSettings);
@@ -120,9 +114,6 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDestroy()
 		{
-			EditorWindow.windowFocusChanged -= OnWindowFocusChanged;
-			EditorApplication.delayCall -= RestoreFocus;
-
 			editorInstance?.tabView.SetEnabled(true);
 
 			if (!guiBuilt) return;
@@ -181,7 +172,10 @@ namespace ABB.Grid.Editor.Windows
 			typeField.RegisterValueChanged((monoScript) =>
 			{
 				bool exporterExists = CreateExporterInstance(monoScript?.GetClass());
-				exportButton.SetEnabled(exporterExists);
+				if (exporterExists)
+					Debug.Log($"Successfully assigned {_exporter} as the exporter");
+
+				exportButton.SetEnabled(exporterExists && !string.IsNullOrEmpty(exportSettings.folderPath));
 			});
 
 			return typeField;
@@ -207,8 +201,6 @@ namespace ABB.Grid.Editor.Windows
 			{
 				_exporter = (IExportGrid)Activator.CreateInstance(type);
 				exportSettings.assemblyQualifiedName = _exporter.GetType().AssemblyQualifiedName;
-
-				Debug.Log($"Successfully assigned {type} as the exporter");
 
 				return true;
 			}
@@ -243,6 +235,8 @@ namespace ABB.Grid.Editor.Windows
 		private void OnFolderFieldValueChanged(ChangeEvent<string> folderPath)
 		{
 			exportSettings.folderPath = folderPath.newValue;
+
+			exportButton.SetEnabled(_exporter != null && !string.IsNullOrEmpty(exportSettings.folderPath));
 		}
 
 		private void Export()

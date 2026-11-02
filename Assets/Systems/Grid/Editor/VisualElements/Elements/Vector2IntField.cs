@@ -15,8 +15,9 @@ namespace ABB.Grid.Editor.VisualElements
 			get => _value;
 			set
 			{
+				Vector2Int previousValue = _value;
 				SetValueWithoutNotify(value);
-				ValueChanged?.Invoke(_value);
+				if (previousValue != _value) ValueChanged?.Invoke(_value);
 			}
 		}
 
@@ -81,7 +82,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			xField.RegisterValueChangedCallback(evt =>
 			{
-				Vector2 previousValue = _value;
+				Vector2Int previousValue = _value;
 				SetValueWithoutNotify(new Vector2Int(evt.newValue, Value.y));
 
 				if (previousValue != _value) ValueChanged?.Invoke(_value);
@@ -89,7 +90,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			yField.RegisterValueChangedCallback(evt =>
 			{
-				Vector2 previousValue = _value;
+				Vector2Int previousValue = _value;
 				SetValueWithoutNotify(new Vector2Int(Value.x, evt.newValue));
 
 				if (previousValue != _value) ValueChanged?.Invoke(_value);

@@ -14,19 +14,22 @@ public class GridExporter : IExportGrid
 		string relativePath = FileUtil.GetProjectRelativePath(path);
 		if (!AssetDatabase.AssetPathExists(relativePath))
 		{
-			Debug.LogError($"Asset path does not exists. {relativePath}");
+			Debug.LogError($"Path must be inside Assets directory.");
 
 			return false;
 		}
 
-		GridTerrainDataSO gridData = ScriptableObject.CreateInstance<GridTerrainDataSO>();
-		gridData.terrainData = ParseGrid(grid);
-
-		string finalPath = Path.Combine(relativePath, fileName + ".asset");
-
+		GridTerrainDataSO gridData = null;
 		try
 		{
+			gridData = ScriptableObject.CreateInstance<GridTerrainDataSO>();
+			gridData.terrainData = ParseGrid(grid);
+
+			string finalPath = Path.Combine(relativePath, fileName + ".asset");
+
 			AssetDatabase.CreateAsset(gridData, finalPath);
+
+			return true;
 		}
 		catch
 		{
@@ -35,8 +38,11 @@ public class GridExporter : IExportGrid
 
 			return false;
 		}
-
-		return true;
+		finally
+		{
+			if (gridData != null && !EditorUtility.IsPersistent(gridData))
+				UnityEngine.Object.DestroyImmediate(gridData);
+		}
 	}
 
 	private int[][] ParseGrid(int[][] grid)

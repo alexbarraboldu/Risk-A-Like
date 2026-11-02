@@ -15,8 +15,10 @@ internal class TextInputDialog : EditorWindow
 
 	private event Action<string> OnAccept;
 
+	public bool acceptBlankInput = true;
 
-	public static TextInputDialog OpenWindow(string titleContent, string textLabel, string buttonLabel, Rect parentWindowPosition, Action<string> onAccept)
+
+	public static TextInputDialog OpenWindow(string titleContent, string textLabel, string buttonLabel, Rect parentWindowPosition, Action<string> onAccept, bool acceptBlankInput = true)
 	{
 		TextInputDialog window = CreateInstance<TextInputDialog>();
 		window.titleContent = new GUIContent(titleContent);
@@ -29,6 +31,8 @@ internal class TextInputDialog : EditorWindow
 		window.buttonLabel = buttonLabel;
 
 		window.OnAccept += onAccept;
+
+		window.acceptBlankInput = acceptBlankInput;
 
 		window.ShowModalUtility();
 
@@ -81,7 +85,14 @@ internal class TextInputDialog : EditorWindow
 
 	private void AddLogic()
 	{
+		acceptButton.SetEnabled(acceptBlankInput);
 		acceptButton.clicked += OnAcceptButtonClicked;
+
+		textField.RegisterValueChangedCallback(evt =>
+		{
+			if (!acceptBlankInput)
+				acceptButton.SetEnabled(evt.newValue != string.Empty);
+		});
 	}
 
 	private void OnAcceptButtonClicked()

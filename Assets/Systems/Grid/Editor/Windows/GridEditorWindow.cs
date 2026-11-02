@@ -61,7 +61,7 @@ namespace ABB.Grid.Editor.Windows
 			int maxVector2IntFieldSize = CalculateVector2IntFieldMaxIntegerSize(maxMemoryAllocationMB);
 
 			_editorTab = new("Editor", session, terrainColors, currentGrid, this, maxVector2IntFieldSize);
-			_saveFilesTab = new("Save Files", ref grids);
+			_saveFilesTab = new("Save Files", grids);
 
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackNewGridData(NewEntry);

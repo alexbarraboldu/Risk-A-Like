@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
 
 using UnityEditor.UIElements;
@@ -13,7 +12,7 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ColorSelectorDropdown<E> : VisualElement where E : Enum
 	{
-		public Dictionary<TerrainType, Color> TerrainColors { get; private set; }
+		public Dictionary<int, Color> PaletteColors { get; private set; }
 
 		private int _value;
 		public int Value
@@ -25,7 +24,7 @@ namespace ABB.Grid.Editor.VisualElements
 				if (_value == value) return;
 
 				_value = value;
-				colorField.value = TerrainColors[(TerrainType)value];
+				colorField.value = PaletteColors[value];
 				dropdownField.index = value;
 				OnValueChanged?.Invoke(value);
 			}
@@ -94,13 +93,13 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			colorField.RegisterValueChangedCallback(evt =>
 			{
-				TerrainColors[(TerrainType)_value] = evt.newValue;
+				PaletteColors[_value] = evt.newValue;
 				OnColorChanged?.Invoke(_value, evt.newValue);
 			});
 
 			dropdownField.RegisterValueChangedCallback(evt =>
 			{
-				Value = (int)dropdownField.index;
+				Value = dropdownField.index;
 			});
 
 			dropdownField.RegisterCallback<TooltipEvent>(evt =>
@@ -114,29 +113,28 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void SetColorsPalette(TerrainColor[] terrainColors)
 		{
-			TerrainColors = new();
+			PaletteColors = new();
 
 			for (int i = 0; i < terrainColors.Length; i++)
 			{
 				TerrainColor terrainColor = terrainColors[i];
 				Color color = new Color(terrainColor.r, terrainColor.g, terrainColor.b, terrainColor.a);
-				TerrainType terrain = (TerrainType)terrainColor.terrain;
 
-				TerrainColors.TryAdd(terrain, color);
+				PaletteColors.TryAdd(terrainColor.terrain, color);
 			}
 
-			if (TerrainColors.Count != 0)
-				colorField.value = TerrainColors[(TerrainType)_value];
+			if (PaletteColors.Count != 0)
+				colorField.value = PaletteColors[_value];
 		}
 
 		public void SetPaletteColor(int value, Color color)
 		{
-			TerrainColors[(TerrainType)value] = color;
+			PaletteColors[value] = color;
 		}
 
 		public void SetColorByValue(int value)
 		{
-			colorField.value = TerrainColors[(TerrainType)value];
+			colorField.value = PaletteColors[value];
 		}
 	}
 }

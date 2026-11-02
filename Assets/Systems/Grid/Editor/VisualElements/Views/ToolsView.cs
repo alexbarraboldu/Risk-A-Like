@@ -107,20 +107,13 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			name = "tools_view";
 
-			VisualElement rootOptionsElement = new()
-			{
-				name = "tools-view--root",
-				style =
-				{
-					flexDirection = FlexDirection.Row,
-					paddingLeft = 4,
-					paddingTop = 4,
-					paddingBottom = 4,
-					paddingRight = 4,
-					backgroundColor = Color.gray4,
-					alignItems = Align.Center
-				}
-			};
+			style.flexDirection = FlexDirection.Row;
+			style.paddingLeft = 4;
+			style.paddingTop = 4;
+			style.paddingBottom = 4;
+			style.paddingRight = 4;
+			style.backgroundColor = Color.gray4;
+			style.alignItems = Align.Center;
 
 			VisualElement leftOptionsElement = new()
 			{
@@ -247,10 +240,8 @@ namespace ABB.Grid.Editor.VisualElements
 			gridTextLabel.style.alignSelf = Align.Stretch;
 
 			///	ADD TO UI
-			Add(rootOptionsElement);
-
 			///	Left
-			rootOptionsElement.Add(leftOptionsElement);
+			Add(leftOptionsElement);
 
 			VisualElement rowSelectorParent = new();
 			rowSelectorParent.style.flexDirection = FlexDirection.Row;
@@ -277,10 +268,10 @@ namespace ABB.Grid.Editor.VisualElements
 			leftOptionsElement.Add(rowGridSizeDeleteParent);
 
 			///	Middle
-			rootOptionsElement.Add(middleOptionsElement);
+			Add(middleOptionsElement);
 
 			///	Right
-			rootOptionsElement.Add(rightOptionsElement);
+			Add(rightOptionsElement);
 
 			VisualElement rightButtonsParent = new();
 			rightButtonsParent.style.flexDirection = FlexDirection.Row;
@@ -325,7 +316,8 @@ namespace ABB.Grid.Editor.VisualElements
 				"Grid name",
 				"Create & Edit",
 				owner.position,
-				OnNewGridConfirmed
+				OnNewGridConfirmed,
+				false
 				);
 		}
 
@@ -365,7 +357,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (rightTerrainTypeSelector.Value == value)
 				rightTerrainTypeSelector.SetColorByValue(value);
 
-			TerrainColor newTerrainColor = new((TerrainType)value, color);
+			TerrainColor newTerrainColor = new(value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 		private void RightSelectorColorChanged(int value, Color color)
@@ -374,7 +366,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (leftTerrainTypeSelector.Value == value)
 				leftTerrainTypeSelector.SetColorByValue(value);
 
-			TerrainColor newTerrainColor = new((TerrainType)value, color);
+			TerrainColor newTerrainColor = new(value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 	}

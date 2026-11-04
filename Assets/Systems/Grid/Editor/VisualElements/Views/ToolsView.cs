@@ -304,6 +304,14 @@ namespace ABB.Grid.Editor.VisualElements
 					eraserButton.style.backgroundColor = Color.gray5;
 			};
 
+			fillGridButton.clicked += () =>
+			{
+				if (fillGridButton.style.backgroundColor == Color.gray5)
+					fillGridButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				else
+					fillGridButton.style.backgroundColor = Color.gray5;
+			};
+
 			SetEnableUI(false);
 
 			newGridButton.clicked += OnNewGridButtonClicked;

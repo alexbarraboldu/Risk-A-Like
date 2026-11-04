@@ -2,6 +2,8 @@ using System;
 
 using ABB.Grid.Editor.Data;
 
+using Unity.Collections.LowLevel.Unsafe;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,16 +11,18 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class CanvasView : VisualElement
 	{
+		///	DATA
 		private SessionData session = null;
 		private GridData currentGrid = new();
 		private TerrainColorData terrainColors = null;
 
 		public Vector2Int GridSize => new(currentGrid.columns, currentGrid.rows);
 
-
-		private bool _deleteCell;
+		private bool isRenderEnabled = true;
+		private bool isErasing = false;
+		private bool isFilling = false;
 		private bool isPainting = false;
-		private int button = -1;
+		private int mouseButton = -1;
 
 		private Vector2 gridPosition = Vector2.zero;
 		private Vector2 localMousePosition = Vector2.zero;
@@ -29,6 +33,107 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float yOffset = 0.4330127f;
 		private const float cellWidth = 1;
 		private const float cellHeight = yOffset * 2f;
+
+		private long totalMemorySizeKiloBytes = 0;
+		private long totalMemorySizeMegaBytes = 0;
+		private long totalStaticCanvasMemorySizeBytes = 0;
+
+		///	OUTLINED HEXAGON
+		Vertex[] outlinedHexVertices = new Vertex[12]
+		{
+				///	0 outer bottom left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	1 outer mid left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	2 outer top left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	3 outer top right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	4 outer mid right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	5 outer bottom right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+
+				///	6 inner bottom left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	7 inner mid left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	8 inner top left
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	9 inner top right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	10 inner mid right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+				///	11 inner bottom right
+				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+		};
+		private readonly ushort[] outlinedHexTris = new ushort[36]
+			{
+				///	outter -> inner
+				/// bottom middle
+				0, 5, 6,
+				5, 11, 6,
+				/// bottom right
+				5, 4, 11,
+				11, 4, 10,
+				/// top right
+				10, 4, 9,
+				4, 3, 9,
+				/// top middle
+				8, 9, 3,
+				8, 3, 2,
+				/// top left
+				1, 7, 2,
+				7, 8, 2,
+				/// bottom left
+				0, 7, 1,
+				0, 6, 7
+			};
+
+		///	FILLED HEXAGON
+		Vertex[] filledHexVertices = new Vertex[7]
+		{
+			///	0 bottom left
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	1 mid left
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	2 top left
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	3 top right
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	4 mid right
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	5 bottom right
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+			///	6 middle
+			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
+		};
+		private readonly ushort[] filledHexTris = new ushort[18]
+		{
+			/// bottom middle
+			0, 5, 6,
+			/// bottom right
+			5, 4, 6,
+			/// top right
+			4, 3, 6,
+			/// top middle
+			3, 2, 6,
+			/// top left
+			2, 1, 6,
+			/// bottom left
+			1, 0, 6
+		};
+
+		///	DRAW HEXAGON
+		private Vector2 cellPosition = Vector2.zero;
+		private float radius = 0;
+		private float inRadius = 0;
+		private Vector2 center = Vector2.zero;
+		private float innerRadius = 0;
+		private float innerInRadius = 0;
+
+		///	VISUAL ELEMENTS
+		private Label memoryLabel = null;
 
 
 		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors)
@@ -45,10 +150,27 @@ namespace ABB.Grid.Editor.VisualElements
 			RegisterCallback<PointerUpEvent>(OnPointerUp);
 			RegisterCallback<WheelEvent>(OnWheelScroll);
 			RegisterCallback<GeometryChangedEvent>(OnResizeWindow);
+			RegisterCallback<KeyDownEvent>(evt =>
+			{
+				if (evt.keyCode != KeyCode.R) return;
+
+				isRenderEnabled = !isRenderEnabled;
+
+				schedule.Execute(SetMemoryLabelText);
+				MarkDirtyRepaint();
+
+				string state = isRenderEnabled ? "enabled" : "disabled";
+				Debug.Log($"Render state: {state}");
+			});
 
 			this.session = session;
 			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
+
+			memoryLabel = new();
+			memoryLabel.style.alignSelf = Align.FlexEnd;
+			memoryLabel.style.color = Color.white;
+			Add(memoryLabel);
 		}
 
 
@@ -65,7 +187,14 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnGenerateVisualContent(MeshGenerationContext context)
 		{
-			DrawGrid(context);
+			if (session.cellSize <= 0f)
+			{
+				Debug.LogError("Cell size must be positive");
+				return;
+			}
+
+			if (isRenderEnabled)
+				DrawGrid(context);
 		}
 
 		private bool EnsureGrid()
@@ -135,127 +264,148 @@ namespace ABB.Grid.Editor.VisualElements
 			MarkDirtyRepaint();
 		}
 
+		private void SetMemoryLabelText(TimerState timerState)
+		{
+			CalculateStaticCanvasMemory();
+
+			long allocationKB = isRenderEnabled ? totalMemorySizeKiloBytes : 0L;
+			long allocationMB = isRenderEnabled ? totalMemorySizeMegaBytes : 0L;
+
+			memoryLabel.text =
+				$"Total memory allocated:\n" +
+				$"{allocationKB + (totalStaticCanvasMemorySizeBytes / 1000L)} KB\n" +
+				$"{allocationMB + (totalStaticCanvasMemorySizeBytes / 1000000L)} MB";
+		}
+
 		#region RENDERING
 
 		private void DrawGrid(MeshGenerationContext context)
 		{
+			///	HEXAGON PRE-CALCULATIONS
+			radius = session.cellSize / 2f;
+			inRadius = Mathf.Sqrt((radius * radius) - ((radius / 2f) * (radius / 2f)));
+			center.x = radius + 2f; center.y = inRadius + 2f;
+
+			innerRadius = session.cellSize / 2.15f;
+			innerInRadius = Mathf.Sqrt((innerRadius * innerRadius) - ((innerRadius / 2f) * (innerRadius / 2f)));
+
+			int outlineHexagons = 0, filledHexagons = 0, cellValue = 0;
+			float oddColumnOffset = 0, xPos = 0, yPos = 0;
 			for (int c = 0; c < currentGrid.columns; c++)
 			{
 				for (int r = 0; r < currentGrid.rows; r++)
 				{
-					float oddColumnOffset = (c & 1) != 0 ? yOffset * session.cellSize : 0f;
+					oddColumnOffset = (c & 1) != 0 ? yOffset * session.cellSize : 0f;
 
-					float xPos = c * xOffset * session.cellSize;
-					float yPos = r * cellHeight * session.cellSize + oddColumnOffset;
+					xPos = c * xOffset * session.cellSize;
+					yPos = r * cellHeight * session.cellSize + oddColumnOffset;
 
-					Vector2 position = gridPosition + new Vector2(xPos, yPos);
+					cellPosition = gridPosition;
+					cellPosition.x += xPos; cellPosition.y += yPos;
 
-					int cellValue = currentGrid.grid[c][r];
+					cellValue = currentGrid.grid[c][r];
 					if (cellValue != -1)
-						AllocateHexagon(context, position, cellValue);
+					{
+						AllocateFilledHexagon(context, cellPosition, cellValue);
+						filledHexagons++;
+					}
 					else
-						DrawHexagonOutline(context, position);
+					{
+						AllocateOutlinedHexagon(context, cellPosition);
+						outlineHexagons++;
+					}
 				}
 			}
+
+			long totalMemorySizeBytes = CalculateSizeOfFilledHexagons(filledHexagons) + CalculateSizeOfOutlineHexagons(outlineHexagons);
+			totalMemorySizeKiloBytes = totalMemorySizeBytes / 1000L;
+			totalMemorySizeMegaBytes = totalMemorySizeKiloBytes / 1000L;
+
+			schedule.Execute(SetMemoryLabelText);
 		}
 
-		private void DrawHexagonOutline(MeshGenerationContext context, Vector2 position)
+		private void AllocateOutlinedHexagon(MeshGenerationContext context, Vector2 position)
 		{
-			if (session.cellSize <= 0f)
-			{
-				Debug.LogError("Cell size must be positive");
-				return;
-			}
+			MeshWriteData mesh = context.Allocate(12, 36);
 
-			float radius = session.cellSize / 2f;
-			float inRadius = Mathf.Sqrt(radius * radius - (radius / 2f) * (radius / 2f));
+			///	Calculate vertices
+			outlinedHexVertices[0].position.x = position.x + center.x - radius / 2;
+			outlinedHexVertices[0].position.y = position.y + center.y - inRadius;
 
-			float lineWidth = 2f;
+			outlinedHexVertices[1].position.x = position.x + center.x - radius;
+			outlinedHexVertices[1].position.y = position.y + center.y;
 
-			/// Offset so the outline is not clipped at the top/left edge.
-			Vector2 center = new Vector2(radius + lineWidth, inRadius + lineWidth);
+			outlinedHexVertices[2].position.x = position.x + center.x - radius / 2;
+			outlinedHexVertices[2].position.y = position.y + center.y + inRadius;
 
-			Vector2[] points =
-			{
-			new(position.x + center.x - radius / 2f,    position.y + center.y - inRadius),
-			new(position.x + center.x - radius,         position.y + center.y),
-			new(position.x + center.x - radius / 2f,    position.y + center.y + inRadius),
-			new(position.x + center.x + radius / 2f,    position.y + center.y + inRadius),
-			new(position.x + center.x + radius,         position.y + center.y),
-			new(position.x + center.x + radius / 2f,    position.y + center.y - inRadius),
-		};
+			outlinedHexVertices[3].position.x = position.x + center.x + radius / 2;
+			outlinedHexVertices[3].position.y = position.y + center.y + inRadius;
 
-			Painter2D painter = context.painter2D;
+			outlinedHexVertices[4].position.x = position.x + center.x + radius;
+			outlinedHexVertices[4].position.y = position.y + center.y;
 
-			painter.strokeColor = Color.white;
-			painter.lineWidth = lineWidth;
+			outlinedHexVertices[5].position.x = position.x + center.x + radius / 2;
+			outlinedHexVertices[5].position.y = position.y + center.y - inRadius;
 
-			painter.BeginPath();
-			painter.MoveTo(points[0]);
+			outlinedHexVertices[6].position.x = position.x + center.x - innerRadius / 2;
+			outlinedHexVertices[6].position.y = position.y + center.y - innerInRadius;
 
-			for (int i = 1; i < points.Length; i++)
-			{
-				painter.LineTo(points[i]);
-			}
+			outlinedHexVertices[7].position.x = position.x + center.x - innerRadius;
+			outlinedHexVertices[7].position.y = position.y + center.y;
 
-			painter.ClosePath();
-			painter.Stroke();
+			outlinedHexVertices[8].position.x = position.x + center.x - innerRadius / 2;
+			outlinedHexVertices[8].position.y = position.y + center.y + innerInRadius;
+
+			outlinedHexVertices[9].position.x = position.x + center.x + innerRadius / 2;
+			outlinedHexVertices[9].position.y = position.y + center.y + innerInRadius;
+
+			outlinedHexVertices[10].position.x = position.x + center.x + innerRadius;
+			outlinedHexVertices[10].position.y = position.y + center.y;
+
+			outlinedHexVertices[11].position.x = position.x + center.x + innerRadius / 2;
+			outlinedHexVertices[11].position.y = position.y + center.y - innerInRadius;
+
+			mesh.SetAllVertices(outlinedHexVertices);
+			mesh.SetAllIndices(outlinedHexTris);
 		}
 
-		private void AllocateHexagon(MeshGenerationContext context, Vector2 position, int cellValue)
+		private void AllocateFilledHexagon(MeshGenerationContext context, Vector2 position, int cellValue)
 		{
-			if (session.cellSize <= 0f)
-			{
-				Debug.LogError("Cell size must be positive");
-				return;
-			}
-
-			float radius = session.cellSize / 2f;
-			float inRadius = Mathf.Sqrt((radius * radius) - ((radius / 2) * (radius / 2)));
-
-			Vector2 center = new Vector2(radius + 2f, inRadius + 2f);
-
 			MeshWriteData mesh = context.Allocate(7, 18);
 
 			Color tint = SelectCellTint(cellValue);
 
 			///	Calculate vertices
-			Vertex[] vertices = new Vertex[7]
-			{
-			///	0 bottom left
-			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = tint },
-			///	1 mid left
-			new Vertex { position = new Vector3(position.x + center.x - radius,     position.y + center.y,              Vertex.nearZ), tint = tint },
-			///	2 top left
-			new Vertex { position = new Vector3(position.x + center.x - radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = tint },
-			///	3 top right
-			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y + inRadius,   Vertex.nearZ), tint = tint },
-			///	4 mid right
-			new Vertex { position = new Vector3(position.x + center.x + radius,     position.y + center.y,              Vertex.nearZ), tint = tint },
-			///	5 bottom right
-			new Vertex { position = new Vector3(position.x + center.x + radius / 2, position.y + center.y - inRadius,   Vertex.nearZ), tint = tint },
-			///	6 middle
-			new Vertex { position = new Vector3(position.x + center.x,              position.y + center.y,              Vertex.nearZ), tint = tint },
-			};
-			mesh.SetAllVertices(vertices);
+			filledHexVertices[0].position.x = position.x + center.x - radius / 2;
+			filledHexVertices[0].position.y = position.y + center.y - inRadius;
+			filledHexVertices[0].tint = tint;
 
-			///	Calculate triangles
-			ushort[] tris = new ushort[18]
-			{
-				/// bottom middle
-				0, 5, 6,
-				/// bottom right
-				5, 4, 6,
-				/// top right
-				4, 3, 6,
-				/// top middle
-				3, 2, 6,
-				/// top left
-				2, 1, 6,
-				/// bottom left
-				1, 0, 6
-			};
-			mesh.SetAllIndices(tris);
+			filledHexVertices[1].position.x = position.x + center.x - radius;
+			filledHexVertices[1].position.y = position.y + center.y;
+			filledHexVertices[1].tint = tint;
+
+			filledHexVertices[2].position.x = position.x + center.x - radius / 2;
+			filledHexVertices[2].position.y = position.y + center.y + inRadius;
+			filledHexVertices[2].tint = tint;
+
+			filledHexVertices[3].position.x = position.x + center.x + radius / 2;
+			filledHexVertices[3].position.y = position.y + center.y + inRadius;
+			filledHexVertices[3].tint = tint;
+
+			filledHexVertices[4].position.x = position.x + center.x + radius;
+			filledHexVertices[4].position.y = position.y + center.y;
+			filledHexVertices[4].tint = tint;
+
+			filledHexVertices[5].position.x = position.x + center.x + radius / 2;
+			filledHexVertices[5].position.y = position.y + center.y - inRadius;
+			filledHexVertices[5].tint = tint;
+
+			filledHexVertices[6].position.x = position.x + center.x;
+			filledHexVertices[6].position.y = position.y + center.y;
+			filledHexVertices[6].tint = tint;
+
+			mesh.SetAllVertices(filledHexVertices);
+			mesh.SetAllIndices(filledHexTris);
 		}
 
 		private Color SelectCellTint(int cellValue)
@@ -267,7 +417,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#endregion
 
-		#region ACTIONS
+		#region ACTIONS 
 
 		private void EditGridCells(Vector2 pointerPosition)
 		{
@@ -301,13 +451,24 @@ namespace ABB.Grid.Editor.VisualElements
 			if (column < 0 || column >= currentGrid.grid.Length || row < 0 || row >= currentGrid.grid[column].Length)
 				return;
 
-			if (button == 0) currentGrid.grid[column][row] = _deleteCell ? -1 : (int)session.leftColor;
-			else if (button == 1) currentGrid.grid[column][row] = _deleteCell ? -1 : (int)session.rightColor;
+			if (isFilling)
+			{
+				Debug.Log("Filling");
+
+				FillGrid(column, row);
+
+				Debug.Log("Filled");
+			}
+			else
+			{
+				if (mouseButton == 0) currentGrid.grid[column][row] = isErasing ? -1 : (int)session.leftColor;
+				else if (mouseButton == 1) currentGrid.grid[column][row] = isErasing ? -1 : (int)session.rightColor;
+			}
 		}
 
 		private void PaintStroke(Vector2 from, Vector2 to)
 		{
-			if (session.cellSize <= 0f) return;
+			if (session.cellSize <= 0f || isFilling) return;
 
 			float spacing = session.cellSize * 0.25f;
 			int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / spacing));
@@ -343,24 +504,47 @@ namespace ABB.Grid.Editor.VisualElements
 			gridPosition = localMouseDeltaPosition;
 		}
 
-		public void DeleteCell()
-		{
-			_deleteCell = !_deleteCell;
-		}
+		public void EraseClicked() => isErasing = !isErasing;
 
-		public void FillGrid()
-		{
-			EnsureGrid();
+		public void FillClicked() => isFilling = !isFilling;
 
-			for (int c = 0; c < currentGrid.columns; c++)
+		private void FillGrid(int column, int row)
+		{
+			int cellValueToCheck = currentGrid.grid[column][row];
+			int newValue = mouseButton == 0 ? (int)session.leftColor : mouseButton == 1 ? (int)session.rightColor : -1;
+
+			if (cellValueToCheck == newValue)
 			{
-				for (int r = 0; r < currentGrid.rows; r++)
-				{
-					currentGrid.grid[c][r] = (int)session.leftColor;
-				}
+				Debug.Log("NOPE");
+				return;
 			}
 
-			MarkDirtyRepaint();
+			currentGrid.grid[column][row] = newValue;
+
+			///	Bottom neighbour
+			if (CheckNeighbours(column, row + 1, cellValueToCheck))
+				FillGrid(column, row + 1);
+			///	Right neighbour
+			if (CheckNeighbours(column + 1, row, cellValueToCheck))
+				FillGrid(column + 1, row);
+			///	Top neighbour
+			if (CheckNeighbours(column, row - 1, cellValueToCheck))
+				FillGrid(column, row - 1);
+			///	Left neighbour
+			if (CheckNeighbours(column - 1, row, cellValueToCheck))
+				FillGrid(column - 1, row);
+		}
+
+		public bool CheckNeighbours(int column, int row, int cellValueToCheck)
+		{
+			return
+				(column < currentGrid.columns && column >= 0) &&
+				(row < currentGrid.rows && row >= 0) &&
+				currentGrid.grid[column][row] == cellValueToCheck;
+
+			//int rightN = currentGrid.grid[c][r + 1];
+			//int topN = currentGrid.grid[c - 1][r];
+			//int leftN = currentGrid.grid[c - 1][r - 1];
 		}
 
 		public void ResetGrid()
@@ -390,9 +574,9 @@ namespace ABB.Grid.Editor.VisualElements
 			localMouseStartPosition = (Vector2)evt.localPosition - gridPosition;
 
 			isPainting = true;
-			button = evt.button;
+			mouseButton = evt.button;
 
-			if (button != 2)
+			if (mouseButton != 2)
 				EditGridCells(localMousePosition);
 
 			MarkDirtyRepaint();
@@ -407,7 +591,7 @@ namespace ABB.Grid.Editor.VisualElements
 			localMousePosition = evt.localPosition;
 			localMouseDeltaPosition = localMousePosition - localMouseStartPosition;
 
-			if (button == 2)
+			if (mouseButton == 2)
 				Pan();
 			else
 				PaintStroke(previousPosition, localMousePosition);
@@ -418,7 +602,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private void OnPointerUp(PointerUpEvent evt)
 		{
 			isPainting = false;
-			button = -1;
+			mouseButton = -1;
 		}
 
 		private void OnWheelScroll(WheelEvent evt)
@@ -427,7 +611,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			Zoom(evt.delta.y);
 
-			if (isPainting && button == 2)
+			if (isPainting && mouseButton == 2)
 				localMouseStartPosition = localMousePosition - gridPosition;
 
 			MarkDirtyRepaint();
@@ -520,6 +704,50 @@ namespace ABB.Grid.Editor.VisualElements
 
 			painter.ClosePath();
 			painter.Stroke();
+		}
+
+		#endregion
+
+		#region	MEMOERY CALCULATIONS
+
+		private long CalculateSizeOfOutlineHexagons(int count)
+		{
+			if (count == 0) return 0;
+
+			long vertexSize = 12 * UnsafeUtility.SizeOf<Vertex>();
+			long trianglesSize = 36 * sizeof(ushort);
+
+			return (vertexSize + trianglesSize) * count;
+		}
+
+		private long CalculateSizeOfFilledHexagons(int count)
+		{
+			if (count == 0) return 0;
+
+			long vertexSize = 7 * UnsafeUtility.SizeOf<Vertex>();
+			long trianglesSize = 18 * sizeof(ushort);
+
+			return (vertexSize + trianglesSize) * count;
+		}
+
+		private void CalculateStaticCanvasMemory()
+		{
+			totalStaticCanvasMemorySizeBytes =
+				///	Outlined Vertices
+				outlinedHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
+				///	Outlined Tris
+				outlinedHexTris.Length * sizeof(ushort) +
+				///	Filled Vertices
+				filledHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
+				///	Filled Tris
+				filledHexTris.Length * sizeof(ushort) +
+				///	Current Grid
+				currentGrid.columns * currentGrid.rows * sizeof(int) +
+				2 * sizeof(int) +
+				///	Grid & Mouse Positions
+				4 * UnsafeUtility.SizeOf<Vector2>() +
+				///	Cell Drawing
+				4 * sizeof(float) + 2 * UnsafeUtility.SizeOf<Vector2>();
 		}
 
 		#endregion

@@ -14,12 +14,13 @@ namespace ABB.Grid.Editor.Data
 
 		public TerrainColorData()
 		{
-			int size = Enum.GetValues(typeof(TerrainType)).Length;
-			terrainColors = new TerrainColor[size];
+			var enumVaules = (TerrainType[])Enum.GetValues(typeof(TerrainType));
+			terrainColors = new TerrainColor[enumVaules.Length];
 
-			for (int i = 0; i < size; i++)
+			for (int i = 0; i < enumVaules.Length; i++)
 			{
-				terrainColors[i] = new TerrainColor(i, Color.black);
+				TerrainColor terrainColor = new TerrainColor(enumVaules[i].ToString(), i, Color.black);
+				terrainColors[i] = terrainColor;
 			}
 		}
 	}
@@ -27,6 +28,7 @@ namespace ABB.Grid.Editor.Data
 	[Serializable]
 	public struct TerrainColor
 	{
+		public string name;
 		public int terrain;
 		public float r;
 		public float g;
@@ -35,8 +37,9 @@ namespace ABB.Grid.Editor.Data
 
 		public Color color => new Color(r, g, b, a);
 
-		public TerrainColor(int terrain, Color color)
+		public TerrainColor(string name, int terrain, Color color)
 		{
+			this.name = name;
 			this.terrain = terrain;
 			this.r = color.r;
 			this.g = color.g;

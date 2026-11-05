@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
-using ABB.Grid.Editor.Data;
-
+using UnityEditor;
 using UnityEditor.UIElements;
 
 using UnityEngine;
@@ -10,11 +10,15 @@ using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
-	public class ColorSelectorDropdown<E> : VisualElement where E : Enum
+	public class ColorSelectorDropdown : VisualElement
 	{
-		public Dictionary<int, Color> PaletteColors { get; private set; }
+		public bool isDelayed = false;
+		private IVisualElementScheduledItem pickerWatcher;
+		private Color auxColor;
 
-		private int _value;
+		public Dictionary<int, Color> PaletteColors { get; set; } = new();
+
+		private int _value = -1;
 		public int Value
 		{
 			get => _value;
@@ -24,13 +28,13 @@ namespace ABB.Grid.Editor.VisualElements
 				if (_value == value) return;
 
 				_value = value;
-				colorField.value = PaletteColors[value];
-				dropdownField.index = value;
+				colorField.SetValueWithoutNotify(PaletteColors[value]);
+				dropdownField.SetValueWithoutNotify(dropdownField.choices[value]);
 				OnValueChanged?.Invoke(value);
 			}
 		}
 
-		public int Length => dropdownField.choices.Count;
+		public List<string> Choices => dropdownField.choices;
 
 		public event Action<int> OnValueChanged;
 		public event Action<int, Color> OnColorChanged;
@@ -45,7 +49,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement popupInput;
 			BuildUI(out popupInput);
-
 			AddLogic(popupInput);
 		}
 
@@ -56,7 +59,7 @@ namespace ABB.Grid.Editor.VisualElements
 			colorField.style.width = 25;
 			colorField.style.height = 20;
 			colorField.style.marginRight = 0;
-			colorField.Q<VisualElement>("unity-eyedropper").style.display = DisplayStyle.None;
+			colorField.showEyeDropper = false;
 
 			dropdownField = new DropdownField()
 			{
@@ -69,20 +72,6 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			List<string> choices = new();
-			Type terrainType = typeof(E);
-			foreach (var terrain in Enum.GetValues(terrainType))
-			{
-				string terrainStr = terrain.ToString();
-				choices.Add(terrainStr);
-			}
-
-			dropdownField.choices = choices;
-			dropdownField.index = 0;
-			E e = (E)Enum.Parse(terrainType, dropdownField.value);
-			_value = (int)(object)e;
-			dropdownField.tooltip = dropdownField.value;
-
 			popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");
 
 			Add(colorField);
@@ -91,10 +80,16 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic(VisualElement popupInput)
 		{
-			colorField.RegisterValueChangedCallback(evt =>
+			colorField.Q<VisualElement>("unity-color-container").RegisterCallback<PointerDownEvent>(DelayedBehaviour);
+
+			colorField.RegisterValueChangedCallback(colorEvent =>
 			{
-				PaletteColors[_value] = evt.newValue;
-				OnColorChanged?.Invoke(_value, evt.newValue);
+				auxColor = colorEvent.newValue;
+
+				if (isDelayed) return;
+
+				PaletteColors[_value] = auxColor;
+				OnColorChanged?.Invoke(_value, auxColor);
 			});
 
 			dropdownField.RegisterValueChangedCallback(evt =>
@@ -110,21 +105,26 @@ namespace ABB.Grid.Editor.VisualElements
 			}, TrickleDown.TrickleDown);
 		}
 
-
-		public void SetColorsPalette(TerrainColor[] terrainColors)
+		private void DelayedBehaviour(PointerDownEvent pointerDownEvent)
 		{
-			PaletteColors = new();
+			if (!isDelayed) return;
 
-			for (int i = 0; i < terrainColors.Length; i++)
+			var colorPicker = Resources.FindObjectsOfTypeAll<EditorWindow>().FirstOrDefault(window => window.GetType().FullName == "UnityEditor.ColorPicker");
+			if (colorPicker == null) return;
+
+			pickerWatcher = schedule.Execute(timerState =>
 			{
-				TerrainColor terrainColor = terrainColors[i];
-				Color color = new Color(terrainColor.r, terrainColor.g, terrainColor.b, terrainColor.a);
+				if (colorPicker == null)
+				{
+					if (PaletteColors[_value] != auxColor)
+					{
+						PaletteColors[_value] = auxColor;
+						OnColorChanged?.Invoke(_value, auxColor);
+					}
 
-				PaletteColors.TryAdd(terrainColor.terrain, color);
-			}
-
-			if (PaletteColors.Count != 0)
-				colorField.value = PaletteColors[_value];
+					pickerWatcher?.Pause();
+				}
+			}).Every(100);
 		}
 
 		public void SetPaletteColor(int value, Color color)

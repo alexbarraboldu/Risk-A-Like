@@ -1,6 +1,5 @@
 using System;
 
-using ABB.Gameplay.Data.Types;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
 
@@ -19,8 +18,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private readonly GridEditorWindow owner = null;
 
 		///	VISUAL ELEMENTS
-		private ColorSelectorDropdown<TerrainType> leftTerrainTypeSelector = null;
-		private ColorSelectorDropdown<TerrainType> rightTerrainTypeSelector = null;
+		private ColorSelectorDropdown leftTerrainTypeSelector = null;
+		private ColorSelectorDropdown rightTerrainTypeSelector = null;
 
 		private Vector2IntField gridSizeField = null;
 
@@ -95,11 +94,7 @@ namespace ABB.Grid.Editor.VisualElements
 			AddStyle();
 			AddLogic();
 
-			leftTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
-			rightTerrainTypeSelector.SetColorsPalette(this.terrainColors.terrainColors);
-
-			leftTerrainTypeSelector.Value = (int)session.leftColor;
-			rightTerrainTypeSelector.Value = (int)session.rightColor;
+			ConfigureColorSelectorDropdowns();
 		}
 
 
@@ -159,8 +154,8 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			///	Terrain type selector
-			leftTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
-			rightTerrainTypeSelector = new ColorSelectorDropdown<TerrainType>();
+			leftTerrainTypeSelector = new ColorSelectorDropdown();
+			rightTerrainTypeSelector = new ColorSelectorDropdown();
 			///----------------------
 
 			///	Eraser Button
@@ -290,6 +285,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic()
 		{
+			leftTerrainTypeSelector.isDelayed = true;
+			rightTerrainTypeSelector.isDelayed = true;
+
 			leftTerrainTypeSelector.OnValueChanged += LeftSelectorValueChanged;
 			rightTerrainTypeSelector.OnValueChanged += RightSelectorValueChanged;
 
@@ -356,6 +354,8 @@ namespace ABB.Grid.Editor.VisualElements
 			SetEnableUI(!(currentGrid.fileName == string.Empty));
 		}
 
+		#region COLOR SELECTORS
+
 		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
 		private void RightSelectorValueChanged(int value) => session.rightColor = (uint)value;
 
@@ -365,7 +365,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (rightTerrainTypeSelector.Value == value)
 				rightTerrainTypeSelector.SetColorByValue(value);
 
-			TerrainColor newTerrainColor = new(value, color);
+			TerrainColor newTerrainColor = new(leftTerrainTypeSelector.Choices[value], value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 		private void RightSelectorColorChanged(int value, Color color)
@@ -374,8 +374,30 @@ namespace ABB.Grid.Editor.VisualElements
 			if (leftTerrainTypeSelector.Value == value)
 				leftTerrainTypeSelector.SetColorByValue(value);
 
-			TerrainColor newTerrainColor = new(value, color);
+			TerrainColor newTerrainColor = new(leftTerrainTypeSelector.Choices[value], value, color);
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
+
+		public void ConfigureColorSelectorDropdowns()
+		{
+			for (int i = 0; i < terrainColors.terrainColors.Length; i++)
+			{
+				TerrainColor terrainColor = terrainColors.terrainColors[i];
+
+				leftTerrainTypeSelector.PaletteColors.TryAdd(terrainColor.terrain, terrainColor.color);
+				leftTerrainTypeSelector.Choices.Add(terrainColor.name);
+
+				rightTerrainTypeSelector.PaletteColors.TryAdd(terrainColor.terrain, terrainColor.color);
+				rightTerrainTypeSelector.Choices.Add(terrainColor.name);
+			}
+
+			if (leftTerrainTypeSelector.PaletteColors.Count != 0)
+				leftTerrainTypeSelector.Value = (int)session.leftColor;
+
+			if (rightTerrainTypeSelector.PaletteColors.Count != 0)
+				rightTerrainTypeSelector.Value = (int)session.rightColor;
+		}
+
+		#endregion
 	}
 }

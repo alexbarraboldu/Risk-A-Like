@@ -28,6 +28,7 @@ namespace ABB.Grid.Editor.VisualElements
 				if (_value == value) return;
 
 				_value = value;
+				auxColor = PaletteColors[value];
 				colorField.SetValueWithoutNotify(PaletteColors[value]);
 				dropdownField.SetValueWithoutNotify(dropdownField.choices[value]);
 				OnValueChanged?.Invoke(value);
@@ -80,13 +81,15 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic(VisualElement popupInput)
 		{
-			colorField.Q<VisualElement>("unity-color-container").RegisterCallback<PointerDownEvent>(DelayedBehaviour);
+			var colorContainer = colorField.Q<VisualElement>("unity-color-container");
+			colorContainer.RegisterCallback<PointerDownEvent>(evt => DelayedBehaviour());
+			colorContainer.RegisterCallback<KeyDownEvent>(evt => DelayedBehaviour());
 
 			colorField.RegisterValueChangedCallback(colorEvent =>
 			{
 				auxColor = colorEvent.newValue;
 
-				if (isDelayed) return;
+				if (isDelayed && pickerWatcher?.isActive == true) return;
 
 				PaletteColors[_value] = auxColor;
 				OnColorChanged?.Invoke(_value, auxColor);
@@ -105,15 +108,26 @@ namespace ABB.Grid.Editor.VisualElements
 			}, TrickleDown.TrickleDown);
 		}
 
-		private void DelayedBehaviour(PointerDownEvent pointerDownEvent)
+		private void DelayedBehaviour()
 		{
 			if (!isDelayed) return;
+
+			if (pickerWatcher?.isActive == true)
+			{
+				if (PaletteColors[_value] != auxColor)
+				{
+					PaletteColors[_value] = auxColor;
+					OnColorChanged?.Invoke(_value, auxColor);
+				}
+				pickerWatcher?.Pause();
+			}
 
 			var colorPicker = Resources.FindObjectsOfTypeAll<EditorWindow>().FirstOrDefault(window => window.GetType().FullName == "UnityEditor.ColorPicker");
 			if (colorPicker == null) return;
 
 			pickerWatcher = schedule.Execute(timerState =>
 			{
+				Debug.Log("LOL");
 				if (colorPicker == null)
 				{
 					if (PaletteColors[_value] != auxColor)
@@ -134,7 +148,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void SetColorByValue(int value)
 		{
-			colorField.value = PaletteColors[value];
+			colorField.SetValueWithoutNotify(PaletteColors[value]);
+			auxColor = PaletteColors[value];
+			//colorField.value = PaletteColors[value];
 		}
 	}
 }

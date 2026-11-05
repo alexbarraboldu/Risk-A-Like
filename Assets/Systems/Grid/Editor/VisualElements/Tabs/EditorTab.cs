@@ -51,8 +51,6 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.Add(_canvasView);
 
 			///	ADD LOGIC
-			_toolsView.OnLeftTerrainChanged += (terrain) => session.leftColor = (uint)terrain;
-			_toolsView.OnRightTerrainChanged += (terrain) => session.rightColor = (uint)terrain;
 			_toolsView.OnLeftColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnRightColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnGridSizeChanged += _canvasView.SetGridSize;

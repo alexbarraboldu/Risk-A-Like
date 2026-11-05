@@ -43,16 +43,6 @@ namespace ABB.Grid.Editor.VisualElements
 			add => rightTerrainTypeSelector.OnColorChanged += value;
 			remove => rightTerrainTypeSelector.OnColorChanged -= value;
 		}
-		public event Action<int> OnLeftTerrainChanged
-		{
-			add => leftTerrainTypeSelector.OnValueChanged += value;
-			remove => leftTerrainTypeSelector.OnValueChanged -= value;
-		}
-		public event Action<int> OnRightTerrainChanged
-		{
-			add => rightTerrainTypeSelector.OnValueChanged += value;
-			remove => rightTerrainTypeSelector.OnValueChanged -= value;
-		}
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
 			add => gridSizeField.ValueChanged += value;

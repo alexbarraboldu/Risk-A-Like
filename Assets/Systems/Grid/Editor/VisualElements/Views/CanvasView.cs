@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using ABB.Grid.Editor.Data;
 
@@ -509,20 +510,33 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (cellValueToCheck == newValue) return;
 
+			int[,] dir = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+			Queue<(int, int)> queue = new Queue<(int, int)>();
+			queue.Enqueue((column, row));
+
+			int oldColor = currentGrid.grid[column][row];
 			currentGrid.grid[column][row] = newValue;
 
-			///	Bottom neighbour
-			if (CheckNeighbours(column, row + 1, cellValueToCheck))
-				FillGrid(column, row + 1);
-			///	Right neighbour
-			if (CheckNeighbours(column + 1, row, cellValueToCheck))
-				FillGrid(column + 1, row);
-			///	Top neighbour
-			if (CheckNeighbours(column, row - 1, cellValueToCheck))
-				FillGrid(column, row - 1);
-			///	Left neighbour
-			if (CheckNeighbours(column - 1, row, cellValueToCheck))
-				FillGrid(column - 1, row);
+			int columns = currentGrid.columns;
+			int rows = currentGrid.rows;
+
+			while (queue.Count > 0)
+			{
+				var (c, r) = queue.Dequeue();
+				for (int i = 0; i < 4; i++)
+				{
+					int nC = c + dir[i, 0];
+					int nR = r + dir[i, 1];
+
+					if (nC >= 0 && nC < columns &&
+						nR >= 0 && nR < rows &&
+						currentGrid.grid[nC][nR] == oldColor)
+					{
+						currentGrid.grid[nC][nR] = newValue;
+						queue.Enqueue((nC, nR));
+					}
+				}
+			}
 		}
 
 		public bool CheckNeighbours(int column, int row, int cellValueToCheck)

@@ -34,8 +34,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellWidth = 1;
 		private const float cellHeight = yOffset * 2f;
 
-		private long totalMemorySizeKiloBytes = 0;
-		private long totalMemorySizeMegaBytes = 0;
+		private long renderMemorySizeBytes = 0;
 		private long totalStaticCanvasMemorySizeBytes = 0;
 
 		///	OUTLINED HEXAGON
@@ -244,6 +243,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			currentGrid.grid = aux;
 
+			schedule.Execute(SetMemoryLabelText);
+
 			return true;
 		}
 
@@ -268,13 +269,12 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			CalculateStaticCanvasMemory();
 
-			long allocationKB = isRenderEnabled ? totalMemorySizeKiloBytes : 0L;
-			long allocationMB = isRenderEnabled ? totalMemorySizeMegaBytes : 0L;
+			long renderBytes = isRenderEnabled ? renderMemorySizeBytes : 0L;
 
 			memoryLabel.text =
-				$"Total memory allocated:\n" +
-				$"{allocationKB + (totalStaticCanvasMemorySizeBytes / 1000L)} KB\n" +
-				$"{allocationMB + (totalStaticCanvasMemorySizeBytes / 1000000L)} MB";
+				$"Estimated render memory:\n" +
+				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000L} KB\n" +
+				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000000L} MB";
 		}
 
 		#region RENDERING
@@ -286,7 +286,7 @@ namespace ABB.Grid.Editor.VisualElements
 			inRadius = Mathf.Sqrt((radius * radius) - ((radius / 2f) * (radius / 2f)));
 			center.x = radius + 2f; center.y = inRadius + 2f;
 
-			innerRadius = session.cellSize / 2.15f;
+			innerRadius = session.cellSize / 2.25f;
 			innerInRadius = Mathf.Sqrt((innerRadius * innerRadius) - ((innerRadius / 2f) * (innerRadius / 2f)));
 
 			int outlineHexagons = 0, filledHexagons = 0, cellValue = 0;
@@ -317,9 +317,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			}
 
-			long totalMemorySizeBytes = CalculateSizeOfFilledHexagons(filledHexagons) + CalculateSizeOfOutlineHexagons(outlineHexagons);
-			totalMemorySizeKiloBytes = totalMemorySizeBytes / 1000L;
-			totalMemorySizeMegaBytes = totalMemorySizeKiloBytes / 1000L;
+			this.renderMemorySizeBytes = CalculateSizeOfFilledHexagons(filledHexagons) + CalculateSizeOfOutlineHexagons(outlineHexagons);
 
 			schedule.Execute(SetMemoryLabelText);
 		}
@@ -453,11 +451,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (isFilling)
 			{
-				Debug.Log("Filling");
-
 				FillGrid(column, row);
-
-				Debug.Log("Filled");
 			}
 			else
 			{
@@ -513,11 +507,7 @@ namespace ABB.Grid.Editor.VisualElements
 			int cellValueToCheck = currentGrid.grid[column][row];
 			int newValue = mouseButton == 0 ? (int)session.leftColor : mouseButton == 1 ? (int)session.rightColor : -1;
 
-			if (cellValueToCheck == newValue)
-			{
-				Debug.Log("NOPE");
-				return;
-			}
+			if (cellValueToCheck == newValue) return;
 
 			currentGrid.grid[column][row] = newValue;
 

@@ -54,7 +54,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnLeftColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnRightColorChanged += (value, color) => _canvasView.MarkDirtyRepaint();
 			_toolsView.OnGridSizeChanged += _canvasView.SetGridSize;
-			_toolsView.OnDeleteCell += _canvasView.EraseClicked;
+			_toolsView.OnEraserClicked += _canvasView.EraseClicked;
 			_toolsView.OnResetGrid += _canvasView.ResetGrid;
 			_toolsView.OnFillGrid += _canvasView.FillClicked;
 			_toolsView.OnExportGrid += OnExportGrid;

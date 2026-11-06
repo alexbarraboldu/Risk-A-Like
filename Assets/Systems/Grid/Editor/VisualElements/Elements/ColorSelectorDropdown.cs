@@ -16,7 +16,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private IVisualElementScheduledItem pickerWatcher;
 		private Color auxColor;
 
-		public Dictionary<int, Color> PaletteColors { get; set; } = new();
+		public Dictionary<int, Color> paletteColors { get; private set; } = new();
+		public IReadOnlyDictionary<int, Color> PaletteColors { get => paletteColors; }
 
 		private int _value = -1;
 		public int Value
@@ -28,14 +29,14 @@ namespace ABB.Grid.Editor.VisualElements
 				if (_value == value) return;
 
 				_value = value;
-				auxColor = PaletteColors[value];
-				colorField.SetValueWithoutNotify(PaletteColors[value]);
+				auxColor = paletteColors[value];
+				colorField.SetValueWithoutNotify(paletteColors[value]);
 				dropdownField.SetValueWithoutNotify(dropdownField.choices[value]);
 				OnValueChanged?.Invoke(value);
 			}
 		}
 
-		public List<string> Choices => dropdownField.choices;
+		public IReadOnlyList<string> Choices { get => dropdownField.choices; }
 
 		public event Action<int> OnValueChanged;
 		public event Action<int, Color> OnColorChanged;
@@ -91,7 +92,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 				if (isDelayed && pickerWatcher?.isActive == true) return;
 
-				PaletteColors[_value] = auxColor;
+				paletteColors[_value] = auxColor;
 				OnColorChanged?.Invoke(_value, auxColor);
 			});
 
@@ -114,9 +115,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (pickerWatcher?.isActive == true)
 			{
-				if (PaletteColors[_value] != auxColor)
+				if (paletteColors[_value] != auxColor)
 				{
-					PaletteColors[_value] = auxColor;
+					paletteColors[_value] = auxColor;
 					OnColorChanged?.Invoke(_value, auxColor);
 				}
 				pickerWatcher?.Pause();
@@ -130,9 +131,9 @@ namespace ABB.Grid.Editor.VisualElements
 				Debug.Log("LOL");
 				if (colorPicker == null)
 				{
-					if (PaletteColors[_value] != auxColor)
+					if (paletteColors[_value] != auxColor)
 					{
-						PaletteColors[_value] = auxColor;
+						paletteColors[_value] = auxColor;
 						OnColorChanged?.Invoke(_value, auxColor);
 					}
 
@@ -143,14 +144,20 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void SetPaletteColor(int value, Color color)
 		{
-			PaletteColors[value] = color;
+			paletteColors[value] = color;
 		}
 
 		public void SetColorByValue(int value)
 		{
-			colorField.SetValueWithoutNotify(PaletteColors[value]);
-			auxColor = PaletteColors[value];
-			//colorField.value = PaletteColors[value];
+			colorField.SetValueWithoutNotify(paletteColors[value]);
+			auxColor = paletteColors[value];
+			//colorField.value = paletteColors[value];
+		}
+
+		public void Configure(List<string> choices, Dictionary<int, Color> paletteColors)
+		{
+			dropdownField.choices = choices;
+			this.paletteColors = paletteColors;
 		}
 	}
 }

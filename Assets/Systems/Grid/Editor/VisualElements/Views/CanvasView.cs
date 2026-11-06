@@ -202,6 +202,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (currentGrid.columns <= 0 || currentGrid.rows <= 0)
 			{
 				currentGrid.grid = Array.Empty<int[]>();
+				schedule.Execute(SetMemoryLabelText);
 				return false;
 			}
 
@@ -217,7 +218,11 @@ namespace ABB.Grid.Editor.VisualElements
 					}
 				}
 			}
-			if (!needsRebuild) return true;
+			if (!needsRebuild)
+			{
+				schedule.Execute(SetMemoryLabelText);
+				return true;
+			}
 
 			int[][] aux = new int[currentGrid.columns][];
 			int gridColumns = currentGrid.grid.Length;
@@ -463,7 +468,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void PaintStroke(Vector2 from, Vector2 to)
 		{
-			if (session.cellSize <= 0f || isFilling) return;
+			if (session.cellSize <= 0f) return;
 
 			float spacing = session.cellSize * 0.25f;
 			int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / spacing));
@@ -509,8 +514,8 @@ namespace ABB.Grid.Editor.VisualElements
 			int newValue = mouseButton == 0 ? (int)session.leftColor : mouseButton == 1 ? (int)session.rightColor : -1;
 
 			if (cellValueToCheck == newValue) return;
-
-			int[,] dir = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+			///				RIGHT		LEFT	BOTTOM		TOP		RIGHT-TOP	RIGHT-BOTTOM	LEFT-TOP	LEFT-BOTTOM
+			int[,] dir = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
 			Queue<(int, int)> queue = new Queue<(int, int)>();
 			queue.Enqueue((column, row));
 
@@ -520,13 +525,17 @@ namespace ABB.Grid.Editor.VisualElements
 			int columns = currentGrid.columns;
 			int rows = currentGrid.rows;
 
+			int dirLength = dir.Length / 2;
 			while (queue.Count > 0)
 			{
 				var (c, r) = queue.Dequeue();
-				for (int i = 0; i < 4; i++)
+				for (int i = 0; i < dirLength; i++)
 				{
 					int nC = c + dir[i, 0];
 					int nR = r + dir[i, 1];
+
+					int diagonalRowOffset = (c & 1) == 0 ? -1 : 1;
+					if (i >= 4 && dir[i, 1] != diagonalRowOffset) continue;
 
 					if (nC >= 0 && nC < columns &&
 						nR >= 0 && nR < rows &&
@@ -588,7 +597,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerMove(PointerMoveEvent evt)
 		{
-			if (!isPainting) return;
+			if (!isPainting || isFilling) return;
 
 			Vector2 previousPosition = localMousePosition;
 

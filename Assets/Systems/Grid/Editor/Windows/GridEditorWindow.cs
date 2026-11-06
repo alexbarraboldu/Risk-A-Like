@@ -34,13 +34,20 @@ namespace ABB.Grid.Editor.Windows
 		private GridData currentGrid = new();
 		private GridData[] grids = null;
 
+		private bool closeEditor = false;
+
 
 		[MenuItem("Window/Custom Tools/Grid Editor")]
 		private static void OpenWindow()
 		{
-			GridEditorWindow window = GetWindow<GridEditorWindow>();
+			GridEditorWindow window = CreateInstance<GridEditorWindow>();
+
 			window.titleContent = new GUIContent("Grid Editor");
 			window.minSize = new Vector2(minWindowWidth, minWindowHeight);
+
+			window.Show();
+
+			if (window.closeEditor) window.Close();
 		}
 
 		public void CreateGUI()
@@ -51,7 +58,11 @@ namespace ABB.Grid.Editor.Windows
 			rootVisualElement.style.minWidth = minWindowWidth;
 			rootVisualElement.style.minHeight = minWindowHeight;
 
-			LoadAllData();
+			if (!LoadAllData())
+			{
+				closeEditor = true;
+				return;
+			}
 
 			///	BUILD WINDOW UI
 			tabView = new() { name = "grid-editor-window__tab-view" };
@@ -83,6 +94,8 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDestroy()
 		{
+			if (closeEditor) return;
+
 			if (!Directory.Exists(Constants.PATH))
 			{
 				Directory.CreateDirectory(Constants.PATH);
@@ -95,12 +108,15 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDisable()
 		{
+			if (closeEditor) return;
+
 			if (!Directory.Exists(Constants.PATH))
 			{
 				Directory.CreateDirectory(Constants.PATH);
 				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
 			}
 
+			if (!Save.SaveGridDataFile(grids)) Debug.LogError("Could not save grids.bin, all information has been lost. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
 			Save.SaveTerrainColorsFile(terrainColors);
 			Save.SaveSessionFile(session);
 		}
@@ -112,7 +128,7 @@ namespace ABB.Grid.Editor.Windows
 				Save.SaveSessionFile(new());
 		}
 
-		private void LoadAllData()
+		private bool LoadAllData()
 		{
 			bool pathExists = Directory.Exists(Constants.PATH);
 			if (!pathExists)
@@ -145,6 +161,31 @@ namespace ABB.Grid.Editor.Windows
 				grids = Array.Empty<GridData>();
 				Save.SaveGridDataFile(grids);
 			}
+
+			if (terrainColors == null || session == null || grids == null)
+			{
+				string affectedFiles = "Affected files: ";
+				affectedFiles += terrainColors == null ? "TerrainColorData file, " : "";
+				affectedFiles += session == null ? "SessionData file, " : "";
+				affectedFiles += grids == null ? "GridData file," : "";
+				affectedFiles = affectedFiles.TrimEnd(',');
+
+				LoadErrorWindow.OpenWindow("Error on load data files", out bool closeParent, out bool regenerate, affectedFiles);
+
+				if (regenerate)
+				{
+					if (terrainColors == null) terrainColors = new();
+					if (session == null) session = new();
+					if (grids == null) grids = Array.Empty<GridData>();
+				}
+
+				if (closeParent)
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		private void ActivateGrid(GridData grid, int index)
@@ -208,5 +249,83 @@ namespace ABB.Grid.Editor.Windows
 			maxVector2IntFieldMemory = 2;
 			maxCanvasMemory = 2;
 		}
+	}
+}
+
+internal class LoadErrorWindow : EditorWindow
+{
+	private Label affectedFilesLabel = null;
+	private Button continueButton = null;
+	private Button closeEditorButton = null;
+
+	private string affectedFiles = string.Empty;
+
+	private bool closeParent = true;
+	private bool regenerate = false;
+
+	public static LoadErrorWindow OpenWindow(string titleContent, out bool closeParent, out bool regenerate, string affectedFiles)
+	{
+		LoadErrorWindow window = CreateInstance<LoadErrorWindow>();
+		window.titleContent = new GUIContent(titleContent);
+		window.minSize = new Vector2(400, 100);
+		window.maxSize = new Vector2(400, 100);
+
+		Rect unityWindow = EditorGUIUtility.GetMainWindowPosition();
+		window.position = new Rect(unityWindow.center - window.minSize * 0.5f, window.minSize);
+
+		window.affectedFiles = affectedFiles;
+
+		window.ShowModalUtility();
+
+		closeParent = window.closeParent;
+		regenerate = window.regenerate;
+
+		return window;
+	}
+
+	private void CreateGUI()
+	{
+		rootVisualElement.style.paddingLeft = 4;
+		rootVisualElement.style.paddingRight = 4;
+		rootVisualElement.style.paddingBottom = 4;
+		rootVisualElement.style.paddingTop = 4;
+
+		affectedFilesLabel = new(affectedFiles);
+		affectedFilesLabel.style.marginTop = 4;
+
+		closeEditorButton = new()
+		{
+			text = "Close editor",
+			tooltip = "Close editor"
+		};
+		closeEditorButton.style.marginTop = 4;
+		closeEditorButton.style.minHeight = 30;
+
+		continueButton = new()
+		{
+			text = "Continue (will regenerate files)",
+			tooltip = "Continue (will regenerate files)"
+		};
+		continueButton.style.marginTop = 4;
+		continueButton.style.minHeight = 30;
+
+		rootVisualElement.Add(affectedFilesLabel);
+		rootVisualElement.Add(closeEditorButton);
+		rootVisualElement.Add(continueButton);
+
+		closeEditorButton.clicked += () =>
+		{
+			closeParent = true;
+			Close();
+		};
+
+		continueButton.clicked += () =>
+		{
+			closeParent = false;
+			regenerate = true;
+			Close();
+		};
+
+
 	}
 }

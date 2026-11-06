@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
@@ -48,21 +49,13 @@ namespace ABB.Grid.Editor.VisualElements
 			add => gridSizeField.ValueChanged += value;
 			remove => gridSizeField.ValueChanged -= value;
 		}
-		public event Action OnDeleteCell
-		{
-			add => eraserButton.clicked += value;
-			remove => eraserButton.clicked -= value;
-		}
+		public event Action OnEraserClicked;
 		public event Action OnResetGrid
 		{
 			add => resetGridButton.clicked += value;
 			remove => resetGridButton.clicked -= value;
 		}
-		public event Action OnFillGrid
-		{
-			add => fillGridButton.clicked += value;
-			remove => fillGridButton.clicked -= value;
-		}
+		public event Action OnFillGrid;
 		public event Action OnExportGrid
 		{
 			add => exportGridButton.clicked += value;
@@ -284,21 +277,8 @@ namespace ABB.Grid.Editor.VisualElements
 			leftTerrainTypeSelector.OnColorChanged += LeftSelectorColorChanged;
 			rightTerrainTypeSelector.OnColorChanged += RightSelectorColorChanged;
 
-			eraserButton.clicked += () =>
-			{
-				if (eraserButton.style.backgroundColor == Color.gray5)
-					eraserButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
-				else
-					eraserButton.style.backgroundColor = Color.gray5;
-			};
-
-			fillGridButton.clicked += () =>
-			{
-				if (fillGridButton.style.backgroundColor == Color.gray5)
-					fillGridButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
-				else
-					fillGridButton.style.backgroundColor = Color.gray5;
-			};
+			eraserButton.clicked += OnEraseButton;
+			fillGridButton.clicked += OnFillButton;
 
 			SetEnableUI(false);
 
@@ -344,6 +324,56 @@ namespace ABB.Grid.Editor.VisualElements
 			SetEnableUI(!(currentGrid.fileName == string.Empty));
 		}
 
+		#region ERASE & FILL BUTTONS
+
+		private void OnFillButton()
+		{
+			OnFillGrid?.Invoke();
+
+			if (!fillGridButton.hasCheckedPseudoState)
+			{
+				fillGridButton.SetCheckedPseudoState(true);
+				fillGridButton.style.backgroundColor = Color.gray5;
+
+				if (eraserButton.hasCheckedPseudoState)
+				{
+					OnEraserClicked?.Invoke();
+					eraserButton.SetCheckedPseudoState(false);
+					eraserButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				}
+			}
+			else
+			{
+				fillGridButton.SetCheckedPseudoState(false);
+				fillGridButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+			}
+		}
+
+		private void OnEraseButton()
+		{
+			OnEraserClicked?.Invoke();
+
+			if (!eraserButton.hasCheckedPseudoState)
+			{
+				eraserButton.SetCheckedPseudoState(true);
+				eraserButton.style.backgroundColor = Color.gray5;
+
+				if (fillGridButton.hasCheckedPseudoState)
+				{
+					OnFillGrid?.Invoke();
+					fillGridButton.SetCheckedPseudoState(false);
+					fillGridButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+				}
+			}
+			else
+			{
+				eraserButton.SetCheckedPseudoState(false);
+				eraserButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
+			}
+		}
+
+		#endregion
+
 		#region COLOR SELECTORS
 
 		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
@@ -370,16 +400,18 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void ConfigureColorSelectorDropdowns()
 		{
+			List<string> choices = new();
+			Dictionary<int, Color> paletteColors = new();
+
 			for (int i = 0; i < terrainColors.terrainColors.Length; i++)
 			{
 				TerrainColor terrainColor = terrainColors.terrainColors[i];
 
-				leftTerrainTypeSelector.PaletteColors.TryAdd(terrainColor.terrain, terrainColor.color);
-				leftTerrainTypeSelector.Choices.Add(terrainColor.name);
-
-				rightTerrainTypeSelector.PaletteColors.TryAdd(terrainColor.terrain, terrainColor.color);
-				rightTerrainTypeSelector.Choices.Add(terrainColor.name);
+				choices.Add(terrainColor.name);
+				paletteColors.Add(terrainColor.terrain, terrainColor.color);
 			}
+			leftTerrainTypeSelector.Configure(choices, paletteColors);
+			rightTerrainTypeSelector.Configure(choices, paletteColors);
 
 			if (leftTerrainTypeSelector.PaletteColors.Count != 0)
 				leftTerrainTypeSelector.Value = (int)session.leftColor;

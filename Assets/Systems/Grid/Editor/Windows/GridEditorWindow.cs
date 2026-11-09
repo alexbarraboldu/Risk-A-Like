@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
@@ -34,7 +36,7 @@ namespace ABB.Grid.Editor.Windows
 		private GridData currentGrid = new();
 		private GridData[] grids = null;
 
-		private bool closeEditor = false;
+		private bool closeEditor = true;
 
 
 		[MenuItem("Window/Custom Tools/Grid Editor")]
@@ -58,11 +60,9 @@ namespace ABB.Grid.Editor.Windows
 			rootVisualElement.style.minWidth = minWindowWidth;
 			rootVisualElement.style.minHeight = minWindowHeight;
 
-			if (!LoadAllData())
-			{
-				closeEditor = true;
-				return;
-			}
+			closeEditor = !LoadAllData();
+			if (closeEditor) return;
+			CheckData();
 
 			///	BUILD WINDOW UI
 			tabView = new() { name = "grid-editor-window__tab-view" };
@@ -188,12 +188,42 @@ namespace ABB.Grid.Editor.Windows
 			return true;
 		}
 
+		private bool CheckData()
+		{
+			for (int i = 0; i < grids.Length; i++)
+			{
+				GridData grid = grids[i];
+				List<int> values = new();
+				for (int column = 0; column < grid.columns; column++)
+				{
+					values.AddRange(grid.grid[column].Distinct());
+				}
+				IEnumerable<int> uniqueValues = values.Distinct();
+
+				int paletteLength = terrainColors.terrainColors.Length;
+				bool invalid = false;
+				foreach (var item in uniqueValues)
+				{
+					invalid = item < -1 || item >= paletteLength;
+					if (invalid) return false;
+				}
+
+				if (invalid)
+				{
+					Debug.LogWarning($"Grid: '{grid.fileName}' has as invalid palette value");
+				}
+			}
+
+			return true;
+		}
+
 		private void ActivateGrid(GridData grid, int index)
 		{
+			_editorTab.LoadGrid(grid, index);
+
 			currentGrid = grid;
 			session.saveFileIndex = index;
 
-			_editorTab.LoadGrid(grid, index);
 			tabView.activeTab = _editorTab;
 		}
 
@@ -212,11 +242,10 @@ namespace ABB.Grid.Editor.Windows
 			///	GENERATE NEW GRID & SAVE NEW GRID INTO GRIDS
 			if (session.saveFileIndex != -1)
 			{
-				currentGrid = new();
-				currentGrid.fileName = newFileName;
+				GridData newGrid = new() { fileName = newFileName };
 				index = grids.Length;
 				Array.Resize(ref grids, index + 1);
-				grids[index] = currentGrid;
+				grids[index] = currentGrid = newGrid;
 			}
 
 			_editorTab.LoadGrid(currentGrid, index);

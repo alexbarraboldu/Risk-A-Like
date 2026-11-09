@@ -79,8 +79,8 @@ namespace ABB.Grid.Editor.VisualElements
 			int columns = Math.Min(newGrid.columns, maxVector2IntFieldSize);
 			int rows = Math.Min(newGrid.rows, maxVector2IntFieldSize);
 
-			_canvasView.SetCurrentGrid(currentGrid, columns, rows);
-			_toolsView.SetCurrentGrid(currentGrid);
+			_canvasView.SetCurrentGrid(newGrid, columns, rows);
+			_toolsView.SetCurrentGrid(newGrid);
 
 			currentGrid = newGrid;
 			session.saveFileIndex = index;

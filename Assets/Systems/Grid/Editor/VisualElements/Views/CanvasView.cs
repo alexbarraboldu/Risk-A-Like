@@ -197,77 +197,53 @@ namespace ABB.Grid.Editor.VisualElements
 				DrawGrid(context);
 		}
 
-		private bool EnsureGrid()
+		private void EnsureGrid(ref GridData gridData, int columns, int rows)
 		{
-			if (currentGrid.columns <= 0 || currentGrid.rows <= 0)
-			{
-				currentGrid.grid = Array.Empty<int[]>();
-				schedule.Execute(SetMemoryLabelText);
-				return false;
-			}
+			int[][] oldGrid = gridData.grid;
+			int[][] preparedGrid = oldGrid;
 
-			bool needsRebuild = currentGrid.grid == null || currentGrid.grid.Length != currentGrid.columns;
-			if (!needsRebuild)
+			if (columns <= 0 || rows <= 0)
 			{
-				for (int x = 0; x < currentGrid.columns; x++)
+				preparedGrid = Array.Empty<int[]>();
+			}
+			else if (oldGrid == null || oldGrid.Length != columns || Array.Exists(oldGrid, column => column == null || column.Length != rows))
+			{
+				preparedGrid = new int[columns][];
+
+				for (int c = 0; c < columns; c++)
 				{
-					if (currentGrid.grid[x] == null || currentGrid.grid[x].Length != currentGrid.rows)
-					{
-						needsRebuild = true;
-						break;
-					}
-				}
-			}
-			if (!needsRebuild)
-			{
-				schedule.Execute(SetMemoryLabelText);
-				return true;
-			}
+					int[] oldColumn = oldGrid != null && c < oldGrid.Length ? oldGrid[c] : null;
 
-			int[][] aux = new int[currentGrid.columns][];
-			int gridColumns = currentGrid.grid.Length;
-			int gridRows = currentGrid.grid != null && currentGrid.grid.Length > 0 ? currentGrid.grid[0]?.Length ?? currentGrid.rows : currentGrid.rows;
-			for (int auxC = 0, c = 0; auxC < currentGrid.columns; auxC++, c++)
-			{
-				aux[auxC] = new int[currentGrid.rows];
-				for (int auxR = 0, r = 0; auxR < currentGrid.rows; auxR++, r++)
-				{
-					if (auxC >= gridColumns)
-					{
-						aux[auxC][auxR] = -1;
-						continue;
-					}
-					else if (auxR >= gridRows)
-					{
-						aux[auxC][auxR] = -1;
-						continue;
-					}
+					int[] newColumn = new int[rows];
+					int rowsToCopy = Math.Min(oldColumn?.Length ?? 0, rows);
 
-					aux[auxC][auxR] = currentGrid.grid[c][r];
+					if (rowsToCopy > 0)
+						Array.Copy(oldColumn, newColumn, rowsToCopy);
+
+					for (int r = rowsToCopy; r < rows; r++)
+						newColumn[r] = -1;
+
+					preparedGrid[c] = newColumn;
 				}
 			}
 
-			currentGrid.grid = aux;
+			gridData.columns = columns;
+			gridData.rows = rows;
+			gridData.grid = preparedGrid;
 
 			schedule.Execute(SetMemoryLabelText);
-
-			return true;
 		}
 
-		public void SetCurrentGrid(GridData gridData)
+		public void SetCurrentGrid(GridData gridData, int columns, int rows)
 		{
-			this.currentGrid = gridData;
-
-			EnsureGrid();
+			EnsureGrid(ref gridData, columns, rows);
+			currentGrid = gridData;
 			MarkDirtyRepaint();
 		}
 
 		public void SetGridSize(Vector2Int value)
 		{
-			currentGrid.columns = value.x;
-			currentGrid.rows = value.y;
-
-			EnsureGrid();
+			EnsureGrid(ref currentGrid, value.x, value.y);
 			MarkDirtyRepaint();
 		}
 
@@ -548,21 +524,9 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 		}
 
-		public bool CheckNeighbours(int column, int row, int cellValueToCheck)
-		{
-			return
-				(column < currentGrid.columns && column >= 0) &&
-				(row < currentGrid.rows && row >= 0) &&
-				currentGrid.grid[column][row] == cellValueToCheck;
-
-			//int rightN = currentGrid.grid[c][r + 1];
-			//int topN = currentGrid.grid[c - 1][r];
-			//int leftN = currentGrid.grid[c - 1][r - 1];
-		}
-
 		public void ResetGrid()
 		{
-			EnsureGrid();
+			EnsureGrid(ref currentGrid, currentGrid.columns, currentGrid.rows);
 
 			for (int c = 0; c < currentGrid.columns; c++)
 			{
@@ -581,7 +545,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerDown(PointerDownEvent evt)
 		{
-			if (session.cellSize <= 0f || currentGrid.columns <= 0f || currentGrid.rows <= 0f) return;
+			if (session.cellSize <= 0f || currentGrid.columns <= 0f || currentGrid.rows <= 0f || evt.button > 2) return;
 
 			localMousePosition = evt.localPosition;
 			localMouseStartPosition = (Vector2)evt.localPosition - gridPosition;
@@ -597,7 +561,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerMove(PointerMoveEvent evt)
 		{
-			if (!isPainting || isFilling) return;
+			if (!isPainting) return;
 
 			Vector2 previousPosition = localMousePosition;
 
@@ -606,7 +570,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (mouseButton == 2)
 				Pan();
-			else
+			else if (!isFilling)
 				PaintStroke(previousPosition, localMousePosition);
 
 			MarkDirtyRepaint();

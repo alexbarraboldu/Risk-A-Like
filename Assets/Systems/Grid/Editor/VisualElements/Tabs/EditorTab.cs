@@ -40,7 +40,6 @@ namespace ABB.Grid.Editor.VisualElements
 			this.owner = owner;
 
 			this.maxVector2IntFieldSize = maxVector2IntFieldSize;
-			ValidateGridSize();
 
 			///	CREATE UI
 			_toolsView = new(session, this.currentGrid, terrainColors, owner, maxVector2IntFieldSize);
@@ -77,22 +76,14 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void LoadGrid(GridData newGrid, int index)
 		{
+			int columns = Math.Min(newGrid.columns, maxVector2IntFieldSize);
+			int rows = Math.Min(newGrid.rows, maxVector2IntFieldSize);
+
+			_canvasView.SetCurrentGrid(currentGrid, columns, rows);
+			_toolsView.SetCurrentGrid(currentGrid);
+
 			currentGrid = newGrid;
 			session.saveFileIndex = index;
-
-			ValidateGridSize();
-
-			_canvasView.SetCurrentGrid(currentGrid);
-			_toolsView.SetCurrentGrid(currentGrid);
-		}
-
-		private void ValidateGridSize()
-		{
-			if (currentGrid.columns > maxVector2IntFieldSize)
-				currentGrid.columns = maxVector2IntFieldSize;
-
-			if (currentGrid.rows > maxVector2IntFieldSize)
-				currentGrid.rows = maxVector2IntFieldSize;
 		}
 	}
 }

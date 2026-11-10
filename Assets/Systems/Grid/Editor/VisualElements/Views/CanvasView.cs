@@ -454,6 +454,8 @@ namespace ABB.Grid.Editor.VisualElements
 				Vector2 position = Vector2.Lerp(from, to, i / (float)steps);
 				EditGridCells(position);
 			}
+
+			MarkDirtyRepaint();
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -478,6 +480,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private void Pan()
 		{
 			gridPosition = localMouseDeltaPosition;
+
+			MarkDirtyRepaint();
 		}
 
 		public void EraseClicked() => isErasing = !isErasing;
@@ -572,8 +576,6 @@ namespace ABB.Grid.Editor.VisualElements
 				Pan();
 			else if (!isFilling)
 				PaintStroke(previousPosition, localMousePosition);
-
-			MarkDirtyRepaint();
 		}
 
 		private void OnPointerUp(PointerUpEvent evt)

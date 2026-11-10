@@ -22,8 +22,6 @@ namespace ABB.Grid.Editor.Windows
 		private const int maxMemoryAllocationMB = 1000;
 		private const int minWindowWidth = 400;
 		private const int minWindowHeight = 400;
-		private const string StylePath = "Assets/";
-		public StyleSheet uss;
 
 		private EditorTab _editorTab = null;
 		private SaveFilesTab _saveFilesTab = null;
@@ -42,26 +40,28 @@ namespace ABB.Grid.Editor.Windows
 		[MenuItem("Window/Custom Tools/Grid Editor")]
 		private static void OpenWindow()
 		{
+			if (HasOpenInstances<GridEditorWindow>())
+				return;
+
 			GridEditorWindow window = CreateInstance<GridEditorWindow>();
 
 			window.titleContent = new GUIContent("Grid Editor");
 			window.minSize = new Vector2(minWindowWidth, minWindowHeight);
 
 			window.Show();
-
-			if (window.closeEditor) window.Close();
 		}
 
 		public void CreateGUI()
 		{
-			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-			if (uss != null) rootVisualElement.styleSheets.Add(uss);
-
 			rootVisualElement.style.minWidth = minWindowWidth;
 			rootVisualElement.style.minHeight = minWindowHeight;
 
-			closeEditor = !LoadAllData();
-			if (closeEditor) return;
+			closeEditor = true;
+			if (!LoadAllData())
+			{
+				EditorApplication.delayCall += Close;
+				return;
+			}
 			CheckData();
 
 			///	BUILD WINDOW UI
@@ -69,7 +69,7 @@ namespace ABB.Grid.Editor.Windows
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 
-			int maxVector2IntFieldSize = CalculateVector2IntFieldMaxIntegerSize(maxMemoryAllocationMB);
+			int maxVector2IntFieldSize = Math.Min(CalculateVector2IntFieldMaxIntegerSize(maxMemoryAllocationMB), Constants.MAX_GRID_DIMENSION);
 
 			_editorTab = new("Editor", session, terrainColors, currentGrid, this, maxVector2IntFieldSize);
 			_saveFilesTab = new("Save Files", grids);
@@ -90,6 +90,8 @@ namespace ABB.Grid.Editor.Windows
 			int index = session.saveFileIndex;
 			if (index >= 0 && index < grids.Length) ActivateGrid(grids[index], index);
 			else ActivateGrid(new GridData(), -1);
+
+			closeEditor = false;
 		}
 
 		private void OnDestroy()
@@ -190,6 +192,8 @@ namespace ABB.Grid.Editor.Windows
 
 		private bool CheckData()
 		{
+			bool invalid = false;
+			int paletteLength = terrainColors.terrainColors.Length;
 			for (int i = 0; i < grids.Length; i++)
 			{
 				GridData grid = grids[i];
@@ -200,12 +204,11 @@ namespace ABB.Grid.Editor.Windows
 				}
 				IEnumerable<int> uniqueValues = values.Distinct();
 
-				int paletteLength = terrainColors.terrainColors.Length;
-				bool invalid = false;
+
 				foreach (var item in uniqueValues)
 				{
 					invalid = item < -1 || item >= paletteLength;
-					if (invalid) return false;
+					if (invalid) break;
 				}
 
 				if (invalid)
@@ -214,7 +217,12 @@ namespace ABB.Grid.Editor.Windows
 				}
 			}
 
-			return true;
+			if (session.leftColor >= paletteLength)
+				session.leftColor = paletteLength > 0 ? (uint)paletteLength - 1 : 0;
+			if (session.rightColor >= paletteLength)
+				session.rightColor = paletteLength > 0 ? (uint)paletteLength - 1 : 0;
+
+			return !invalid;
 		}
 
 		private void ActivateGrid(GridData grid, int index)
@@ -229,6 +237,12 @@ namespace ABB.Grid.Editor.Windows
 
 		private void NewEntry(string newFileName)
 		{
+			if (grids.Length >= Constants.MAX_SAVED_GRIDS)
+			{
+				Debug.LogError($"Maximum saved grids reached. Grid {newFileName} won't be created.");
+				return;
+			}
+
 			///	SAVE CURRENT GRID INTO GRIDS
 			int index = session.saveFileIndex;
 			if (session.saveFileIndex < 0)
@@ -278,83 +292,5 @@ namespace ABB.Grid.Editor.Windows
 			maxVector2IntFieldMemory = 2;
 			maxCanvasMemory = 2;
 		}
-	}
-}
-
-internal class LoadErrorWindow : EditorWindow
-{
-	private Label affectedFilesLabel = null;
-	private Button continueButton = null;
-	private Button closeEditorButton = null;
-
-	private string affectedFiles = string.Empty;
-
-	private bool closeParent = true;
-	private bool regenerate = false;
-
-	public static LoadErrorWindow OpenWindow(string titleContent, out bool closeParent, out bool regenerate, string affectedFiles)
-	{
-		LoadErrorWindow window = CreateInstance<LoadErrorWindow>();
-		window.titleContent = new GUIContent(titleContent);
-		window.minSize = new Vector2(400, 100);
-		window.maxSize = new Vector2(400, 100);
-
-		Rect unityWindow = EditorGUIUtility.GetMainWindowPosition();
-		window.position = new Rect(unityWindow.center - window.minSize * 0.5f, window.minSize);
-
-		window.affectedFiles = affectedFiles;
-
-		window.ShowModalUtility();
-
-		closeParent = window.closeParent;
-		regenerate = window.regenerate;
-
-		return window;
-	}
-
-	private void CreateGUI()
-	{
-		rootVisualElement.style.paddingLeft = 4;
-		rootVisualElement.style.paddingRight = 4;
-		rootVisualElement.style.paddingBottom = 4;
-		rootVisualElement.style.paddingTop = 4;
-
-		affectedFilesLabel = new(affectedFiles);
-		affectedFilesLabel.style.marginTop = 4;
-
-		closeEditorButton = new()
-		{
-			text = "Close editor",
-			tooltip = "Close editor"
-		};
-		closeEditorButton.style.marginTop = 4;
-		closeEditorButton.style.minHeight = 30;
-
-		continueButton = new()
-		{
-			text = "Continue (will regenerate files)",
-			tooltip = "Continue (will regenerate files)"
-		};
-		continueButton.style.marginTop = 4;
-		continueButton.style.minHeight = 30;
-
-		rootVisualElement.Add(affectedFilesLabel);
-		rootVisualElement.Add(closeEditorButton);
-		rootVisualElement.Add(continueButton);
-
-		closeEditorButton.clicked += () =>
-		{
-			closeParent = true;
-			Close();
-		};
-
-		continueButton.clicked += () =>
-		{
-			closeParent = false;
-			regenerate = true;
-			Close();
-		};
-
-
 	}
 }

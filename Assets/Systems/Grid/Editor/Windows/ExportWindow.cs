@@ -15,6 +15,7 @@ namespace ABB.Grid.Editor.Windows
 	public class ExportWindow : EditorWindow
 	{
 		private bool guiBuilt = false;
+		private bool closeExportWindow = true;
 
 		private ExportSettingsData exportSettings;
 		private GridData currentGrid;
@@ -42,7 +43,13 @@ namespace ABB.Grid.Editor.Windows
 
 		public void CreateGUI()
 		{
-			LoadExportSettings();
+			closeExportWindow = true;
+			closeExportWindow = !LoadExportSettings();
+			if (closeExportWindow)
+			{
+				EditorApplication.delayCall += Close;
+				return;
+			}
 
 			TypeField<IExportGrid> typeField = CreateTypeField();
 
@@ -107,7 +114,7 @@ namespace ABB.Grid.Editor.Windows
 			EditorWindow.windowFocusChanged -= OnWindowFocusChanged;
 			EditorApplication.delayCall -= RestoreFocus;
 
-			if (!guiBuilt) return;
+			if (!guiBuilt || closeExportWindow) return;
 
 			Save.SaveExportSettingsFile(exportSettings);
 		}
@@ -116,7 +123,7 @@ namespace ABB.Grid.Editor.Windows
 		{
 			editorInstance?.tabView.SetEnabled(true);
 
-			if (!guiBuilt) return;
+			if (!guiBuilt || closeExportWindow) return;
 
 			Save.SaveExportSettingsFile(exportSettings);
 		}
@@ -137,13 +144,12 @@ namespace ABB.Grid.Editor.Windows
 				Focus();
 		}
 
-		private void LoadExportSettings()
+		private bool LoadExportSettings()
 		{
 			bool pathExists = Directory.Exists(Constants.PATH);
 			if (!pathExists) Directory.CreateDirectory(Constants.PATH);
 
-			bool fileExists = File.Exists(Path.Combine(Constants.PATH, Constants.EXPORT_SETTINGS_FILE_NAME));
-			if (fileExists)
+			if (File.Exists(Path.Combine(Constants.PATH, Constants.EXPORT_SETTINGS_FILE_NAME)))
 			{
 				exportSettings = Load.LoadExportSettingsFile();
 			}
@@ -155,6 +161,25 @@ namespace ABB.Grid.Editor.Windows
 
 				Debug.Log("Successfully created export settings file");
 			}
+
+			if (exportSettings == null)
+			{
+				string affectedFiles = "Affected files: ExportSettings file";
+
+				LoadErrorWindow.OpenWindow("Error on load data files", out bool closeParent, out bool regenerate, affectedFiles);
+
+				if (regenerate && exportSettings == null)
+				{
+					exportSettings = new();
+				}
+
+				if (closeParent)
+				{
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		private TypeField<IExportGrid> CreateTypeField()
@@ -207,7 +232,7 @@ namespace ABB.Grid.Editor.Windows
 			catch (Exception exception)
 			{
 				_exporter = null;
-				exportSettings.assemblyQualifiedName = null;
+				exportSettings.assemblyQualifiedName = string.Empty;
 
 				Debug.LogException(exception);
 

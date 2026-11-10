@@ -12,10 +12,15 @@ public class GridExporter : IExportGrid
 	public bool ExportGrid(string fileName, string path, int[][] grid)
 	{
 		string relativePath = FileUtil.GetProjectRelativePath(path);
-		if (!AssetDatabase.AssetPathExists(relativePath))
+		if (!AssetDatabase.IsValidFolder(relativePath))
 		{
 			Debug.LogError($"Path must be inside Assets directory.");
+			return false;
+		}
 
+		if (string.IsNullOrWhiteSpace(fileName) || fileName.Contains('/') || fileName.Contains('\\') || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+		{
+			Debug.LogError("Enter a valid file name.");
 			return false;
 		}
 
@@ -29,13 +34,11 @@ public class GridExporter : IExportGrid
 
 			AssetDatabase.CreateAsset(gridData, finalPath);
 
-			return true;
+			return gridData != null && AssetDatabase.LoadMainAssetAtPath(finalPath) == gridData;
 		}
-		catch
+		catch (System.Exception exception)
 		{
-			Object.DestroyImmediate(gridData);
-			Debug.LogError($"Failed on AssetDatabase.CreateAsset. Could not create {fileName}.asset");
-
+			Debug.LogException(exception);
 			return false;
 		}
 		finally

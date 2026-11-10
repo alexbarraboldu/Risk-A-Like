@@ -19,6 +19,9 @@ namespace ABB.Grid.Editor.Utils
 		public static readonly string GRIDS_FILE_NAME = "grids.bin";
 		public static readonly string SESSION_FILE_NAME = "session.bin";
 		public static readonly string EXPORT_SETTINGS_FILE_NAME = "exportSettings.bin";
+
+		public static readonly int MAX_GRID_DIMENSION = 10000;
+		public static readonly int MAX_SAVED_GRIDS = 100;
 	}
 
 
@@ -90,7 +93,13 @@ namespace ABB.Grid.Editor.Utils
 			{
 				return BinarySerialization.ReadFromBinaryFile<GridData[]>(Path.Combine(Constants.PATH, Constants.GRIDS_FILE_NAME), reader =>
 				{
+					const int minEntryBytes = 2 * sizeof(int) + 1;
+
 					int grids = reader.ReadInt32();
+					long remaining = reader.BaseStream.Length - reader.BaseStream.Position;
+
+					if (grids < 0 || grids > Constants.MAX_SAVED_GRIDS || grids > remaining / minEntryBytes)
+						throw new InvalidDataException("Invalid grid count.");
 
 					GridData[] gridsData = new GridData[grids];
 
@@ -101,6 +110,16 @@ namespace ABB.Grid.Editor.Utils
 							columns = reader.ReadInt32(),
 							rows = reader.ReadInt32()
 						};
+
+						if (grid.columns < 0 || grid.columns > Constants.MAX_GRID_DIMENSION ||
+							grid.rows < 0 || grid.rows > Constants.MAX_GRID_DIMENSION)
+							throw new InvalidDataException("Invalid grid dimensions.");
+
+						remaining = reader.BaseStream.Length - reader.BaseStream.Position;
+						long cellCount = (long)grid.columns * grid.rows;
+
+						if (remaining < 1 || cellCount > (remaining - 1) / sizeof(int))
+							throw new InvalidDataException("Incomplete grid data.");
 
 						grid.grid = new int[grid.columns][];
 						for (int column = 0; column < grid.columns; column++)

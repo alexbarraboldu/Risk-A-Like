@@ -16,7 +16,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private IVisualElementScheduledItem pickerWatcher;
 		private Color auxColor;
 
-		public Dictionary<int, Color> paletteColors { get; private set; } = new();
+		private Dictionary<int, Color> paletteColors = new();
 		public IReadOnlyDictionary<int, Color> PaletteColors { get => paletteColors; }
 
 		private int _value = -1;
@@ -128,7 +128,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			pickerWatcher = schedule.Execute(timerState =>
 			{
-				Debug.Log("LOL");
 				if (colorPicker == null)
 				{
 					if (paletteColors[_value] != auxColor)

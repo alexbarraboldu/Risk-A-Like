@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Text;
 
+using UnityEngine;
+
 namespace ABB.Grid.Editor.Utils
 {
 	public class BinarySerialization
@@ -25,8 +27,15 @@ namespace ABB.Grid.Editor.Utils
 			}
 			finally
 			{
-				if (File.Exists(tempFilePath))
-					File.Delete(tempFilePath);
+				try
+				{
+					if (File.Exists(tempFilePath))
+						File.Delete(tempFilePath);
+				}
+				catch (Exception exception)
+				{
+					Debug.LogException(exception);
+				}
 			}
 		}
 

@@ -199,37 +199,35 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void EnsureGrid(ref GridData gridData, int columns, int rows)
 		{
-			int[][] oldGrid = gridData.grid;
-			int[][] preparedGrid = oldGrid;
+			int oldColumns = gridData.columns, oldRows = gridData.rows;
+			int[] oldGrid = gridData.grid ?? Array.Empty<int>();
+			int[] newGrid = oldGrid;
 
 			if (columns <= 0 || rows <= 0)
 			{
-				preparedGrid = Array.Empty<int[]>();
+				newGrid = Array.Empty<int>();
 			}
-			else if (oldGrid == null || oldGrid.Length != columns || Array.Exists(oldGrid, column => column == null || column.Length != rows))
+			else if (columns != oldColumns || rows != oldRows || oldGrid.Length != columns * rows)
 			{
-				preparedGrid = new int[columns][];
+				newGrid = new int[columns * rows];
+				Array.Fill(newGrid, -1);
 
-				for (int c = 0; c < columns; c++)
+				int columnsToCopy = Math.Min(oldColumns, columns);
+				int rowsToCopy = Math.Min(oldRows, rows);
+
+				for (int column = 0; column < columnsToCopy && rowsToCopy > 0; column++)
 				{
-					int[] oldColumn = oldGrid != null && c < oldGrid.Length ? oldGrid[c] : null;
+					int oldStart = column * oldRows;
+					if (oldStart >= oldGrid.Length) break;
 
-					int[] newColumn = new int[rows];
-					int rowsToCopy = Math.Min(oldColumn?.Length ?? 0, rows);
-
-					if (rowsToCopy > 0)
-						Array.Copy(oldColumn, newColumn, rowsToCopy);
-
-					for (int r = rowsToCopy; r < rows; r++)
-						newColumn[r] = -1;
-
-					preparedGrid[c] = newColumn;
+					int count = Math.Min(rowsToCopy, oldGrid.Length - oldStart);
+					Array.Copy(oldGrid, oldStart, newGrid, column * rows, count);
 				}
 			}
 
 			gridData.columns = columns;
 			gridData.rows = rows;
-			gridData.grid = preparedGrid;
+			gridData.grid = newGrid;
 
 			schedule.Execute(SetMemoryLabelText);
 		}
@@ -273,19 +271,19 @@ namespace ABB.Grid.Editor.VisualElements
 
 			int outlineHexagons = 0, filledHexagons = 0, cellValue = 0;
 			float oddColumnOffset = 0, xPos = 0, yPos = 0;
-			for (int c = 0; c < currentGrid.columns; c++)
+			for (int column = 0; column < currentGrid.columns; column++)
 			{
-				for (int r = 0; r < currentGrid.rows; r++)
+				for (int row = 0; row < currentGrid.rows; row++)
 				{
-					oddColumnOffset = (c & 1) != 0 ? yOffset * session.cellSize : 0f;
+					oddColumnOffset = (column & 1) != 0 ? yOffset * session.cellSize : 0f;
 
-					xPos = c * xOffset * session.cellSize;
-					yPos = r * cellHeight * session.cellSize + oddColumnOffset;
+					xPos = column * xOffset * session.cellSize;
+					yPos = row * cellHeight * session.cellSize + oddColumnOffset;
 
 					cellPosition = gridPosition;
 					cellPosition.x += xPos; cellPosition.y += yPos;
 
-					cellValue = currentGrid.grid[c][r];
+					cellValue = currentGrid.grid[column * currentGrid.rows + row];
 					if (cellValue != -1)
 					{
 						AllocateFilledHexagon(context, cellPosition, cellValue);
@@ -428,7 +426,7 @@ namespace ABB.Grid.Editor.VisualElements
 			int column = evenIsCloser ? evenColumn : oddColumn;
 			int row = evenIsCloser ? evenRow : oddRow;
 
-			if (column < 0 || column >= currentGrid.grid.Length || row < 0 || row >= currentGrid.grid[column].Length)
+			if (column < 0 || column >= currentGrid.columns || row < 0 || row >= currentGrid.rows)
 				return;
 
 			if (isFilling)
@@ -437,8 +435,8 @@ namespace ABB.Grid.Editor.VisualElements
 			}
 			else
 			{
-				if (mouseButton == 0) currentGrid.grid[column][row] = isErasing ? -1 : (int)session.leftColor;
-				else if (mouseButton == 1) currentGrid.grid[column][row] = isErasing ? -1 : (int)session.rightColor;
+				if (mouseButton == 0) currentGrid.grid[column * currentGrid.rows + row] = isErasing ? -1 : (int)session.leftColor;
+				else if (mouseButton == 1) currentGrid.grid[column * currentGrid.rows + row] = isErasing ? -1 : (int)session.rightColor;
 			}
 		}
 
@@ -490,7 +488,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void FillGrid(int column, int row)
 		{
-			int cellValueToCheck = currentGrid.grid[column][row];
+			int cellValueToCheck = currentGrid.grid[column * currentGrid.rows + row];
 			int newValue = mouseButton == 0 ? (int)session.leftColor : mouseButton == 1 ? (int)session.rightColor : -1;
 
 			if (cellValueToCheck == newValue) return;
@@ -499,8 +497,8 @@ namespace ABB.Grid.Editor.VisualElements
 			Queue<(int, int)> queue = new Queue<(int, int)>();
 			queue.Enqueue((column, row));
 
-			int oldColor = currentGrid.grid[column][row];
-			currentGrid.grid[column][row] = newValue;
+			int oldColor = currentGrid.grid[column * currentGrid.rows + row];
+			currentGrid.grid[column * currentGrid.rows + row] = newValue;
 
 			int columns = currentGrid.columns;
 			int rows = currentGrid.rows;
@@ -519,9 +517,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 					if (nC >= 0 && nC < columns &&
 						nR >= 0 && nR < rows &&
-						currentGrid.grid[nC][nR] == oldColor)
+						currentGrid.grid[nC * currentGrid.rows + nR] == oldColor)
 					{
-						currentGrid.grid[nC][nR] = newValue;
+						currentGrid.grid[nC * currentGrid.rows + nR] = newValue;
 						queue.Enqueue((nC, nR));
 					}
 				}
@@ -532,11 +530,11 @@ namespace ABB.Grid.Editor.VisualElements
 		{
 			EnsureGrid(ref currentGrid, currentGrid.columns, currentGrid.rows);
 
-			for (int c = 0; c < currentGrid.columns; c++)
+			for (int column = 0; column < currentGrid.columns; column++)
 			{
-				for (int r = 0; r < currentGrid.rows; r++)
+				for (int row = 0; row < currentGrid.rows; row++)
 				{
-					currentGrid.grid[c][r] = -1;
+					currentGrid.grid[column * currentGrid.rows + row] = -1;
 				}
 			}
 
@@ -615,11 +613,6 @@ namespace ABB.Grid.Editor.VisualElements
 			gridPosition = (evt.newRect.size - gridExtent) / 2f - drawnOffset;
 
 			MarkDirtyRepaint();
-
-			//float width = evt.newRect.width;
-			//float height = evt.newRect.height;
-			//gridPosition.x = (width / 2f) - ((currentGrid.grid.Length * session.cellSize) / 2f) * xOffset;
-			//gridPosition.y = (height / 2f) - ((currentGrid.grid[0].Length * session.cellSize) / 2f) * cellHeight;
 		}
 
 		private void OnPointerLeave(PointerLeaveEvent evt)

@@ -121,13 +121,12 @@ namespace ABB.Grid.Editor.Utils
 						if (remaining < 1 || cellCount > (remaining - 1) / sizeof(int))
 							throw new InvalidDataException("Incomplete grid data.");
 
-						grid.grid = new int[grid.columns][];
+						grid.grid = new int[grid.columns * grid.rows];
 						for (int column = 0; column < grid.columns; column++)
 						{
-							grid.grid[column] = new int[grid.rows];
 							for (int row = 0; row < grid.rows; row++)
 							{
-								grid.grid[column][row] = reader.ReadInt32();
+								grid.grid[column * grid.rows + row] = reader.ReadInt32();
 							}
 						}
 
@@ -237,7 +236,7 @@ namespace ABB.Grid.Editor.Utils
 
 					for (int i = 0; i < grids; i++)
 					{
-						int[][] grid = gridsData[i].grid;
+						int[] grid = gridsData[i].grid;
 						int columns = gridsData[i].columns, rows = gridsData[i].rows;
 
 						writer.Write(columns);
@@ -247,7 +246,7 @@ namespace ABB.Grid.Editor.Utils
 						{
 							for (int row = 0; row < rows; row++)
 							{
-								writer.Write(grid[column][row]);
+								writer.Write(grid[column * rows + row]);
 							}
 						}
 

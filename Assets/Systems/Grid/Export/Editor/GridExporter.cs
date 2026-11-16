@@ -9,7 +9,7 @@ using UnityEngine;
 
 public class GridExporter : IExportGrid
 {
-	public bool ExportGrid(string fileName, string path, int[][] grid)
+	public bool ExportGrid(string fileName, string path, int[] grid, int columns, int rows)
 	{
 		string relativePath = FileUtil.GetProjectRelativePath(path);
 		if (!AssetDatabase.IsValidFolder(relativePath))
@@ -28,7 +28,7 @@ public class GridExporter : IExportGrid
 		try
 		{
 			gridData = ScriptableObject.CreateInstance<GridTerrainDataSO>();
-			gridData.terrainData = ParseGrid(grid);
+			gridData.terrainData = ParseGrid(grid, columns, rows);
 
 			string finalPath = Path.Combine(relativePath, fileName + ".asset");
 
@@ -48,18 +48,16 @@ public class GridExporter : IExportGrid
 		}
 	}
 
-	private int[][] ParseGrid(int[][] grid)
+	private int[][] ParseGrid(int[] grid, int columns, int rows)
 	{
-		int columns = grid.Length;
-		int rows = grid != null && grid.Length > 0 ? grid[0]?.Length ?? 0 : 0;
 		int[][] result = new int[columns][];
 
-		for (int c = 0, C = columns - 1; c < columns; c++, --C)
+		for (int column = 0, C = columns - 1; column < columns; column++, --C)
 		{
-			result[c] = new int[rows];
-			for (int r = 0, R = rows - 1; r < rows; r++, --R)
+			result[column] = new int[rows];
+			for (int row = 0, R = rows - 1; row < rows; row++, --R)
 			{
-				result[c][r] = grid[c][R];
+				result[column][row] = grid[column * rows + R];
 			}
 		}
 

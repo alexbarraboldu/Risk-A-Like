@@ -106,6 +106,7 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnEnable()
 		{
+			EditorApplication.delayCall += DisableTabView;
 			EditorWindow.windowFocusChanged += OnWindowFocusChanged;
 		}
 
@@ -113,6 +114,7 @@ namespace ABB.Grid.Editor.Windows
 		{
 			EditorWindow.windowFocusChanged -= OnWindowFocusChanged;
 			EditorApplication.delayCall -= RestoreFocus;
+			EditorApplication.delayCall -= DisableTabView;
 
 			if (!guiBuilt || closeExportWindow) return;
 
@@ -142,6 +144,11 @@ namespace ABB.Grid.Editor.Windows
 
 			if (EditorWindow.focusedWindow == editorInstance)
 				Focus();
+		}
+
+		private void DisableTabView()
+		{
+			editorInstance?.tabView.SetEnabled(false);
 		}
 
 		private bool LoadExportSettings()
@@ -284,7 +291,7 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				if (_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid))
+				if (_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid, currentGrid.columns, currentGrid.rows))
 					Debug.Log("Grid data exported successfully!");
 				else
 				{

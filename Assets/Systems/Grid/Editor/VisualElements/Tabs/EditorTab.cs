@@ -67,8 +67,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnExportGrid()
 		{
-			owner.tabView.SetEnabled(false);
-
 			ExportWindow.OpenWindow(currentGrid, owner);
 		}
 

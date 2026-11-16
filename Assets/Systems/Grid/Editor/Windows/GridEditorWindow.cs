@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Utils;
@@ -104,7 +102,10 @@ namespace ABB.Grid.Editor.Windows
 				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
 			}
 
-			if (!Save.SaveGridDataFile(grids)) Debug.LogError("Could not save grids.bin, all information has been lost. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+			if (!Save.SaveGridDataFile(grids))
+			{
+				Debug.LogError("Could not save grids.bin, recent grids may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+			}
 			EditorApplication.delayCall += ResetSessionIfClosed;
 		}
 
@@ -118,9 +119,18 @@ namespace ABB.Grid.Editor.Windows
 				Debug.Log($"Successfully created parent directory at {Constants.PATH}");
 			}
 
-			if (!Save.SaveGridDataFile(grids)) Debug.LogError("Could not save grids.bin, all information has been lost. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
-			Save.SaveTerrainColorsFile(terrainColors);
-			Save.SaveSessionFile(session);
+			if (!Save.SaveGridDataFile(grids))
+			{
+				Debug.LogError("Could not save grids.bin, recent grids may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+			}
+			if (!Save.SaveTerrainColorsFile(terrainColors))
+			{
+				Debug.LogError("Could not save terrainColors.bin, recent palette colors may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+			}
+			if (!Save.SaveSessionFile(session))
+			{
+				Debug.LogError("Could not save session.bin, recent grids may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+			}
 		}
 
 
@@ -166,10 +176,10 @@ namespace ABB.Grid.Editor.Windows
 
 			if (terrainColors == null || session == null || grids == null)
 			{
-				string affectedFiles = "Affected files: ";
-				affectedFiles += terrainColors == null ? "TerrainColorData file, " : "";
-				affectedFiles += session == null ? "SessionData file, " : "";
-				affectedFiles += grids == null ? "GridData file," : "";
+				string affectedFiles = "Affected files:";
+				affectedFiles += terrainColors == null ? " TerrainColorData file," : "";
+				affectedFiles += session == null ? " SessionData file," : "";
+				affectedFiles += grids == null ? " GridData file," : "";
 				affectedFiles = affectedFiles.TrimEnd(',');
 
 				LoadErrorWindow.OpenWindow("Error on load data files", out bool closeParent, out bool regenerate, affectedFiles);
@@ -192,37 +202,31 @@ namespace ABB.Grid.Editor.Windows
 
 		private bool CheckData()
 		{
-			bool invalid = false;
 			int paletteLength = terrainColors.terrainColors.Length;
-			for (int i = 0; i < grids.Length; i++)
+			bool allGridsValid = true;
+
+			foreach (GridData grid in grids)
 			{
-				GridData grid = grids[i];
-				List<int> values = new();
-				for (int column = 0; column < grid.columns; column++)
+				foreach (int value in grid.grid)
 				{
-					values.AddRange(grid.grid[column].Distinct());
-				}
-				IEnumerable<int> uniqueValues = values.Distinct();
+					if (value >= -1 && value < paletteLength)
+						continue;
 
-
-				foreach (var item in uniqueValues)
-				{
-					invalid = item < -1 || item >= paletteLength;
-					if (invalid) break;
-				}
-
-				if (invalid)
-				{
-					Debug.LogWarning($"Grid: '{grid.fileName}' has as invalid palette value");
+					Debug.LogWarning($"Grid '{grid.fileName}' has invalid palette value {value}.");
+					allGridsValid = false;
+					break;
 				}
 			}
 
-			if (session.leftColor >= paletteLength)
-				session.leftColor = paletteLength > 0 ? (uint)paletteLength - 1 : 0;
-			if (session.rightColor >= paletteLength)
-				session.rightColor = paletteLength > 0 ? (uint)paletteLength - 1 : 0;
+			uint fallbackBrush = paletteLength > 0 ? (uint)(paletteLength - 1) : 0u;
 
-			return !invalid;
+			if (session.leftColor >= paletteLength)
+				session.leftColor = fallbackBrush;
+
+			if (session.rightColor >= paletteLength)
+				session.rightColor = fallbackBrush;
+
+			return allGridsValid;
 		}
 
 		private void ActivateGrid(GridData grid, int index)

@@ -62,13 +62,6 @@ namespace ABB.Grid.Editor.Windows
 			{
 				name = "unity-object-selector__search-field"
 			};
-			//_searchField.SetValueWithoutNotify(_searchFilter);
-			//_searchField.RegisterCallback<KeyDownEvent>(OnSearchFieldKeyDown, TrickleDown.TrickleDown);
-			//_searchField.RegisterValueChangedCallback(OnSearchFieldChanged);
-			//_searchField.RegisterCallback(delegate (AttachToPanelEvent evt)
-			//{
-			//	((VisualElement)evt.target).Focus();
-			//});
 			_searchField.RegisterValueChangedCallback(OnSearchFieldChanged);
 
 			Toolbar _toolbar = new Toolbar

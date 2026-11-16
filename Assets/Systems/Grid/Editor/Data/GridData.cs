@@ -8,7 +8,7 @@ namespace ABB.Grid.Editor.Data
 		public int columns = 0;
 		public int rows = 0;
 
-		public int[][] grid = Array.Empty<int[]>();
+		public int[] grid = Array.Empty<int>();
 
 		public string fileName = string.Empty;
 	}

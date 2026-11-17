@@ -91,7 +91,7 @@ internal class TextInputDialog : EditorWindow
 		textField.RegisterValueChangedCallback(evt =>
 		{
 			if (!acceptBlankInput)
-				acceptButton.SetEnabled(evt.newValue != string.Empty);
+				acceptButton.SetEnabled(!string.IsNullOrWhiteSpace(evt.newValue));
 		});
 	}
 

@@ -22,10 +22,10 @@ namespace ABB.Grid.Editor.VisualElements
 		///	FIELDS
 		private int maxVector2IntFieldSize = 0;
 
-		private event Action<string> NewGridData;
+		private event Func<string, bool> NewGridData;
 
 
-		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, GridEditorWindow owner, int maxVector2IntFieldSize)
+		public EditorTab(string label, SessionData session, TerrainColorData terrainColors, GridData currentGrid, GridEditorWindow owner, int maxVector2IntFieldSize, int maxMemoryAllocationMB)
 		{
 			base.label = label;
 			closeable = false;
@@ -43,7 +43,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			///	CREATE UI
 			_toolsView = new(session, this.currentGrid, terrainColors, owner, maxVector2IntFieldSize);
-			_canvasView = new(session, this.currentGrid, terrainColors);
+			_canvasView = new(session, this.currentGrid, terrainColors, maxMemoryAllocationMB);
 
 			///	ADD UI
 			contentContainer.Add(_toolsView);
@@ -57,31 +57,52 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnResetGrid += _canvasView.ResetGrid;
 			_toolsView.OnFillGrid += _canvasView.FillClicked;
 			_toolsView.OnExportGrid += OnExportGrid;
-			_toolsView.OnNewGrid += (value) => NewGridData?.Invoke(value);
+			_toolsView.OnNewGrid += OnNewGrid;
 		}
 
 
 		#region ACTIONS
 
-		public void RegisterCallbackNewGridData(Action<string> action) => NewGridData += action;
+		public void RegisterCallbackNewGridData(Func<string, bool> action) => NewGridData += action;
 
 		private void OnExportGrid()
 		{
 			ExportWindow.OpenWindow(currentGrid, owner);
 		}
 
+		private bool OnNewGrid(string value) => NewGridData?.Invoke(value) ?? false;
+
 		#endregion
 
-		public void LoadGrid(GridData newGrid, int index)
+		public bool LoadGrid(GridData newGrid, int index)
 		{
 			int columns = Math.Min(newGrid.columns, maxVector2IntFieldSize);
 			int rows = Math.Min(newGrid.rows, maxVector2IntFieldSize);
+
+			if (newGrid.columns > maxVector2IntFieldSize || newGrid.columns > maxVector2IntFieldSize)
+			{
+				LoadErrorWindow.OpenWindow(
+					$"{newGrid.fileName} grid size is bigger than what the memory budget allows.",
+					out bool closeParent,
+					out bool regenerate,
+					"Cancel opening",
+					"Continue (resize grid to actual limit)",
+					$"{newGrid.fileName}"
+				);
+
+				if (!regenerate && closeParent)
+				{
+					return false;
+				}
+			}
 
 			_canvasView.SetCurrentGrid(newGrid, columns, rows);
 			_toolsView.SetCurrentGrid(newGrid);
 
 			currentGrid = newGrid;
 			session.saveFileIndex = index;
+
+			return true;
 		}
 	}
 }

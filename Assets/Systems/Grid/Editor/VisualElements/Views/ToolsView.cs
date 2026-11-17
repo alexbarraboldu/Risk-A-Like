@@ -61,7 +61,7 @@ namespace ABB.Grid.Editor.VisualElements
 			add => exportGridButton.clicked += value;
 			remove => exportGridButton.clicked -= value;
 		}
-		public event Action<string> OnNewGrid;
+		public event Func<string, bool> OnNewGrid;
 
 
 		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, GridEditorWindow owner, int maxVector2IntFieldSize)
@@ -299,9 +299,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnNewGridConfirmed(string value)
 		{
-			SetEnableUI(true);
-
-			OnNewGrid?.Invoke(value);
+			bool result = OnNewGrid?.Invoke(value) ?? false;
+			if (result) SetEnableUI(true);
 		}
 
 		private void SetEnableUI(bool value)

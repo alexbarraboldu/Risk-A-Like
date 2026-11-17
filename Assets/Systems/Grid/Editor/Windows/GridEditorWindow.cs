@@ -17,7 +17,7 @@ namespace ABB.Grid.Editor.Windows
 		/// <summary>
 		///	Maximum grid memory allocation in MB
 		/// </summary>
-		private const int maxMemoryAllocationMB = 1000;
+		private const int maxMemoryAllocationMB = 180;
 		private const int minWindowWidth = 400;
 		private const int minWindowHeight = 400;
 
@@ -69,7 +69,7 @@ namespace ABB.Grid.Editor.Windows
 
 			int maxVector2IntFieldSize = Math.Min(CalculateVector2IntFieldMaxIntegerSize(maxMemoryAllocationMB), Constants.MAX_GRID_DIMENSION);
 
-			_editorTab = new("Editor", session, terrainColors, currentGrid, this, maxVector2IntFieldSize);
+			_editorTab = new("Editor", session, terrainColors, currentGrid, this, maxVector2IntFieldSize, maxMemoryAllocationMB);
 			_saveFilesTab = new("Save Files", grids);
 
 			///	ADD LOGIC
@@ -129,7 +129,7 @@ namespace ABB.Grid.Editor.Windows
 			}
 			if (!Save.SaveSessionFile(session))
 			{
-				Debug.LogError("Could not save session.bin, recent grids may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
+				Debug.LogError("Could not save session.bin, recent session data may be missing when you reopen the editor. Make sure you have space, another process has not locked the file or that storage device is working properlly.");
 			}
 		}
 
@@ -182,7 +182,14 @@ namespace ABB.Grid.Editor.Windows
 				affectedFiles += grids == null ? " GridData file," : "";
 				affectedFiles = affectedFiles.TrimEnd(',');
 
-				LoadErrorWindow.OpenWindow("Error on load data files", out bool closeParent, out bool regenerate, affectedFiles);
+				LoadErrorWindow.OpenWindow(
+					"Error on load data files",
+					out bool closeParent,
+					out bool regenerate,
+					"Close editor",
+					"Continue (will regenerate files)",
+					affectedFiles
+				);
 
 				if (regenerate)
 				{
@@ -239,12 +246,12 @@ namespace ABB.Grid.Editor.Windows
 			tabView.activeTab = _editorTab;
 		}
 
-		private void NewEntry(string newFileName)
+		private bool NewEntry(string newFileName)
 		{
 			if (grids.Length >= Constants.MAX_SAVED_GRIDS)
 			{
 				Debug.LogError($"Maximum saved grids reached. Grid {newFileName} won't be created.");
-				return;
+				return false;
 			}
 
 			///	SAVE CURRENT GRID INTO GRIDS
@@ -272,29 +279,19 @@ namespace ABB.Grid.Editor.Windows
 			_saveFilesTab.SetEntries(grids);
 
 			if (!Save.SaveGridDataFile(grids))
-				return;
+				return false;
 
 			Save.SaveSessionFile(session);
+
+			return true;
 		}
 
 		private int CalculateVector2IntFieldMaxIntegerSize(int maxMemoryAllocationMB)
 		{
-			long maxVectorCount = (long)maxMemoryAllocationMB * 1_000_000 / sizeof(int);
-			return (int)System.Math.Sqrt(maxVectorCount);
-		}
-
-		private int CalculateCanvasMaxMemmoryAllocation(int maxMemoryAllocationMB)
-		{
-			return (int)System.Math.Sqrt(maxMemoryAllocationMB);
-		}
-
-		///	This is for the future
-		///	i.e.: GridEditor will have a maximum memory size alloaction and from that it will calculate
-		///	the Vector2IntField.maxIntegerSize & CanvasView.maxGridSize
-		private void DistributeMemoryLimits(out int maxVector2IntFieldMemory, out int maxCanvasMemory)
-		{
-			maxVector2IntFieldMemory = 2;
-			maxCanvasMemory = 2;
+			int outlineHexBytes = 936 + 4;
+			long maxMemoryBytes = (long)maxMemoryAllocationMB * 1_000_000L;
+			long maxCells = maxMemoryBytes / outlineHexBytes;
+			return (int)System.Math.Sqrt(maxCells);
 		}
 	}
 }

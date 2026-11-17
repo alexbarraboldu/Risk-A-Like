@@ -9,12 +9,16 @@ internal class LoadErrorWindow : EditorWindow
 	private Button continueButton = null;
 	private Button closeEditorButton = null;
 
+	private string closeButtonContent = string.Empty;
+	private string continueButtonContent = string.Empty;
+
 	private string affectedFiles = string.Empty;
 
-	private bool closeParent = true;
-	private bool regenerate = false;
+	private bool onClose = true;
+	private bool onContinue = false;
 
-	public static LoadErrorWindow OpenWindow(string titleContent, out bool closeParent, out bool regenerate, string affectedFiles)
+
+	public static LoadErrorWindow OpenWindow(string titleContent, out bool onClose, out bool onContinue, string closeButtonContent, string continueButtonContent, string affectedFiles)
 	{
 		LoadErrorWindow window = CreateInstance<LoadErrorWindow>();
 		window.titleContent = new GUIContent(titleContent);
@@ -24,12 +28,15 @@ internal class LoadErrorWindow : EditorWindow
 		Rect unityWindow = EditorGUIUtility.GetMainWindowPosition();
 		window.position = new Rect(unityWindow.center - window.minSize * 0.5f, window.minSize);
 
+		window.closeButtonContent = closeButtonContent;
+		window.continueButtonContent = continueButtonContent;
+
 		window.affectedFiles = affectedFiles;
 
 		window.ShowModalUtility();
 
-		closeParent = window.closeParent;
-		regenerate = window.regenerate;
+		onClose = window.onClose;
+		onContinue = window.onContinue;
 
 		return window;
 	}
@@ -46,16 +53,16 @@ internal class LoadErrorWindow : EditorWindow
 
 		closeEditorButton = new()
 		{
-			text = "Close editor",
-			tooltip = "Close editor"
+			text = closeButtonContent,
+			tooltip = closeButtonContent
 		};
 		closeEditorButton.style.marginTop = 4;
 		closeEditorButton.style.minHeight = 30;
 
 		continueButton = new()
 		{
-			text = "Continue (will regenerate files)",
-			tooltip = "Continue (will regenerate files)"
+			text = continueButtonContent,
+			tooltip = continueButtonContent
 		};
 		continueButton.style.marginTop = 4;
 		continueButton.style.minHeight = 30;
@@ -66,17 +73,15 @@ internal class LoadErrorWindow : EditorWindow
 
 		closeEditorButton.clicked += () =>
 		{
-			closeParent = true;
+			onClose = true;
 			Close();
 		};
 
 		continueButton.clicked += () =>
 		{
-			closeParent = false;
-			regenerate = true;
+			onClose = false;
+			onContinue = true;
 			Close();
 		};
-
-
 	}
 }

@@ -123,7 +123,8 @@ namespace ABB.Grid.Editor.Windows
 
 		private void OnDestroy()
 		{
-			editorInstance?.tabView.SetEnabled(true);
+			if (editorInstance != null)
+				editorInstance.tabView?.SetEnabled(true);
 
 			if (!guiBuilt || closeExportWindow) return;
 
@@ -148,7 +149,8 @@ namespace ABB.Grid.Editor.Windows
 
 		private void DisableTabView()
 		{
-			editorInstance?.tabView.SetEnabled(false);
+			if (this != null && editorInstance != null)
+				editorInstance.tabView?.SetEnabled(false);
 		}
 
 		private bool LoadExportSettings()
@@ -164,22 +166,27 @@ namespace ABB.Grid.Editor.Windows
 			{
 				if (exportSettings == null) exportSettings = new();
 
-				Save.SaveExportSettingsFile(exportSettings);
-
-				Debug.Log("Successfully created export settings file");
+				if (Save.SaveExportSettingsFile(exportSettings))
+					Debug.Log("Successfully created export settings file");
 			}
 
 			if (exportSettings == null)
 			{
 				string affectedFiles = "Affected files: ExportSettings file";
 
-				LoadErrorWindow.OpenWindow("Error on load data files", out bool closeParent, out bool regenerate, affectedFiles);
+				LoadErrorWindow.OpenWindow(
+					"Error on load data files",
+					out bool closeParent,
+					out bool regenerate,
+					"Close editor",
+					"Continue (will regenerate files)",
+					affectedFiles
+				);
 
-				if (regenerate && exportSettings == null)
+				if (regenerate)
 				{
 					exportSettings = new();
 				}
-
 				if (closeParent)
 				{
 					return false;

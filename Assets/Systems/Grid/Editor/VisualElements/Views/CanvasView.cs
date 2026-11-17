@@ -135,8 +135,10 @@ namespace ABB.Grid.Editor.VisualElements
 		///	VISUAL ELEMENTS
 		private Label memoryLabel = null;
 
+		private int maxMemoryAllocationMB = 0;
 
-		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors)
+
+		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxMemoryAllocationMB)
 		{
 			focusable = true;
 
@@ -166,6 +168,8 @@ namespace ABB.Grid.Editor.VisualElements
 			this.session = session;
 			this.currentGrid = currentGrid;
 			this.terrainColors = terrainColors;
+
+			this.maxMemoryAllocationMB = maxMemoryAllocationMB;
 
 			memoryLabel = new();
 			memoryLabel.style.alignSelf = Align.FlexEnd;
@@ -252,6 +256,7 @@ namespace ABB.Grid.Editor.VisualElements
 			long renderBytes = isRenderEnabled ? renderMemorySizeBytes : 0L;
 
 			memoryLabel.text =
+				$"Max memory: {maxMemoryAllocationMB} MB\n" +
 				$"Estimated render memory:\n" +
 				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000L} KB\n" +
 				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000000L} MB";

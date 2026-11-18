@@ -79,7 +79,7 @@ namespace ABB.Grid.Editor.VisualElements
 			int columns = Math.Min(newGrid.columns, maxVector2IntFieldSize);
 			int rows = Math.Min(newGrid.rows, maxVector2IntFieldSize);
 
-			if (newGrid.columns > maxVector2IntFieldSize || newGrid.columns > maxVector2IntFieldSize)
+			if (newGrid.columns > maxVector2IntFieldSize || newGrid.rows > maxVector2IntFieldSize)
 			{
 				LoadErrorWindow.OpenWindow(
 					$"{newGrid.fileName} grid size is bigger than what the memory budget allows.",

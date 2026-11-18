@@ -17,7 +17,7 @@ namespace ABB.Grid.Editor.Windows
 		/// <summary>
 		///	Maximum grid memory allocation in MB
 		/// </summary>
-		private const int maxMemoryAllocationMB = 180;
+		private const int maxMemoryAllocationMB = 1000;
 		private const int minWindowWidth = 400;
 		private const int minWindowHeight = 400;
 
@@ -86,8 +86,9 @@ namespace ABB.Grid.Editor.Windows
 
 			///	RELOAD GRID
 			int index = session.saveFileIndex;
+			ActivateGrid(new GridData(), -1);
+
 			if (index >= 0 && index < grids.Length) ActivateGrid(grids[index], index);
-			else ActivateGrid(new GridData(), -1);
 
 			closeEditor = false;
 		}
@@ -238,7 +239,7 @@ namespace ABB.Grid.Editor.Windows
 
 		private void ActivateGrid(GridData grid, int index)
 		{
-			_editorTab.LoadGrid(grid, index);
+			if (!_editorTab.LoadGrid(grid, index)) return;
 
 			currentGrid = grid;
 			session.saveFileIndex = index;

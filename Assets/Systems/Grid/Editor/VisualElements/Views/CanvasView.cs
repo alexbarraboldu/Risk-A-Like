@@ -464,15 +464,36 @@ namespace ABB.Grid.Editor.VisualElements
 			if (column < 0 || column >= currentGrid.columns || row < 0 || row >= currentGrid.rows)
 				return;
 
+			bool hasEdited = false;
 			if (isFilling)
 			{
-				FillGrid(column, row);
+				hasEdited = FillGrid(column, row);
 			}
 			else
 			{
-				if (mouseButton == 0) currentGrid.grid[column * currentGrid.rows + row] = isErasing ? -1 : (int)session.leftColor;
-				else if (mouseButton == 1) currentGrid.grid[column * currentGrid.rows + row] = isErasing ? -1 : (int)session.rightColor;
+				if (mouseButton == 0)
+				{
+					int cellValue = currentGrid.grid[column * currentGrid.rows + row];
+					int paintValue = isErasing ? -1 : (int)session.leftColor;
+					if (cellValue != paintValue)
+					{
+						currentGrid.grid[column * currentGrid.rows + row] = paintValue;
+						hasEdited = true;
+					}
+				}
+				else if (mouseButton == 1)
+				{
+					int cellValue = currentGrid.grid[column * currentGrid.rows + row];
+					int paintValue = isErasing ? -1 : (int)session.rightColor;
+					if (cellValue != paintValue)
+					{
+						currentGrid.grid[column * currentGrid.rows + row] = paintValue;
+						hasEdited = true;
+					}
+				}
 			}
+
+			if (hasEdited) CanvasMarkDirtyRepaint("EditGridCells");
 		}
 
 		private void PaintStroke(Vector2 from, Vector2 to)
@@ -523,12 +544,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void FillClicked() => isFilling = !isFilling;
 
-		private void FillGrid(int column, int row)
+		private bool FillGrid(int column, int row)
 		{
 			int cellValueToCheck = currentGrid.grid[column * currentGrid.rows + row];
 			int newValue = mouseButton == 0 ? (int)session.leftColor : mouseButton == 1 ? (int)session.rightColor : -1;
 
-			if (cellValueToCheck == newValue) return;
+			if (cellValueToCheck == newValue) return false;
 			///				RIGHT		LEFT	BOTTOM		TOP		RIGHT-TOP	RIGHT-BOTTOM	LEFT-TOP	LEFT-BOTTOM
 			int[,] dir = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
 			Queue<(int, int)> queue = new Queue<(int, int)>();
@@ -561,6 +582,8 @@ namespace ABB.Grid.Editor.VisualElements
 					}
 				}
 			}
+
+			return true;
 		}
 
 		public void ResetGrid()
@@ -594,8 +617,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (mouseButton != 2)
 				EditGridCells(localMousePosition);
-
-			gridLayer.MarkDirtyRepaint();
 		}
 
 		private void OnPointerMove(PointerMoveEvent evt)
@@ -618,9 +639,9 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			}
 			else if (!isFilling)
+			{
 				PaintStroke(previousPosition, localMousePosition);
-
-			gridLayer.MarkDirtyRepaint();
+			}
 		}
 
 		private void OnPointerUp(PointerUpEvent evt)

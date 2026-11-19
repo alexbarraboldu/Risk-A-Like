@@ -55,10 +55,10 @@ public class HexGridJobs
 		0, 7, 1, 0, 6, 7
 	};
 
-	public static void DrawGrid(MeshGenerationContext context, int[] grid, Vector2Int gridSize, float cellSize, Vector2 gridPosition, Rect viewport, TerrainColor[] terrainColors, bool useJobs = true, bool cullOffscreen = true)
+	public static (int filled, int outlined) DrawGrid(MeshGenerationContext context, int[] grid, Vector2Int gridSize, float cellSize, Vector2 gridPosition, Rect viewport, TerrainColor[] terrainColors, bool useJobs = true, bool cullOffscreen = true)
 	{
 		if (gridSize.x <= 0 || gridSize.y <= 0 || cellSize <= 0f || float.IsNaN(cellSize) || float.IsInfinity(cellSize) || !(viewport.width > 0f) || !(viewport.height > 0f))
-			return;
+			return (0, 0);
 
 		using (PrepareMarker.Auto())
 		{
@@ -66,7 +66,7 @@ public class HexGridJobs
 			GetVisibleRange(gridSize, cellSize, origin, viewport, cullOffscreen, out int firstColumn, out int lastColumn, out int firstRow, out int lastRow);
 
 			if (firstColumn > lastColumn || firstRow > lastRow)
-				return;
+				return (0, 0);
 
 			int visibleColumns = lastColumn - firstColumn + 1;
 			int visibleRows = lastRow - firstRow + 1;
@@ -79,6 +79,8 @@ public class HexGridJobs
 			NativeArray<Color32> fillColors = default;
 
 			JobHandle allJobs = default;
+			int filledCount = 0;
+			int colorsLength = terrainColors?.Length ?? 0;
 
 			try
 			{
@@ -89,30 +91,25 @@ public class HexGridJobs
 					for (int row = firstRow; row <= lastRow; row++)
 					{
 						long sourceIndex = columnOffset + row;
-						snapshot[destination++] = grid != null && sourceIndex < grid.Length
-							? grid[(int)sourceIndex]
-							: -1;
+						int value = grid != null && sourceIndex < grid.Length ? grid[(int)sourceIndex] : -1;
+
+						snapshot[destination++] = value;
+						if (HasFillColor(value, colorsLength))
+							filledCount++;
 					}
 				}
 
 				// Copy each template once for this draw. Every chunk shares these buffers.
-				templateVertices = new NativeArray<Vertex>(HexVertexTemplate, Allocator.TempJob);
-				filledTriangles = new NativeArray<ushort>(FilledTriangleTemplate, Allocator.TempJob);
-				outlinedTriangles = new NativeArray<ushort>(OutlinedTriangleTemplate, Allocator.TempJob);
+				templateVertices = new NativeArray<Vertex>(HexVertexTemplate, Allocator.Persistent);
+				filledTriangles = new NativeArray<ushort>(FilledTriangleTemplate, Allocator.Persistent);
+				outlinedTriangles = new NativeArray<ushort>(OutlinedTriangleTemplate, Allocator.Persistent);
 
-				NativeSlice<Vertex> vertexSlice = templateVertices;
-				NativeSlice<ushort> filledTriangleSlice = filledTriangles;
-				NativeSlice<ushort> outlinedTriangleSlice = outlinedTriangles;
-
-				int colorsLength = terrainColors?.Length ?? 0;
 				fillColors = new NativeArray<Color32>(colorsLength, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 				for (int i = 0; i < colorsLength; i++)
 					fillColors[i] = (Color32)terrainColors[i].color;
 
-
 				context.GetTempMeshAllocator(out TempMeshAllocator allocator);
 
-				int jobCount = 0;
 				for (int pass = 0; pass < 2; pass++)
 				{
 					for (int start = 0; start < visibleCount; start += CellsPerMesh)
@@ -122,9 +119,9 @@ public class HexGridJobs
 							drawFills = pass == 0,
 							cells = snapshot,
 							allocator = allocator,
-							templateVertices = vertexSlice,
-							filledTriangles = filledTriangleSlice,
-							outlinedTriangles = outlinedTriangleSlice,
+							templateVertices = templateVertices,
+							filledTriangles = filledTriangles,
+							outlinedTriangles = outlinedTriangles,
 							start = start,
 							count = Mathf.Min(CellsPerMesh, visibleCount - start),
 							firstColumn = firstColumn,
@@ -140,7 +137,6 @@ public class HexGridJobs
 
 						if (useJobs)
 						{
-							jobCount++;
 							JobHandle handle = job.Schedule();
 							allJobs = JobHandle.CombineDependencies(allJobs, handle);
 						}
@@ -149,8 +145,6 @@ public class HexGridJobs
 							job.Execute();
 						}
 					}
-					//Debug.Log($"Visible count: {visibleCount}");
-					//Debug.Log($"Job count: {jobCount}");
 				}
 			}
 			finally
@@ -165,6 +159,8 @@ public class HexGridJobs
 				if (useJobs)
 					context.AddMeshGenerationJob(cleanup);
 			}
+
+			return (filledCount, visibleCount - filledCount);
 		}
 	}
 
@@ -222,6 +218,8 @@ public class HexGridJobs
 		lastRow = Mathf.Min(size.y - 1, Mathf.FloorToInt((view.yMax - origin.y + margin) / stepY));
 	}
 
+	private static bool HasFillColor(int value, int colorsLength) => value >= 0 && value < colorsLength;
+
 	private struct GridChunkJob : IJob
 	{
 		public bool drawFills;
@@ -261,7 +259,6 @@ public class HexGridJobs
 
 				float proportionalStrokeWidth = StrokeWidth * (cellSize / 50f);
 				float strokeWidth = proportionalStrokeWidth < 0.1f ? proportionalStrokeWidth * 10f : Mathf.Max(1f, proportionalStrokeWidth);
-				Debug.Log($"Stroke width: {strokeWidth}; Proportional stroke width: {proportionalStrokeWidth}");
 				float radius = cellSize * 0.5f;
 				float apothem = radius * HeightFactor;
 				float outerApothem = apothem + strokeWidth * 0.5f;
@@ -322,7 +319,7 @@ public class HexGridJobs
 			vertex.tint = tint;
 			return vertex;
 		}
-
 		private bool HasFillColor(int value) => value >= 0 && value < fillColors.Length;
 	}
+
 }

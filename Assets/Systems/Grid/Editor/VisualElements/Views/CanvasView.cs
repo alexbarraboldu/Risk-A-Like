@@ -46,100 +46,6 @@ namespace ABB.Grid.Editor.VisualElements
 		private long renderMemorySizeBytes = 0;
 		private long totalStaticCanvasMemorySizeBytes = 0;
 
-		///	OUTLINED HEXAGON
-		private Vertex[] outlinedHexVertices = new Vertex[12]
-		{
-				///	0 outer bottom left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	1 outer mid left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	2 outer top left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	3 outer top right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	4 outer mid right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	5 outer bottom right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-
-				///	6 inner bottom left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	7 inner mid left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	8 inner top left
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	9 inner top right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	10 inner mid right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-				///	11 inner bottom right
-				new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-		};
-		private readonly ushort[] outlinedHexTris = new ushort[36]
-			{
-				///	outter -> inner
-				/// bottom middle
-				0, 5, 6,
-				5, 11, 6,
-				/// bottom right
-				5, 4, 11,
-				11, 4, 10,
-				/// top right
-				10, 4, 9,
-				4, 3, 9,
-				/// top middle
-				8, 9, 3,
-				8, 3, 2,
-				/// top left
-				1, 7, 2,
-				7, 8, 2,
-				/// bottom left
-				0, 7, 1,
-				0, 6, 7
-			};
-
-		///	FILLED HEXAGON
-		private Vertex[] filledHexVertices = new Vertex[7]
-		{
-			///	0 bottom left
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	1 mid left
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	2 top left
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	3 top right
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	4 mid right
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	5 bottom right
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-			///	6 middle
-			new Vertex { position = new Vector3(0, 0, Vertex.nearZ), tint = Color.white },
-		};
-		private readonly ushort[] filledHexTris = new ushort[18]
-		{
-			/// bottom middle
-			0, 5, 6,
-			/// bottom right
-			5, 4, 6,
-			/// top right
-			4, 3, 6,
-			/// top middle
-			3, 2, 6,
-			/// top left
-			2, 1, 6,
-			/// bottom left
-			1, 0, 6
-		};
-
-		///	DRAW HEXAGON
-		private Vector2 cellPosition = Vector2.zero;
-		private float radius = 0;
-		private float inRadius = 0;
-		private Vector2 center = Vector2.zero;
-		private float innerRadius = 0;
-		private float innerInRadius = 0;
-
 		///	VISUAL ELEMENTS
 		private Label memoryLabel = null;
 
@@ -188,7 +94,11 @@ namespace ABB.Grid.Editor.VisualElements
 			this.maxMemoryAllocationMB = maxMemoryAllocationMB;
 
 			memoryLabel = new();
+			memoryLabel.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.8f);
 			memoryLabel.style.alignSelf = Align.FlexEnd;
+			memoryLabel.style.paddingBottom = 2;
+			memoryLabel.style.paddingLeft = 5;
+			memoryLabel.style.borderBottomLeftRadius = 8;
 			memoryLabel.style.color = Color.white;
 			Add(memoryLabel);
 		}
@@ -219,9 +129,12 @@ namespace ABB.Grid.Editor.VisualElements
 				Vector2 margin = view.size * 0.1f;
 				Rect drawView = new Rect(view.position - margin, view.size + 2f * margin);
 
-				HexGridJobs.DrawGrid(context, currentGrid.grid, GridSize, session.cellSize, Vector2.zero, drawView, terrainColors.terrainColors);
+				var (filled, outlined) = HexGridJobs.DrawGrid(context, currentGrid.grid, GridSize, session.cellSize, Vector2.zero, drawView, terrainColors.terrainColors);
 
 				renderedCells = HexGridJobs.GetLayerCellRange(GridSize, session.cellSize, drawView);
+
+				renderMemorySizeBytes = CalculateSizeOfFilledHexagons(filled) + CalculateSizeOfOutlinedHexagons(outlined);
+				schedule.Execute(SetMemoryLabelText);
 			}
 		}
 
@@ -263,7 +176,7 @@ namespace ABB.Grid.Editor.VisualElements
 		public void CanvasMarkDirtyRepaint(string where = "")
 		{
 			gridLayer.MarkDirtyRepaint();
-			Debug.Log($"Mark Dirty Repaint: {where}");
+			//Debug.Log($"Mark Dirty Repaint: {where}");
 		}
 
 		public void SetCurrentGrid(GridData gridData, int columns, int rows)
@@ -291,144 +204,6 @@ namespace ABB.Grid.Editor.VisualElements
 				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000L} KB\n" +
 				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000000L} MB";
 		}
-
-		#region RENDERING
-
-		private void DrawGrid(MeshGenerationContext context)
-		{
-			///	HEXAGON PRE-CALCULATIONS
-			radius = session.cellSize / 2f;
-			inRadius = Mathf.Sqrt((radius * radius) - ((radius / 2f) * (radius / 2f)));
-			center.x = radius + 2f; center.y = inRadius + 2f;
-
-			innerRadius = session.cellSize / 2.25f;
-			innerInRadius = Mathf.Sqrt((innerRadius * innerRadius) - ((innerRadius / 2f) * (innerRadius / 2f)));
-
-			int outlineHexagons = 0, filledHexagons = 0, cellValue = 0;
-			float oddColumnOffset = 0, xPos = 0, yPos = 0;
-			for (int column = 0; column < currentGrid.columns; column++)
-			{
-				for (int row = 0; row < currentGrid.rows; row++)
-				{
-					oddColumnOffset = (column & 1) != 0 ? yOffset * session.cellSize : 0f;
-
-					xPos = column * xOffset * session.cellSize;
-					yPos = row * cellHeight * session.cellSize + oddColumnOffset;
-
-					cellPosition = gridPosition;
-					cellPosition.x += xPos; cellPosition.y += yPos;
-
-					cellValue = currentGrid.grid[column * currentGrid.rows + row];
-					if (cellValue != -1)
-					{
-						AllocateFilledHexagon(context, cellPosition, cellValue);
-						filledHexagons++;
-					}
-					else
-					{
-						AllocateOutlinedHexagon(context, cellPosition);
-						outlineHexagons++;
-					}
-				}
-			}
-
-			this.renderMemorySizeBytes = CalculateSizeOfFilledHexagons(filledHexagons) + CalculateSizeOfOutlineHexagons(outlineHexagons);
-
-			schedule.Execute(SetMemoryLabelText);
-		}
-
-		private void AllocateOutlinedHexagon(MeshGenerationContext context, Vector2 position)
-		{
-			MeshWriteData mesh = context.Allocate(12, 36);
-
-			///	Calculate vertices
-			outlinedHexVertices[0].position.x = position.x + center.x - radius / 2;
-			outlinedHexVertices[0].position.y = position.y + center.y - inRadius;
-
-			outlinedHexVertices[1].position.x = position.x + center.x - radius;
-			outlinedHexVertices[1].position.y = position.y + center.y;
-
-			outlinedHexVertices[2].position.x = position.x + center.x - radius / 2;
-			outlinedHexVertices[2].position.y = position.y + center.y + inRadius;
-
-			outlinedHexVertices[3].position.x = position.x + center.x + radius / 2;
-			outlinedHexVertices[3].position.y = position.y + center.y + inRadius;
-
-			outlinedHexVertices[4].position.x = position.x + center.x + radius;
-			outlinedHexVertices[4].position.y = position.y + center.y;
-
-			outlinedHexVertices[5].position.x = position.x + center.x + radius / 2;
-			outlinedHexVertices[5].position.y = position.y + center.y - inRadius;
-
-			outlinedHexVertices[6].position.x = position.x + center.x - innerRadius / 2;
-			outlinedHexVertices[6].position.y = position.y + center.y - innerInRadius;
-
-			outlinedHexVertices[7].position.x = position.x + center.x - innerRadius;
-			outlinedHexVertices[7].position.y = position.y + center.y;
-
-			outlinedHexVertices[8].position.x = position.x + center.x - innerRadius / 2;
-			outlinedHexVertices[8].position.y = position.y + center.y + innerInRadius;
-
-			outlinedHexVertices[9].position.x = position.x + center.x + innerRadius / 2;
-			outlinedHexVertices[9].position.y = position.y + center.y + innerInRadius;
-
-			outlinedHexVertices[10].position.x = position.x + center.x + innerRadius;
-			outlinedHexVertices[10].position.y = position.y + center.y;
-
-			outlinedHexVertices[11].position.x = position.x + center.x + innerRadius / 2;
-			outlinedHexVertices[11].position.y = position.y + center.y - innerInRadius;
-
-			mesh.SetAllVertices(outlinedHexVertices);
-			mesh.SetAllIndices(outlinedHexTris);
-		}
-
-		private void AllocateFilledHexagon(MeshGenerationContext context, Vector2 position, int cellValue)
-		{
-			MeshWriteData mesh = context.Allocate(7, 18);
-
-			Color tint = SelectCellTint(cellValue);
-
-			///	Calculate vertices
-			filledHexVertices[0].position.x = position.x + center.x - radius / 2;
-			filledHexVertices[0].position.y = position.y + center.y - inRadius;
-			filledHexVertices[0].tint = tint;
-
-			filledHexVertices[1].position.x = position.x + center.x - radius;
-			filledHexVertices[1].position.y = position.y + center.y;
-			filledHexVertices[1].tint = tint;
-
-			filledHexVertices[2].position.x = position.x + center.x - radius / 2;
-			filledHexVertices[2].position.y = position.y + center.y + inRadius;
-			filledHexVertices[2].tint = tint;
-
-			filledHexVertices[3].position.x = position.x + center.x + radius / 2;
-			filledHexVertices[3].position.y = position.y + center.y + inRadius;
-			filledHexVertices[3].tint = tint;
-
-			filledHexVertices[4].position.x = position.x + center.x + radius;
-			filledHexVertices[4].position.y = position.y + center.y;
-			filledHexVertices[4].tint = tint;
-
-			filledHexVertices[5].position.x = position.x + center.x + radius / 2;
-			filledHexVertices[5].position.y = position.y + center.y - inRadius;
-			filledHexVertices[5].tint = tint;
-
-			filledHexVertices[6].position.x = position.x + center.x;
-			filledHexVertices[6].position.y = position.y + center.y;
-			filledHexVertices[6].tint = tint;
-
-			mesh.SetAllVertices(filledHexVertices);
-			mesh.SetAllIndices(filledHexTris);
-		}
-
-		private Color SelectCellTint(int cellValue)
-		{
-			Color color = terrainColors.terrainColors[cellValue].color;
-
-			return color;
-		}
-
-		#endregion
 
 		#region ACTIONS 
 
@@ -701,67 +476,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#endregion
 
-		#region VISUAL HELPERS
+		#region	MEMORY CALCULATIONS
 
-		[Obsolete("This method is not longer used", true)]
-		private void DrawPointerGridLines(MeshGenerationContext context, Vector2 pointerPos)
-		{
-			float lineWidth = 1f;
-			Painter2D painter = context.painter2D;
-
-			painter.strokeColor = Color.red;
-			painter.lineWidth = lineWidth;
-
-			painter.BeginPath();
-
-			Vector2 verticalStart = new(pointerPos.x, 0f);
-			Vector2 verticalEnd = new(pointerPos.x, localBound.yMax);
-			painter.MoveTo(verticalStart);
-			painter.LineTo(verticalEnd);
-
-			Vector2 horizontalStart = new(0f, pointerPos.y);
-			Vector2 horizontalEnd = new(localBound.xMax, pointerPos.y);
-			painter.MoveTo(horizontalStart);
-			painter.LineTo(horizontalEnd);
-
-			painter.ClosePath();
-			painter.Stroke();
-		}
-
-		[Obsolete("This method is not longer used", true)]
-		private void DrawPointerRectangle(MeshGenerationContext context, Vector2 mousePos)
-		{
-			float lineWidth = 2f;
-			Painter2D painter = context.painter2D;
-
-			painter.strokeColor = Color.red;
-			painter.lineWidth = lineWidth;
-
-			painter.BeginPath();
-
-			float halfWidth = (cellWidth / 2f) * session.cellSize;
-			float halfHeight = (cellHeight / 2f) * session.cellSize;
-
-			Vector2 topLeft = new(localMousePosition.x - halfWidth, localMousePosition.y + halfHeight);
-			Vector2 topRight = new(localMousePosition.x + halfWidth, localMousePosition.y + halfHeight);
-			Vector2 bottomLeft = new(localMousePosition.x - halfWidth, localMousePosition.y - halfHeight);
-			Vector2 bottomRight = new(localMousePosition.x + halfWidth, localMousePosition.y - halfHeight);
-
-			painter.MoveTo(topLeft);
-			painter.LineTo(topRight);
-			painter.LineTo(bottomRight);
-			painter.LineTo(bottomLeft);
-			painter.LineTo(topLeft);
-
-			painter.ClosePath();
-			painter.Stroke();
-		}
-
-		#endregion
-
-		#region	MEMOERY CALCULATIONS
-
-		private long CalculateSizeOfOutlineHexagons(int count)
+		private long CalculateSizeOfOutlinedHexagons(int count)
 		{
 			if (count == 0) return 0;
 
@@ -780,18 +497,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 			return (vertexSize + trianglesSize) * count;
 		}
-
 		private void CalculateStaticCanvasMemory()
 		{
 			totalStaticCanvasMemorySizeBytes =
 				///	Outlined Vertices
-				outlinedHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
+				//outlinedHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
 				///	Outlined Tris
-				outlinedHexTris.Length * sizeof(ushort) +
+				//outlinedHexTris.Length * sizeof(ushort) +
 				///	Filled Vertices
-				filledHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
+				//filledHexVertices.Length * UnsafeUtility.SizeOf<Vertex>() +
 				///	Filled Tris
-				filledHexTris.Length * sizeof(ushort) +
+				//filledHexTris.Length * sizeof(ushort) +
 				///	Current Grid
 				currentGrid.columns * currentGrid.rows * sizeof(int) +
 				2 * sizeof(int) +

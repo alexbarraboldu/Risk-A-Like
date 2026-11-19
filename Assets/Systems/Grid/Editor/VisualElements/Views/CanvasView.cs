@@ -25,6 +25,9 @@ namespace ABB.Grid.Editor.VisualElements
 		private bool isPainting = false;
 		private int mouseButton = -1;
 
+		private RectInt renderedCells;
+		private Rect LayerViewport => new Rect(contentRect.position - gridPosition, contentRect.size);
+
 		private Vector2 gridPosition = Vector2.zero;
 		private Vector2 localMousePosition = Vector2.zero;
 		private Vector2 localMouseStartPosition = Vector2.zero;
@@ -167,7 +170,7 @@ namespace ABB.Grid.Editor.VisualElements
 				isRenderEnabled = !isRenderEnabled;
 
 				schedule.Execute(SetMemoryLabelText);
-				gridLayer.MarkDirtyRepaint();
+				CanvasMarkDirtyRepaint("KeyDownEvent");
 
 				string state = isRenderEnabled ? "enabled" : "disabled";
 				Debug.Log($"Render state: {state}");
@@ -207,12 +210,13 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (isRenderEnabled)
 			{
-				//DrawGrid(context);
+				Rect view = LayerViewport;
+				Vector2 margin = view.size * 0.1f;
+				Rect drawView = new Rect(view.position - margin, view.size + 2f * margin);
 
-				Rect layerViewport = contentRect;
-				layerViewport.position -= gridPosition;
+				HexGridJobs.DrawGrid(context, currentGrid.grid, GridSize, session.cellSize, Vector2.zero, drawView, terrainColors.terrainColors);
 
-				HexGridJobs.DrawGrid(context, currentGrid.grid, GridSize, session.cellSize, Vector2.zero, layerViewport, terrainColors.terrainColors);
+				renderedCells = HexGridJobs.GetLayerCellRange(GridSize, session.cellSize, drawView);
 			}
 		}
 
@@ -251,17 +255,23 @@ namespace ABB.Grid.Editor.VisualElements
 			schedule.Execute(SetMemoryLabelText);
 		}
 
+		public void CanvasMarkDirtyRepaint(string where = "")
+		{
+			gridLayer.MarkDirtyRepaint();
+			Debug.Log($"Mark Dirty Repaint: {where}");
+		}
+
 		public void SetCurrentGrid(GridData gridData, int columns, int rows)
 		{
 			EnsureGrid(ref gridData, columns, rows);
 			currentGrid = gridData;
-			gridLayer.MarkDirtyRepaint();
+			CanvasMarkDirtyRepaint("SetCurrentGrid");
 		}
 
 		public void SetGridSize(Vector2Int value)
 		{
 			EnsureGrid(ref currentGrid, value.x, value.y);
-			gridLayer.MarkDirtyRepaint();
+			CanvasMarkDirtyRepaint("SetGridSize");
 		}
 
 		private void SetMemoryLabelText(TimerState timerState)
@@ -556,7 +566,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			}
 
-			gridLayer.MarkDirtyRepaint();
+			CanvasMarkDirtyRepaint("ResetGrid");
 		}
 
 		#endregion
@@ -589,7 +599,15 @@ namespace ABB.Grid.Editor.VisualElements
 			localMouseDeltaPosition = localMousePosition - localMouseStartPosition;
 
 			if (mouseButton == 2)
+			{
 				Pan();
+				RectInt needed = HexGridJobs.GetLayerCellRange(GridSize, session.cellSize, LayerViewport);
+
+				if (needed.width > 0 && needed.height > 0 && (needed.xMin < renderedCells.xMin || needed.xMax > renderedCells.xMax || needed.yMin < renderedCells.yMin || needed.yMax > renderedCells.yMax))
+				{
+					CanvasMarkDirtyRepaint("OnPointerMove: Pan");
+				}
+			}
 			else if (!isFilling)
 				PaintStroke(previousPosition, localMousePosition);
 
@@ -611,7 +629,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (isPainting && mouseButton == 2)
 				localMouseStartPosition = localMousePosition - gridPosition;
 
-			gridLayer.MarkDirtyRepaint();
+			CanvasMarkDirtyRepaint("OnWheelScroll");
 			evt.StopPropagation();
 		}
 
@@ -633,7 +651,7 @@ namespace ABB.Grid.Editor.VisualElements
 			gridPosition = (evt.newRect.size - gridExtent) / 2f - drawnOffset;
 			gridLayer.style.translate = gridPosition;
 
-			gridLayer.MarkDirtyRepaint();
+			CanvasMarkDirtyRepaint("OnResizeWindow");
 		}
 
 		private void OnPointerLeave(PointerLeaveEvent evt)

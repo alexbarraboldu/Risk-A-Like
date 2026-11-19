@@ -117,7 +117,6 @@ public class HexGridJobs
 				{
 					for (int start = 0; start < visibleCount; start += CellsPerMesh)
 					{
-						jobCount++;
 						var job = new GridChunkJob
 						{
 							drawFills = pass == 0,
@@ -141,6 +140,7 @@ public class HexGridJobs
 
 						if (useJobs)
 						{
+							jobCount++;
 							JobHandle handle = job.Schedule();
 							allJobs = JobHandle.CombineDependencies(allJobs, handle);
 						}
@@ -166,6 +166,19 @@ public class HexGridJobs
 					context.AddMeshGenerationJob(cleanup);
 			}
 		}
+	}
+
+	internal static RectInt GetLayerCellRange(Vector2Int size, float cellSize, Rect viewport)
+	{
+		if (size.x <= 0 || size.y <= 0 || !(cellSize > 0f) || float.IsInfinity(cellSize) ||
+			!(viewport.width > 0f && viewport.height > 0f))
+			return default;
+
+		GetVisibleRange(size, cellSize, Vector2.one * DrawingPadding, viewport, true,
+			out int left, out int right, out int top, out int bottom);
+
+		if (left > right || top > bottom) return default;
+		return new RectInt(left, top, right - left + 1, bottom - top + 1);
 	}
 
 	private static Vertex TemplateVertex(float x, float y)
@@ -253,8 +266,6 @@ public class HexGridJobs
 				float innerApothem = Mathf.Max(0f, apothem - strokeWidth * 0.5f);
 				float outerRadius = outerApothem / HeightFactor;
 				float innerRadius = innerApothem / HeightFactor;
-
-				Debug.Log($"Stroke width: {strokeWidth}; Actual Stroke width: {StrokeWidth * (cellSize / 50f)}");
 
 				int vertexOffset = 0;
 				int indexOffset = 0;

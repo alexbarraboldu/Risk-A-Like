@@ -432,12 +432,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		#region ACTIONS 
 
-		private void EditGridCells(Vector2 pointerPosition)
+		private bool EditGridCells(Vector2 pointerPosition)
 		{
 			if (session.cellSize <= 0f)
 			{
 				Debug.LogError("Cell size must be positive");
-				return;
+				return false;
 			}
 
 			float radius = session.cellSize * 0.5f;
@@ -462,7 +462,7 @@ namespace ABB.Grid.Editor.VisualElements
 			int row = evenIsCloser ? evenRow : oddRow;
 
 			if (column < 0 || column >= currentGrid.columns || row < 0 || row >= currentGrid.rows)
-				return;
+				return false;
 
 			bool hasEdited = false;
 			if (isFilling)
@@ -493,7 +493,7 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			}
 
-			if (hasEdited) CanvasMarkDirtyRepaint("EditGridCells");
+			return hasEdited;
 		}
 
 		private void PaintStroke(Vector2 from, Vector2 to)
@@ -503,11 +503,14 @@ namespace ABB.Grid.Editor.VisualElements
 			float spacing = session.cellSize * 0.25f;
 			int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / spacing));
 
+			bool hasEdited = false;
 			for (int i = 1; i <= steps; i++)
 			{
 				Vector2 position = Vector2.Lerp(from, to, i / (float)steps);
-				EditGridCells(position);
+				hasEdited |= EditGridCells(position);
 			}
+
+			if (hasEdited) CanvasMarkDirtyRepaint("EditGridCells");
 		}
 
 		private void Zoom(float scrollWheelDelta)
@@ -532,6 +535,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 			gridPosition = mouse - gridPoint * session.cellSize;
 			gridLayer.style.translate = gridPosition;
+
+			if (previousCellSize != session.cellSize)
+			{
+				CanvasMarkDirtyRepaint("Zoom");
+			}
 		}
 
 		private void Pan()
@@ -616,7 +624,10 @@ namespace ABB.Grid.Editor.VisualElements
 			mouseButton = evt.button;
 
 			if (mouseButton != 2)
-				EditGridCells(localMousePosition);
+			{
+				if (EditGridCells(localMousePosition))
+					CanvasMarkDirtyRepaint("OnPointerDown: EditGridCells");
+			}
 		}
 
 		private void OnPointerMove(PointerMoveEvent evt)
@@ -659,7 +670,6 @@ namespace ABB.Grid.Editor.VisualElements
 			if (isPainting && mouseButton == 2)
 				localMouseStartPosition = localMousePosition - gridPosition;
 
-			CanvasMarkDirtyRepaint("OnWheelScroll");
 			evt.StopPropagation();
 		}
 

@@ -212,7 +212,7 @@ public class HexGridJobs
 		float stepX = ColumnStepFactor * cellSize;
 		float stepY = HeightFactor * cellSize;
 		// A centered outline extends beyond the nominal cell.
-		float margin = (StrokeWidth * (cellSize / 50f)) * 0.5f / HeightFactor;
+		float margin = Mathf.Max(1f, StrokeWidth * (cellSize / 50f)) * 0.5f / HeightFactor;
 
 		firstColumn = Mathf.Max(0, Mathf.CeilToInt((view.xMin - origin.x - cellSize - margin) / stepX));
 		lastColumn = Mathf.Min(size.x - 1, Mathf.FloorToInt((view.xMax - origin.x + margin) / stepX));
@@ -259,7 +259,9 @@ public class HexGridJobs
 				if (vertexCount == 0) return;
 				allocator.AllocateTempMesh(vertexCount, indexCount, out NativeSlice<Vertex> vertices, out NativeSlice<ushort> indices);
 
-				float strokeWidth = Mathf.Max(1f, StrokeWidth * (cellSize / 50f));
+				float proportionalStrokeWidth = StrokeWidth * (cellSize / 50f);
+				float strokeWidth = proportionalStrokeWidth < 0.1f ? proportionalStrokeWidth * 10f : Mathf.Max(1f, proportionalStrokeWidth);
+				Debug.Log($"Stroke width: {strokeWidth}; Proportional stroke width: {proportionalStrokeWidth}");
 				float radius = cellSize * 0.5f;
 				float apothem = radius * HeightFactor;
 				float outerApothem = apothem + strokeWidth * 0.5f;

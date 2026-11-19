@@ -38,6 +38,11 @@ namespace ABB.Grid.Editor.VisualElements
 		private const float cellWidth = 1;
 		private const float cellHeight = yOffset * 2f;
 
+		///	ZOOM
+		private float zoomBaseStep = 0.1f;
+		private float zoomMaxStep = 20f;
+		private float maxCellSize = 300f;
+
 		private long renderMemorySizeBytes = 0;
 		private long totalStaticCanvasMemorySizeBytes = 0;
 
@@ -494,8 +499,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 			float previousCellSize = session.cellSize;
 
-			session.cellSize += (scrollWheelDelta > 0) ? (session.cellSize <= 50) ? -1 : -5 : (session.cellSize <= 50) ? 1 : 5;
-			session.cellSize = Mathf.Clamp(session.cellSize, 1f, 300f);
+			float zoomFactor = 1f + (zoomMaxStep - zoomBaseStep) / maxCellSize;
+			float nextCellSize = scrollWheelDelta > 0f
+				? (previousCellSize - zoomBaseStep) / zoomFactor
+				: previousCellSize * zoomFactor + zoomBaseStep;
+
+			session.cellSize = Mathf.Clamp(nextCellSize, 1f, 300f);
 
 			Vector2 mouse = localMousePosition - Vector2.one * 2f;
 			Vector2 gridPoint = (mouse - gridPosition) / previousCellSize;

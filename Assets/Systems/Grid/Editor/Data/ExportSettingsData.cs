@@ -7,5 +7,6 @@ namespace ABB.Grid.Editor.Data
 	{
 		public string assemblyQualifiedName = string.Empty;
 		public string folderPath = string.Empty;
+		public string fileName = string.Empty;
 	}
 }

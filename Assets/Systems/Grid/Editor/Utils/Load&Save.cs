@@ -154,6 +154,7 @@ namespace ABB.Grid.Editor.Utils
 
 					exportSettingsData.assemblyQualifiedName = reader.ReadString();
 					exportSettingsData.folderPath = reader.ReadString();
+					exportSettingsData.fileName = reader.ReadString();
 
 					return exportSettingsData;
 				});
@@ -274,6 +275,7 @@ namespace ABB.Grid.Editor.Utils
 				{
 					writer.Write(exportSettingsData.assemblyQualifiedName);
 					writer.Write(exportSettingsData.folderPath);
+					writer.Write(exportSettingsData.fileName);
 				});
 
 				return true;

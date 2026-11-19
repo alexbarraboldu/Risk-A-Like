@@ -59,6 +59,7 @@ namespace ABB.Grid.Editor.Windows
 
 			fileNameField = new("File name")
 			{
+				isDelayed = true,
 				style =
 				{
 					marginLeft = 6,
@@ -67,7 +68,11 @@ namespace ABB.Grid.Editor.Windows
 				}
 			};
 			fileNameField.labelElement.style.minWidth = 100;
-			fileNameField.value = currentGrid?.fileName ?? string.Empty;
+			fileNameField.value = !string.IsNullOrWhiteSpace(exportSettings?.fileName) ? exportSettings?.fileName : currentGrid?.fileName ?? string.Empty;
+			fileNameField.RegisterValueChangedCallback(evt =>
+			{
+				exportSettings.fileName = evt.newValue;
+			});
 
 			VisualElement spacer = new();
 			spacer.style.flexGrow = 0.5f;
@@ -128,6 +133,7 @@ namespace ABB.Grid.Editor.Windows
 
 			if (!guiBuilt || closeExportWindow) return;
 
+			exportSettings.fileName = string.Empty;
 			Save.SaveExportSettingsFile(exportSettings);
 		}
 

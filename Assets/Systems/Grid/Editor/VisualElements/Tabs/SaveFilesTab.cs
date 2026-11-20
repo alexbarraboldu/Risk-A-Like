@@ -17,6 +17,12 @@ namespace ABB.Grid.Editor.VisualElements
 			remove => _saveFilesView.OnGridDataSelected -= value;
 		}
 
+		public event Action<int> OnGridDataDeleted
+		{
+			add => _saveFilesView.OnGridDataDeleted += value;
+			remove => _saveFilesView.OnGridDataDeleted -= value;
+		}
+
 
 		public SaveFilesTab(string label, GridData[] gridSaves)
 		{

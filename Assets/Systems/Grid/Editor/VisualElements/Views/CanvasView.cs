@@ -35,7 +35,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private const float xOffset = 0.75f;
 		private const float yOffset = 0.4330127f;
-		private const float cellWidth = 1;
 		private const float cellHeight = yOffset * 2f;
 
 		///	ZOOM

@@ -5,6 +5,7 @@ using ABB.Grid.Editor.Data;
 
 using UnityEditor;
 
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
@@ -16,6 +17,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private ListView listView = null;
 
 		public event Action<GridData, int> OnGridDataSelected;
+		public event Action<int> OnGridDataDeleted;
 
 
 		public SaveFilesView(GridData[] gridsData)
@@ -23,6 +25,7 @@ namespace ABB.Grid.Editor.VisualElements
 			this.grids = gridsData;
 
 			listView = new();
+			listView.reorderable = true;
 
 			Add(listView);
 
@@ -37,26 +40,20 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 			listView.makeItem = () =>
 			{
-				VisualElement parent = new();
-				parent.style.flexDirection = FlexDirection.Row;
-				parent.style.alignItems = Align.Center;
-				parent.style.paddingLeft = 18;
-
-				Image icon = new() { name = "icon" };
-				icon.style.width = 16;
-				icon.style.height = 16;
-				icon.style.flexShrink = 0;
-
-				Label label = new() { name = "label" };
-
-				parent.Add(icon);
-				parent.Add(label);
-
-				return parent;
+				SaveFileEntry saveFileEntry = new();
+				saveFileEntry.OnDeleteClicked += () =>
+				{
+					int index = listView.itemsSource.IndexOf(saveFileEntry.userData);
+					if (index >= 0)
+						OnGridDataDeleted?.Invoke(index);
+				};
+				return saveFileEntry;
 			};
 			listView.bindItem = (element, index) =>
 			{
 				var gridSave = this.grids[index];
+
+				element.userData = gridSave;
 
 				Image icon = element.Q<Image>("icon");
 				icon.image = EditorGUIUtility.IconContent("DefaultAsset Icon").image;
@@ -74,6 +71,46 @@ namespace ABB.Grid.Editor.VisualElements
 			this.grids = grids;
 			listView.itemsSource = grids;
 			listView.RefreshItems();
+		}
+
+
+		internal class SaveFileEntry : VisualElement
+		{
+			private Image icon = null;
+			private Label label = null;
+			private Button deleteButton = null;
+
+			public event Action OnDeleteClicked;
+
+			public SaveFileEntry()
+			{
+				style.flexDirection = FlexDirection.Row;
+				style.alignItems = Align.Center;
+				style.paddingLeft = 18;
+
+				icon = new() { name = "icon" };
+				icon.style.width = 16;
+				icon.style.height = 16;
+				icon.style.flexShrink = 0;
+
+				label = new() { name = "label" };
+
+				VisualElement spacer = new();
+				spacer.style.flexGrow = 1;
+
+				deleteButton = new() { name = "delete", tooltip = "Delete grid", iconImage = EditorGUIUtility.FindTexture("TreeEditor.Trash") };
+				Color noColor = new Color(0f, 0f, 0f, 0f);
+				deleteButton.style.borderBottomColor = noColor;
+				deleteButton.style.borderRightColor = noColor;
+				deleteButton.style.borderLeftColor = noColor;
+				deleteButton.style.borderTopColor = noColor;
+				deleteButton.clicked += () => OnDeleteClicked?.Invoke();
+
+				Add(icon);
+				Add(label);
+				Add(spacer);
+				Add(deleteButton);
+			}
 		}
 	}
 }

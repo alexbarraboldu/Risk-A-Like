@@ -1,5 +1,6 @@
 using ABB.Grid.Editor.Data;
 
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Profiling;
@@ -20,7 +21,6 @@ public class HexGridJobs
 	private const int CellsPerMesh = ushort.MaxValue / OutlinedVertexCount;
 
 	private static readonly ProfilerMarker PrepareMarker = new ProfilerMarker("HexGrid.Prepare");
-	private static readonly ProfilerMarker BuildMarker = new ProfilerMarker("HexGrid.BuildChunk");
 
 	// X is in units of radius; Y is in units of apothem.
 	// The outlined hex uses the same six corners for both rings.
@@ -76,6 +76,7 @@ public class HexGridJobs
 			NativeArray<Vertex> templateVertices = default;
 			NativeArray<ushort> filledTriangles = default;
 			NativeArray<ushort> outlinedTriangles = default;
+			NativeArray<int> filledPerChunk = default;
 			NativeArray<Color32> fillColors = default;
 
 			JobHandle allJobs = default;
@@ -84,6 +85,9 @@ public class HexGridJobs
 
 			try
 			{
+				int chunkCount = 1 + (visibleCount - 1) / CellsPerMesh;
+				filledPerChunk = new NativeArray<int>(chunkCount, Allocator.Temp, NativeArrayOptions.ClearMemory);
+
 				int destination = 0;
 				for (int column = firstColumn; column <= lastColumn; column++)
 				{
@@ -93,9 +97,13 @@ public class HexGridJobs
 						long sourceIndex = columnOffset + row;
 						int value = grid != null && sourceIndex < grid.Length ? grid[(int)sourceIndex] : -1;
 
-						snapshot[destination++] = value;
 						if (HasFillColor(value, colorsLength))
+						{
 							filledCount++;
+							filledPerChunk[destination / CellsPerMesh]++;
+						}
+
+						snapshot[destination++] = value;
 					}
 				}
 
@@ -108,22 +116,29 @@ public class HexGridJobs
 				for (int i = 0; i < colorsLength; i++)
 					fillColors[i] = (Color32)terrainColors[i].color;
 
-				context.GetTempMeshAllocator(out TempMeshAllocator allocator);
-
 				for (int pass = 0; pass < 2; pass++)
 				{
-					for (int start = 0; start < visibleCount; start += CellsPerMesh)
+					bool isFillPass = pass == 0;
+					int verticesPerCell = isFillPass ? FilledVertexCount : OutlinedVertexCount;
+					int indicesPerCell = isFillPass ? filledTriangles.Length : outlinedTriangles.Length;
+
+					for (int chunk = 0; chunk < chunkCount; chunk++)
 					{
+						int start = chunk * CellsPerMesh;
+						int chunkCellCount = Mathf.Min(CellsPerMesh, visibleCount - start);
+						int filled = filledPerChunk[chunk];
+						int cellsToDraw = isFillPass ? filled : chunkCellCount - filled;
+						if (cellsToDraw == 0) continue;
+
 						var job = new GridChunkJob
 						{
 							drawFills = pass == 0,
 							cells = snapshot,
-							allocator = allocator,
 							templateVertices = templateVertices,
 							filledTriangles = filledTriangles,
 							outlinedTriangles = outlinedTriangles,
 							start = start,
-							count = Mathf.Min(CellsPerMesh, visibleCount - start),
+							count = chunkCellCount,
 							firstColumn = firstColumn,
 							firstRow = firstRow,
 							visibleRows = visibleRows,
@@ -133,7 +148,8 @@ public class HexGridJobs
 							outlineColor = Color.white
 						};
 
-						context.InsertMeshGenerationNode(out job.node);
+						context.AllocateTempMesh(cellsToDraw * verticesPerCell, cellsToDraw * indicesPerCell, out job.vertices, out job.indices);
+						context.DrawMesh(job.vertices, job.indices);
 
 						if (useJobs)
 						{
@@ -155,6 +171,9 @@ public class HexGridJobs
 				cleanup = DisposeBuffer(ref filledTriangles, cleanup, useJobs);
 				cleanup = DisposeBuffer(ref outlinedTriangles, cleanup, useJobs);
 				cleanup = DisposeBuffer(ref fillColors, cleanup, useJobs);
+
+				if (filledPerChunk.IsCreated)
+					filledPerChunk.Dispose();
 
 				if (useJobs)
 					context.AddMeshGenerationJob(cleanup);
@@ -220,15 +239,18 @@ public class HexGridJobs
 
 	private static bool HasFillColor(int value, int colorsLength) => value >= 0 && value < colorsLength;
 
+
+	[BurstCompile(OptimizeFor = OptimizeFor.Performance)]
 	private struct GridChunkJob : IJob
 	{
+		private static readonly ProfilerMarker BuildMarker = new ProfilerMarker("GridChunk.BuildChunk");
 		public bool drawFills;
 		[ReadOnly] public NativeArray<int> cells;
-		[ReadOnly] public TempMeshAllocator allocator;
 		[ReadOnly] public NativeSlice<Vertex> templateVertices;
 		[ReadOnly] public NativeSlice<ushort> filledTriangles;
 		[ReadOnly] public NativeSlice<ushort> outlinedTriangles;
-		public MeshGenerationNode node;
+		[WriteOnly] public NativeSlice<Vertex> vertices;
+		[WriteOnly] public NativeSlice<ushort> indices;
 		public int start;
 		public int count;
 		public int firstColumn;
@@ -243,19 +265,7 @@ public class HexGridJobs
 		{
 			using (BuildMarker.Auto())
 			{
-				int vertexCount = 0;
-				int indexCount = 0;
 				int end = start + count;
-				for (int i = start; i < end; i++)
-				{
-					bool filled = HasFillColor(cells[i]);
-					if (filled != drawFills) continue;
-					vertexCount += filled ? FilledVertexCount : OutlinedVertexCount;
-					indexCount += filled ? filledTriangles.Length : outlinedTriangles.Length;
-				}
-
-				if (vertexCount == 0) return;
-				allocator.AllocateTempMesh(vertexCount, indexCount, out NativeSlice<Vertex> vertices, out NativeSlice<ushort> indices);
 
 				float proportionalStrokeWidth = StrokeWidth * (cellSize / 50f);
 				float strokeWidth = proportionalStrokeWidth < 0.1f ? proportionalStrokeWidth * 10f : Mathf.Max(1f, proportionalStrokeWidth);
@@ -304,9 +314,6 @@ public class HexGridJobs
 					vertexOffset += filled ? FilledVertexCount : OutlinedVertexCount;
 					indexOffset += triangles.Length;
 				}
-
-				// UI Toolkit owns the mesh buffers. Submit the completed chunk once.
-				node.DrawMesh(vertices, indices);
 			}
 		}
 
@@ -319,6 +326,7 @@ public class HexGridJobs
 			vertex.tint = tint;
 			return vertex;
 		}
+
 		private bool HasFillColor(int value) => value >= 0 && value < fillColors.Length;
 	}
 

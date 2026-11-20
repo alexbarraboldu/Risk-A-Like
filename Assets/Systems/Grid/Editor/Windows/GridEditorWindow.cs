@@ -75,6 +75,7 @@ namespace ABB.Grid.Editor.Windows
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackNewGridData(NewEntry);
 			_saveFilesTab.OnGridDataSelected += ActivateGrid;
+			_saveFilesTab.OnGridDataDeleted += DeleteGrid;
 
 			///	ADD UI
 			rootVisualElement.Add(tabView);
@@ -285,6 +286,26 @@ namespace ABB.Grid.Editor.Windows
 			Save.SaveSessionFile(session);
 
 			return true;
+		}
+
+		private void DeleteGrid(int index)
+		{
+			ArrayUtility.RemoveAt(ref grids, index);
+
+			if (session.saveFileIndex == index)
+			{
+				if (!_editorTab.LoadGrid(new GridData(), -1)) return;
+
+				currentGrid = new GridData();
+				session.saveFileIndex = -1;
+			}
+
+			_saveFilesTab.SetEntries(grids);
+
+			if (!Save.SaveGridDataFile(grids))
+				return;
+
+			Save.SaveSessionFile(session);
 		}
 
 		private int CalculateVector2IntFieldMaxIntegerSize(int maxMemoryAllocationMB)

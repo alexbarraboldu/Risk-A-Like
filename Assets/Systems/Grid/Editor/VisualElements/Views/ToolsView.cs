@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
@@ -76,8 +76,6 @@ namespace ABB.Grid.Editor.VisualElements
 			BuildUI(maxVector2IntFieldSize);
 			AddStyle();
 			AddLogic();
-
-			ConfigureColorSelectorDropdowns();
 		}
 
 
@@ -137,8 +135,8 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			///	Terrain type selector
-			leftTerrainTypeSelector = new ColorSelectorDropdown();
-			rightTerrainTypeSelector = new ColorSelectorDropdown();
+			leftTerrainTypeSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
+			rightTerrainTypeSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
 			///----------------------
 
 			///	Eraser Button
@@ -277,6 +275,9 @@ namespace ABB.Grid.Editor.VisualElements
 			leftTerrainTypeSelector.OnColorChanged += LeftSelectorColorChanged;
 			rightTerrainTypeSelector.OnColorChanged += RightSelectorColorChanged;
 
+			if (leftTerrainTypeSelector.choices.Count != 0) leftTerrainTypeSelector.SetIndex((int)session.leftColor);
+			if (rightTerrainTypeSelector.choices.Count != 0) rightTerrainTypeSelector.SetIndex((int)session.rightColor);
+
 			eraserButton.clicked += OnEraseButton;
 			fillGridButton.clicked += OnFillButton;
 
@@ -380,43 +381,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void LeftSelectorColorChanged(int value, Color color)
 		{
-			rightTerrainTypeSelector.SetPaletteColor(value, color);
-			if (rightTerrainTypeSelector.Value == value)
-				rightTerrainTypeSelector.SetColorByValue(value);
+			rightTerrainTypeSelector.SetColor(value, color);
 
-			TerrainColor newTerrainColor = new(leftTerrainTypeSelector.Choices[value], value, color);
+			TerrainColor newTerrainColor = leftTerrainTypeSelector.choices[value];
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 		private void RightSelectorColorChanged(int value, Color color)
 		{
-			leftTerrainTypeSelector.SetPaletteColor(value, color);
-			if (leftTerrainTypeSelector.Value == value)
-				leftTerrainTypeSelector.SetColorByValue(value);
+			leftTerrainTypeSelector.SetColor(value, color);
 
-			TerrainColor newTerrainColor = new(leftTerrainTypeSelector.Choices[value], value, color);
+			TerrainColor newTerrainColor = leftTerrainTypeSelector.choices[value];
 			terrainColors.terrainColors[value] = newTerrainColor;
-		}
-
-		public void ConfigureColorSelectorDropdowns()
-		{
-			List<string> choices = new();
-			Dictionary<int, Color> paletteColors = new();
-
-			for (int i = 0; i < terrainColors.terrainColors.Length; i++)
-			{
-				TerrainColor terrainColor = terrainColors.terrainColors[i];
-
-				choices.Add(terrainColor.name);
-				paletteColors.Add(terrainColor.terrain, terrainColor.color);
-			}
-			leftTerrainTypeSelector.Configure(choices, paletteColors);
-			rightTerrainTypeSelector.Configure(choices, paletteColors);
-
-			if (leftTerrainTypeSelector.PaletteColors.Count != 0)
-				leftTerrainTypeSelector.Value = (int)session.leftColor;
-
-			if (rightTerrainTypeSelector.PaletteColors.Count != 0)
-				rightTerrainTypeSelector.Value = (int)session.rightColor;
 		}
 
 		#endregion

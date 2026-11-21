@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using ABB.Grid.Editor.Data;
+
 using UnityEditor;
 using UnityEditor.UIElements;
 
@@ -16,32 +18,14 @@ namespace ABB.Grid.Editor.VisualElements
 		private IVisualElementScheduledItem pickerWatcher;
 		private Color auxColor;
 
-		private Dictionary<int, Color> paletteColors = new();
-		public IReadOnlyDictionary<int, Color> PaletteColors { get => paletteColors; }
+		public int index { get; private set; } = -1;
 
-		private int _value = -1;
-		public int Value
-		{
-			get => _value;
-
-			set
-			{
-				if (_value == value) return;
-
-				_value = value;
-				auxColor = paletteColors[value];
-				colorField.SetValueWithoutNotify(paletteColors[value]);
-				dropdownField.SetValueWithoutNotify(dropdownField.choices[value]);
-				OnValueChanged?.Invoke(value);
-			}
-		}
-
-		public IReadOnlyList<string> Choices { get => dropdownField.choices; }
+		public List<TerrainColor> choices => colorPopup.choices;
 
 		public event Action<int> OnValueChanged;
 		public event Action<int, Color> OnColorChanged;
 
-		private DropdownField dropdownField = null;
+		private ColorPopup colorPopup = null;
 		private ColorField colorField = null;
 
 
@@ -50,12 +34,21 @@ namespace ABB.Grid.Editor.VisualElements
 			style.flexDirection = FlexDirection.Row;
 
 			VisualElement popupInput;
-			BuildUI(out popupInput);
+			BuildUI(out popupInput, new(), 0);
+			AddLogic(popupInput);
+		}
+
+		public ColorSelectorDropdown(List<TerrainColor> choices, int defaultIndex = 0)
+		{
+			style.flexDirection = FlexDirection.Row;
+
+			VisualElement popupInput;
+			BuildUI(out popupInput, choices, defaultIndex);
 			AddLogic(popupInput);
 		}
 
 
-		private void BuildUI(out VisualElement popupInput)
+		private void BuildUI(out VisualElement popupInput, List<TerrainColor> choices, int defaultIndex)
 		{
 			colorField = new();
 			colorField.style.width = 25;
@@ -63,7 +56,7 @@ namespace ABB.Grid.Editor.VisualElements
 			colorField.style.marginRight = 0;
 			colorField.showEyeDropper = false;
 
-			dropdownField = new DropdownField()
+			colorPopup = new ColorPopup(choices, defaultIndex)
 			{
 				focusable = true,
 				style =
@@ -74,10 +67,10 @@ namespace ABB.Grid.Editor.VisualElements
 				}
 			};
 
-			popupInput = dropdownField.Q<VisualElement>(null, "unity-base-popup-field__input");
+			popupInput = colorPopup.Q<VisualElement>(null, "unity-base-popup-field__input");
 
 			Add(colorField);
-			Add(dropdownField);
+			Add(colorPopup);
 		}
 
 		private void AddLogic(VisualElement popupInput)
@@ -92,18 +85,21 @@ namespace ABB.Grid.Editor.VisualElements
 
 				if (isDelayed && pickerWatcher?.isActive == true) return;
 
-				paletteColors[_value] = auxColor;
-				OnColorChanged?.Invoke(_value, auxColor);
+				TerrainColor terrainColor = colorPopup.choices[index];
+				terrainColor.color = auxColor;
+				colorPopup.choices[index] = terrainColor;
+
+				OnColorChanged?.Invoke(index, auxColor);
 			});
 
-			dropdownField.RegisterValueChangedCallback(evt =>
+			colorPopup.RegisterValueChangedCallback(evt =>
 			{
-				Value = dropdownField.index;
+				SetIndex(colorPopup.index);
 			});
 
-			dropdownField.RegisterCallback<TooltipEvent>(evt =>
+			colorPopup.RegisterCallback<TooltipEvent>(evt =>
 			{
-				evt.tooltip = dropdownField.value;
+				evt.tooltip = colorPopup.value.name;
 				evt.rect = popupInput.worldBound;
 				evt.StopPropagation();
 			}, TrickleDown.TrickleDown);
@@ -115,10 +111,13 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (pickerWatcher?.isActive == true)
 			{
-				if (paletteColors[_value] != auxColor)
+				if (colorPopup.choices[index].color != auxColor)
 				{
-					paletteColors[_value] = auxColor;
-					OnColorChanged?.Invoke(_value, auxColor);
+					TerrainColor terrainColor = colorPopup.choices[index];
+					terrainColor.color = auxColor;
+
+					colorPopup.choices[index] = terrainColor;
+					OnColorChanged?.Invoke(index, auxColor);
 				}
 				pickerWatcher?.Pause();
 			}
@@ -130,10 +129,13 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				if (colorPicker == null)
 				{
-					if (paletteColors[_value] != auxColor)
+					if (colorPopup.choices[index].color != auxColor)
 					{
-						paletteColors[_value] = auxColor;
-						OnColorChanged?.Invoke(_value, auxColor);
+						TerrainColor terrainColor = colorPopup.choices[index];
+						terrainColor.color = auxColor;
+
+						colorPopup.choices[index] = terrainColor;
+						OnColorChanged?.Invoke(index, auxColor);
 					}
 
 					pickerWatcher?.Pause();
@@ -141,22 +143,49 @@ namespace ABB.Grid.Editor.VisualElements
 			}).Every(100);
 		}
 
-		public void SetPaletteColor(int value, Color color)
+		public void SetColor(int index, Color color)
 		{
-			paletteColors[value] = color;
+			TerrainColor terrainColor = colorPopup.choices[index];
+			terrainColor.color = color;
+			colorPopup.choices[index] = terrainColor;
+
+			if (colorPopup.index == index)
+			{
+				colorField.SetValueWithoutNotify(color);
+				auxColor = color;
+			}
 		}
 
-		public void SetColorByValue(int value)
+		public void SetIndex(int index)
 		{
-			colorField.SetValueWithoutNotify(paletteColors[value]);
-			auxColor = paletteColors[value];
-			//colorField.value = paletteColors[value];
+			this.index = index;
+			auxColor = colorPopup.choices[index].color;
+			colorField.SetValueWithoutNotify(colorPopup.choices[index].color);
+			colorPopup.SetValueWithoutNotify(colorPopup.choices[index]);
+			OnValueChanged?.Invoke(index);
 		}
 
-		public void Configure(List<string> choices, Dictionary<int, Color> paletteColors)
+		public void Configure(List<TerrainColor> choices) => colorPopup.choices = choices;
+
+
+		public class ColorPopup : PopupField<TerrainColor>
 		{
-			dropdownField.choices = choices;
-			this.paletteColors = paletteColors;
+			public ColorPopup()
+			{
+				formatSelectedValueCallback = FormatItem;
+				formatListItemCallback = FormatItem;
+			}
+
+			public ColorPopup(List<TerrainColor> terrainColors, int defaultIndex = 0) : base(terrainColors, defaultIndex)
+			{
+				formatSelectedValueCallback = FormatItem;
+				formatListItemCallback = FormatItem;
+			}
+
+			static string FormatItem(TerrainColor terrainColor)
+			{
+				return terrainColor.name;
+			}
 		}
 	}
 }

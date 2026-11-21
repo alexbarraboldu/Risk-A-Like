@@ -35,7 +35,17 @@ namespace ABB.Grid.Editor.Data
 		public float b;
 		public float a;
 
-		public Color color => new Color(r, g, b, a);
+		public Color color
+		{
+			get => new Color(r, g, b, a);
+			set
+			{
+				r = value.r;
+				g = value.g;
+				b = value.b;
+				a = value.a;
+			}
+		}
 
 		public TerrainColor(string name, int terrain, Color color)
 		{

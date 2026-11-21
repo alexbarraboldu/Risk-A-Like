@@ -5,6 +5,7 @@ namespace ABB.Grid.Editor.Data
 	[Serializable]
 	public class SessionData
 	{
+		public int currentTab = 0;
 		public int saveFileIndex = -1;
 
 		public float cellSize = 10;

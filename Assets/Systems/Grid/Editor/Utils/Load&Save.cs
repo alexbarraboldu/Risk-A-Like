@@ -34,6 +34,7 @@ namespace ABB.Grid.Editor.Utils
 				return BinarySerialization.ReadFromBinaryFile<SessionData>(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME), reader =>
 				{
 					SessionData sessionData = new();
+					sessionData.currentTab = reader.ReadInt32();
 					sessionData.saveFileIndex = reader.ReadInt32();
 					sessionData.cellSize = reader.ReadSingle();
 					sessionData.leftColor = reader.ReadUInt32();
@@ -177,6 +178,7 @@ namespace ABB.Grid.Editor.Utils
 
 				BinarySerialization.WriteToBinary<SessionData>(Path.Combine(Constants.PATH, Constants.SESSION_FILE_NAME), sessionData, (writer, sessionData) =>
 				{
+					writer.Write(sessionData.currentTab);
 					writer.Write(sessionData.saveFileIndex);
 					writer.Write(sessionData.cellSize);
 					writer.Write(sessionData.leftColor);

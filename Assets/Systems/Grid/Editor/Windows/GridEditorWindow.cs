@@ -83,13 +83,14 @@ namespace ABB.Grid.Editor.Windows
 			tabView.contentContainer.Add(_editorTab);
 			tabView.contentContainer.Add(_saveFilesTab);
 
-			tabView.activeTab = _editorTab;
-
 			///	RELOAD GRID
 			int index = session.saveFileIndex;
 			ActivateGrid(new GridData(), -1);
 
 			if (index >= 0 && index < grids.Length) ActivateGrid(grids[index], index);
+
+			tabView.activeTab = tabView.GetTab(session.currentTab);
+			tabView.activeTabChanged += (previousTab, newTab) => session.currentTab = tabView.selectedTabIndex;
 
 			closeEditor = false;
 		}

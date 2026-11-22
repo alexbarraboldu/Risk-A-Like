@@ -1,7 +1,5 @@
 using System;
 
-using ABB.Gameplay.Data.Types;
-
 using UnityEngine;
 
 namespace ABB.Grid.Editor.Data
@@ -10,19 +8,6 @@ namespace ABB.Grid.Editor.Data
 	public class TerrainColorData
 	{
 		public TerrainColor[] terrainColors = Array.Empty<TerrainColor>();
-
-
-		public TerrainColorData()
-		{
-			var enumVaules = (TerrainType[])Enum.GetValues(typeof(TerrainType));
-			terrainColors = new TerrainColor[enumVaules.Length];
-
-			for (int i = 0; i < enumVaules.Length; i++)
-			{
-				TerrainColor terrainColor = new TerrainColor(enumVaules[i].ToString(), i, Color.black);
-				terrainColors[i] = terrainColor;
-			}
-		}
 	}
 
 	[Serializable]

@@ -60,11 +60,6 @@ ColorSelectorDropdown > #remove-color-button {
 	border-top-left-radius: 0px;
 }
 
-/* ColorSelectorDropdown > VisualElement {
-	border-bottom-left-radius: 3px;
-	border-top-left-radius: 3px;
-} */
-
 ColorSelectorDropdown #unity-internal-color-field {
 	border-top-left-radius: 3px;
 }

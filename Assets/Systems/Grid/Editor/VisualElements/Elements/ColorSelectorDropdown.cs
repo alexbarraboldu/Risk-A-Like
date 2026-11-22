@@ -69,9 +69,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 			addChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Plus More"));
 			addChoiceButton.name = "add-color-button";
+			addChoiceButton.tooltip = "Add new color";
 
 			removeChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Minus"));
 			removeChoiceButton.name = "remove-color-button";
+			removeChoiceButton.tooltip = "Remove selected color";
 
 			Add(colorField);
 			Add(colorPopup);

@@ -46,6 +46,8 @@ namespace ABB.Grid.Editor.VisualElements
 			add => rightColorSelector.OnColorChanged += value;
 			remove => rightColorSelector.OnColorChanged -= value;
 		}
+		public event Action<int> OnRemoveTerrain;
+
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
 			add => gridSizeField.ValueChanged += value;
@@ -410,7 +412,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 			ArrayUtility.Add(ref terrainColors.terrainColors, newChoice);
 		}
-
 		private void RightSelectorChoiceAdded(TerrainColor newChoice)
 		{
 			leftColorSelector.AddChoice(newChoice);
@@ -427,8 +428,9 @@ namespace ABB.Grid.Editor.VisualElements
 				rightColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
 
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
-		}
 
+			OnRemoveTerrain?.Invoke(index);
+		}
 		private void RightSelectorChoiceRemoved(int index)
 		{
 			leftColorSelector.RemoveChoice(index);
@@ -436,8 +438,9 @@ namespace ABB.Grid.Editor.VisualElements
 				leftColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
 
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
-		}
 
+			OnRemoveTerrain?.Invoke(index);
+		}
 
 		#endregion
 	}

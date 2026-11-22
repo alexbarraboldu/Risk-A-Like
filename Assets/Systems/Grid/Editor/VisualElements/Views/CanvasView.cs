@@ -516,6 +516,17 @@ namespace ABB.Grid.Editor.VisualElements
 				4 * sizeof(float) + 2 * UnsafeUtility.SizeOf<Vector2>();
 		}
 
+		internal void RemoveCellValue(int value)
+		{
+			int length = currentGrid.columns * currentGrid.rows;
+			for (int i = 0; i < length; i++)
+			{
+				if (currentGrid.grid[i] == value) currentGrid.grid[i] = -1;
+			}
+
+			CanvasMarkDirtyRepaint();
+		}
+
 		#endregion
 	}
 }

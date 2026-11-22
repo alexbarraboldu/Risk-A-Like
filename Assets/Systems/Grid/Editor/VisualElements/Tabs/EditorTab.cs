@@ -58,6 +58,7 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.OnFillGrid += _canvasView.FillClicked;
 			_toolsView.OnExportGrid += OnExportGrid;
 			_toolsView.OnNewGrid += OnNewGrid;
+			_toolsView.OnRemoveTerrain += _canvasView.RemoveCellValue;
 		}
 
 

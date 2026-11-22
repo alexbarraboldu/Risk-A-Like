@@ -5,13 +5,15 @@ using ABB.Grid.Editor.Data;
 
 using UnityEditor;
 
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
 	public class SaveFilesView : VisualElement
 	{
+		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/SaveFileEntry.uss";
+		public StyleSheet saveFileEntryUSS;
+
 		private GridData[] grids;
 
 		private ListView listView = null;
@@ -22,6 +24,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public SaveFilesView(GridData[] gridsData)
 		{
+			if (saveFileEntryUSS == null) saveFileEntryUSS = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+
 			this.grids = gridsData;
 
 			listView = new();
@@ -40,7 +44,7 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 			listView.makeItem = () =>
 			{
-				SaveFileEntry saveFileEntry = new();
+				SaveFileEntry saveFileEntry = new(saveFileEntryUSS);
 				saveFileEntry.OnDeleteClicked += () =>
 				{
 					int index = listView.itemsSource.IndexOf(saveFileEntry.userData);
@@ -58,7 +62,6 @@ namespace ABB.Grid.Editor.VisualElements
 				Image icon = element.Q<Image>("icon");
 				icon.image = EditorGUIUtility.IconContent("DefaultAsset Icon").image;
 
-				element.name = gridSave.fileName;
 				element.Q<Label>("label").text = gridSave.fileName;
 			};
 
@@ -82,28 +85,17 @@ namespace ABB.Grid.Editor.VisualElements
 
 			public event Action OnDeleteClicked;
 
-			public SaveFileEntry()
+			public SaveFileEntry(StyleSheet uss)
 			{
-				style.flexDirection = FlexDirection.Row;
-				style.alignItems = Align.Center;
-				style.paddingLeft = 18;
+				styleSheets.Add(uss);
 
 				icon = new() { name = "icon" };
-				icon.style.width = 16;
-				icon.style.height = 16;
-				icon.style.flexShrink = 0;
-
 				label = new() { name = "label" };
 
 				VisualElement spacer = new();
 				spacer.style.flexGrow = 1;
 
 				deleteButton = new() { name = "delete", tooltip = "Delete grid", iconImage = EditorGUIUtility.FindTexture("TreeEditor.Trash") };
-				Color noColor = new Color(0f, 0f, 0f, 0f);
-				deleteButton.style.borderBottomColor = noColor;
-				deleteButton.style.borderRightColor = noColor;
-				deleteButton.style.borderLeftColor = noColor;
-				deleteButton.style.borderTopColor = noColor;
 				deleteButton.clicked += () => OnDeleteClicked?.Invoke();
 
 				Add(icon);

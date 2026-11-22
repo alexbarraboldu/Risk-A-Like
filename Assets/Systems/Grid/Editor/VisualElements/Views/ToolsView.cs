@@ -13,6 +13,9 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
+		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/ToolsView.uss";
+		public StyleSheet uss;
+
 		///	DATA
 		private SessionData session = null;
 		private GridData currentGrid = null;
@@ -70,6 +73,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, GridEditorWindow owner, int maxVector2IntFieldSize)
 		{
+			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (uss != null)
+			{
+				styleSheets.Add(uss);
+			}
+
 			///	INJECT DATA
 			this.session = session;
 			this.currentGrid = currentGrid;
@@ -85,25 +94,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void BuildUI(int maxVector2IntFieldSize)
 		{
-			name = "tools_view";
-
-			style.flexDirection = FlexDirection.Row;
-			style.paddingLeft = 4;
-			style.paddingTop = 4;
-			style.paddingBottom = 4;
-			style.paddingRight = 4;
-			style.backgroundColor = Color.gray4;
-			style.alignItems = Align.Center;
+			name = "tools-view";
 
 			VisualElement leftOptionsElement = new()
 			{
-				name = "tools-view--left-options",
-				style =
-				{
-					flexDirection = FlexDirection.Column,
-					maxWidth = 300,
-					paddingRight = 4
-				}
+				name = "tools-view--left-options"
 			};
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
@@ -116,26 +111,12 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement middleOptionsElement = new()
 			{
-				name = "tools-view--middle-options",
-				style =
-				{
-					flexGrow = 1,
-					flexDirection = FlexDirection.Column,
-					justifyContent = Justify.Center
-				}
+				name = "tools-view--middle-options"
 			};
 
 			VisualElement rightOptionsElement = new()
 			{
-				name = "tools-view--right-options",
-				style =
-				{
-					flexDirection = FlexDirection.Column,
-					alignItems = Align.Center,
-					alignSelf = Align.Stretch,
-					justifyContent = Justify.SpaceAround,
-					maxWidth = 300
-				}
+				name = "tools-view--right-options"
 			};
 
 			///	Terrain type selector
@@ -147,28 +128,14 @@ namespace ABB.Grid.Editor.VisualElements
 			eraserButton = new()
 			{
 				name = "tools-view--eraser__button",
-				tooltip = "Eraser",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
+				tooltip = "Eraser"
 			};
 			eraserButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.EraserTool").image;
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
 				name = "tools-view--reset-grid__button",
-				tooltip = "Reset grid",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
+				tooltip = "Reset grid"
 			};
 			resetGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Refresh").image;
 			///	Fill Grid Button
@@ -176,41 +143,20 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				name = "tools-view--fill-grid__button",
 				tooltip = "Fill grid",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
 			};
 			fillGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.FillTool").image;
 			///	Export Grid Button
 			exportGridButton = new()
 			{
 				name = "tools-view--export-grid__button",
-				tooltip = "Export grid",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
+				tooltip = "Export grid"
 			};
 			exportGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SceneLoadOut").image;
 			///	New Grid Button
 			newGridButton = new()
 			{
 				name = "tools-view--new-grid__button",
-				tooltip = "New grid",
-				style =
-				{
-					minWidth = 35,
-					maxWidth = 35,
-					minHeight = 35,
-					maxHeight = 35,
-				}
+				tooltip = "New grid"
 			};
 			newGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Toolbar Plus").image;
 			///-------------------
@@ -265,7 +211,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddStyle()
 		{
-
+			eraserButton.AddToClassList("tools-view-button");
+			resetGridButton.AddToClassList("tools-view-button");
+			fillGridButton.AddToClassList("tools-view-button");
+			exportGridButton.AddToClassList("tools-view-button");
+			newGridButton.AddToClassList("tools-view-button");
 		}
 
 		private void AddLogic()

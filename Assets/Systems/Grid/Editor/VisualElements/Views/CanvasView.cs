@@ -5,6 +5,8 @@ using ABB.Grid.Editor.Data;
 
 using Unity.Collections.LowLevel.Unsafe;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,6 +14,9 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class CanvasView : VisualElement
 	{
+		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/CanvasView.uss";
+		public StyleSheet uss;
+
 		///	DATA
 		private SessionData session = null;
 		private GridData currentGrid = new();
@@ -46,25 +51,47 @@ namespace ABB.Grid.Editor.VisualElements
 		private long totalStaticCanvasMemorySizeBytes = 0;
 
 		///	VISUAL ELEMENTS
-		private Label memoryLabel = null;
+		private Label memoryLabel = new()
+		{
+			name = "canvas-view-memory-label"
+		};
 
 		private int maxMemoryAllocationMB = 0;
 
-		private readonly VisualElement gridLayer = new() { pickingMode = PickingMode.Ignore };
+		private readonly VisualElement gridLayer = new()
+		{
+			pickingMode = PickingMode.Ignore,
+			name = "canvas-view-grid"
+		};
 
 
 		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxMemoryAllocationMB)
 		{
+			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (uss != null)
+			{
+				styleSheets.Add(uss);
+			}
+
+			name = "canvas-view";
 			focusable = true;
 
-			SetStyle();
+			this.session = session;
+			this.currentGrid = currentGrid;
+			this.terrainColors = terrainColors;
 
-			gridLayer.usageHints |= UsageHints.DynamicTransform;
-			gridLayer.style.position = Position.Absolute;
-			gridLayer.style.left = 0;
-			gridLayer.style.top = 0;
+			this.maxMemoryAllocationMB = maxMemoryAllocationMB;
+
+			AddLogic();
+
 			Add(gridLayer);
+			Add(memoryLabel);
+		}
 
+
+		private void AddLogic()
+		{
+			gridLayer.usageHints |= UsageHints.DynamicTransform;
 			gridLayer.generateVisualContent += OnGenerateVisualContent;
 
 			RegisterCallback<PointerDownEvent>(OnPointerDown);
@@ -85,33 +112,6 @@ namespace ABB.Grid.Editor.VisualElements
 				string state = isRenderEnabled ? "enabled" : "disabled";
 				Debug.Log($"Render state: {state}");
 			});
-
-			this.session = session;
-			this.currentGrid = currentGrid;
-			this.terrainColors = terrainColors;
-
-			this.maxMemoryAllocationMB = maxMemoryAllocationMB;
-
-			memoryLabel = new();
-			memoryLabel.style.backgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.8f);
-			memoryLabel.style.alignSelf = Align.FlexEnd;
-			memoryLabel.style.paddingBottom = 2;
-			memoryLabel.style.paddingLeft = 5;
-			memoryLabel.style.borderBottomLeftRadius = 8;
-			memoryLabel.style.color = Color.white;
-			Add(memoryLabel);
-		}
-
-
-		private void SetStyle()
-		{
-			style.flexGrow = 1;
-			style.overflow = Overflow.Hidden;
-			style.backgroundColor = new Color(0.15f, 0.15f, 0.15f);
-			style.marginBottom = 4;
-			style.marginLeft = 4;
-			style.marginRight = 4;
-			style.marginTop = 4;
 		}
 
 		private void OnGenerateVisualContent(MeshGenerationContext context)

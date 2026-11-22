@@ -1,0 +1,21 @@
+#canvas-view {
+	flex-grow: 1;
+	overflow: hidden;
+	background-color: rgba(38, 38, 38, 255);
+	margin: 4px;
+}
+
+#canvas-view-grid {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+#canvas-view-memory-label {
+	background-color: rgba(38, 38, 38, 255);
+	align-self: flex-end;
+	padding-bottom: 2px;
+	padding-left: 5px;
+	border-bottom-left-radius: 8px;
+	color: rgba(255, 255, 255, 1);
+}

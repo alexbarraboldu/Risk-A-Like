@@ -111,7 +111,6 @@ namespace ABB.Grid.Editor.VisualElements
 
 				label.AddToClassList("unity-object-field-display__label");
 				label.AddToClassList("unity-object-field-display__label--value-null");
-
 			}
 
 			public void OnMonoScriptChanged(string scriptName)

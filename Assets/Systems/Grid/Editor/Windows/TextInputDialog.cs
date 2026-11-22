@@ -7,6 +7,9 @@ using UnityEngine.UIElements;
 
 internal class TextInputDialog : EditorWindow
 {
+	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/TextInputDialog.uss";
+	public StyleSheet uss;
+
 	private string textLabel = string.Empty;
 	private string buttonLabel = string.Empty;
 
@@ -41,6 +44,13 @@ internal class TextInputDialog : EditorWindow
 
 	private void CreateGUI()
 	{
+		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+		if (uss != null)
+		{
+			rootVisualElement.styleSheets.Add(uss);
+			rootVisualElement.AddToClassList("text-input-dialog__root");
+		}
+
 		///	TEXT FIELD
 		textField = new();
 		textField.label = textLabel;
@@ -55,32 +65,7 @@ internal class TextInputDialog : EditorWindow
 		rootVisualElement.Add(textField);
 		rootVisualElement.Add(acceptButton);
 
-		SetStyle();
 		AddLogic();
-	}
-
-
-	private void SetStyle()
-	{
-		rootVisualElement.style.justifyContent = Justify.SpaceBetween;
-
-		///	TEXT FIELD
-		textField.style.marginTop = 8;
-		textField.style.marginLeft = 8;
-		textField.style.marginRight = 8;
-		textField.style.alignSelf = Align.Stretch;
-
-		textField.labelElement.style.minWidth = 68;
-
-		///	CREATE BUTTON
-		acceptButton.style.marginLeft = 8;
-		acceptButton.style.marginRight = 8;
-		acceptButton.style.marginBottom = 8;
-		acceptButton.style.minHeight = 30;
-		acceptButton.style.justifyContent = Justify.Center;
-
-		Label label = acceptButton.Q<Label>();
-		label.style.fontSize = 18;
 	}
 
 	private void AddLogic()

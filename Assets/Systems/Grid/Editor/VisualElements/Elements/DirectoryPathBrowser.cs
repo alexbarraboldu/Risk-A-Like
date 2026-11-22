@@ -6,6 +6,9 @@ using UnityEngine.UIElements;
 
 public class DirectoryPathBrowser : VisualElement
 {
+	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/DirectoryPathBrowser.uss";
+	public StyleSheet uss;
+
 	private string folderPanelTitle = string.Empty;
 
 	private TextField textField = null;
@@ -22,26 +25,20 @@ public class DirectoryPathBrowser : VisualElement
 
 	public DirectoryPathBrowser(string label, string folderPanelTitle = "")
 	{
-		this.folderPanelTitle = folderPanelTitle;
+		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+		if (uss != null)
+		{
+			styleSheets.Add(uss);
+		}
 
-		style.flexDirection = FlexDirection.Row;
-		style.marginLeft = 6;
-		style.marginRight = 6;
-		style.marginTop = 6;
-		style.marginBottom = 1;
+		this.folderPanelTitle = folderPanelTitle;
 
 		textField = new TextField(label);
 		textField.isReadOnly = true;
 		textField.RegisterValueChangedCallback(FolderFieldValueChanged);
-		textField.style.marginLeft = 0;
-		textField.style.marginRight = 0;
-		textField.style.flexGrow = 1;
-		textField.style.flexShrink = 1;
-		textField.labelElement.style.minWidth = 100;
 
 		browseButton = new Button(OnBrowseClick);
 		browseButton.text = "Browse...";
-		browseButton.style.marginRight = 0;
 
 		Add(textField);
 		Add(browseButton);

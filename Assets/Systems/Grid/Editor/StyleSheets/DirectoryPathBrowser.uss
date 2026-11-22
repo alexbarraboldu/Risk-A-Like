@@ -1,0 +1,19 @@
+DirectoryPathBrowser {
+	flex-direction: row;
+	margin: 6px 6px 1px 6px;
+}
+
+TextField {
+	margin-left: 0px;
+	margin-right: 0px;
+	flex-grow: 1;
+	flex-shrink: 1;
+}
+
+TextField > Label {
+	min-width: 100px;
+}
+
+Button {
+	margin-right: 0px;
+}

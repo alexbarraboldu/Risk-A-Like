@@ -1,0 +1,33 @@
+#tools-view {
+	flex-direction: row;
+	align-items: center;
+	padding: 4px;
+	background-color: rgba(102, 102, 102, 255);
+}
+
+.tools-view-button {
+	min-width: 35px;
+	max-width: 35px;
+	min-height: 35px;
+	max-height: 35px;
+}
+
+#tools-view--left-options {
+	flex-direction: column;
+	max-width: 300px;
+	padding-right: 4px;
+}
+
+#tools-view--middle-options {
+	flex-grow: 1;
+	flex-direction: column;
+	justify-content: center;
+}
+
+#tools-view--right-options {
+	flex-direction: column;
+	align-items: center;
+	align-self: stretch;
+	justify-content: space-around;
+	max-width: 300px;
+}

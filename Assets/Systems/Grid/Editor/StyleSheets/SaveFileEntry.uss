@@ -1,0 +1,24 @@
+SaveFileEntry {
+	flex-direction: row;
+	align-items: center;
+	padding-left: 18px;
+}
+
+Image {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+}
+
+Label {
+	margin-left: 3px;
+}
+
+Button {
+	border-radius: 0px;
+	border-width: 0px;
+	align-self: stretch;
+	margin: 0px;
+	padding-left: 10px;
+	padding-right: 10px;
+}

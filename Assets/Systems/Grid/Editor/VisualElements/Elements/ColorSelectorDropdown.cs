@@ -60,6 +60,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private void BuildUI(out VisualElement popupInput, List<TerrainColor> choices, int defaultIndex)
 		{
 			colorField = new();
+			colorField.SetValueWithoutNotify(Color.white);
 			colorField.showEyeDropper = false;
 
 			colorPopup = new ColorPopup(choices, defaultIndex);
@@ -137,7 +138,7 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				RemoveChoice(index);
 				OnChoiceRemoved?.Invoke(index);
-				SetIndex(index-- < 0 ? 0 : index--);
+				SetIndex(index - 1 < 0 ? 0 : index - 1);
 			};
 		}
 
@@ -148,6 +149,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public void RemoveChoice(int index)
 		{
+			if (colorPopup.choices.Count == 0) return;
 			colorPopup.choices.RemoveAt(index);
 		}
 

@@ -423,21 +423,31 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void LeftSelectorChoiceRemoved(int index)
 		{
+			if (rightColorSelector.choices.Count == 0) return;
+
 			rightColorSelector.RemoveChoice(index);
 			if (leftColorSelector.index == index)
 				rightColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
 
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
 
+			if (terrainColors.terrainColors.Length == 0)
+				rightColorSelector.SetIndex(0);
+
 			OnRemoveTerrain?.Invoke(index);
 		}
 		private void RightSelectorChoiceRemoved(int index)
 		{
+			if (leftColorSelector.choices.Count == 0) return;
+
 			leftColorSelector.RemoveChoice(index);
 			if (leftColorSelector.index == index)
 				leftColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
 
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
+
+			if (terrainColors.terrainColors.Length == 0)
+				leftColorSelector.SetIndex(0);
 
 			OnRemoveTerrain?.Invoke(index);
 		}

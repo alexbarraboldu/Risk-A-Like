@@ -1,0 +1,75 @@
+ColorSelectorDropdown {
+	flex-direction: row;
+	flex-shrink: 0;
+	margin-right: 3px;
+}
+
+ColorSelectorDropdown > ColorField {
+	width: 20px;
+	height: 20px;
+	margin-right: 0px;
+	border-radius: 0px;
+}
+
+ColorSelectorDropdown ColorField > VisualElement {
+	border-right-width: 0px;
+	border-bottom-right-radius: 0px;
+	border-top-right-radius: 0px;
+}
+
+ColorSelectorDropdown > ColorPopup {
+	max-width: 85px;
+	min-width: 85px;
+	height: 20px;
+	margin-right: 0px;
+	margin-left: 0px;
+	border-left-width: 0px;
+	border-bottom-left-radius: 0px;
+	border-top-left-radius: 0px;
+}
+
+ColorSelectorDropdown > ColorPopup > VisualElement {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+}
+
+ColorPopup {
+	background-color: #585858;
+}
+
+ColorPopup:hover {
+	background-color: #676767;
+}
+
+ColorSelectorDropdown > Button {
+	padding: 0px;
+	margin-right: 0px;
+	min-width: 22px;
+	min-height: 20px;
+}
+
+ColorSelectorDropdown > #add-color-button {
+	border-right-width: 0px;
+	border-bottom-right-radius: 0px;
+	border-top-right-radius: 0px;
+}
+
+ColorSelectorDropdown > #remove-color-button {
+	margin-left: 0px;
+	border-bottom-left-radius: 0px;
+	border-top-left-radius: 0px;
+}
+
+/* ColorSelectorDropdown > VisualElement {
+	border-bottom-left-radius: 3px;
+	border-top-left-radius: 3px;
+} */
+
+ColorSelectorDropdown #unity-internal-color-field {
+	border-top-left-radius: 3px;
+}
+
+ColorSelectorDropdown ProgressBar .unity-progress-bar__progress {
+	border-bottom-left-radius: 3px;
+}
+

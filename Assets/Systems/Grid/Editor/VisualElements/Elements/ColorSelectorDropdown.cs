@@ -14,6 +14,9 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ColorSelectorDropdown : VisualElement
 	{
+		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/ColorSelectorDropdown.uss";
+		public StyleSheet uss;
+
 		public bool isDelayed = false;
 		private IVisualElementScheduledItem pickerWatcher;
 		private Color auxColor;
@@ -22,25 +25,31 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public List<TerrainColor> choices => colorPopup.choices;
 
-		public event Action<int> OnValueChanged;
+		public event Action<int> OnIndexChanged;
 		public event Action<int, Color> OnColorChanged;
+		public event Action<TerrainColor> OnChoiceAdded;
+		public event Action<int> OnChoiceRemoved;
 
 		private ColorPopup colorPopup = null;
 		private ColorField colorField = null;
+		private Button addChoiceButton = null;
+		private Button removeChoiceButton = null;
 
 
 		public ColorSelectorDropdown()
 		{
-			style.flexDirection = FlexDirection.Row;
-
-			VisualElement popupInput;
-			BuildUI(out popupInput, new(), 0);
-			AddLogic(popupInput);
+			Init(new());
 		}
 
 		public ColorSelectorDropdown(List<TerrainColor> choices, int defaultIndex = 0)
 		{
-			style.flexDirection = FlexDirection.Row;
+			Init(choices, defaultIndex);
+		}
+
+		private void Init(List<TerrainColor> choices, int defaultIndex = 0)
+		{
+			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (uss != null) styleSheets.Add(uss);
 
 			VisualElement popupInput;
 			BuildUI(out popupInput, choices, defaultIndex);
@@ -51,26 +60,23 @@ namespace ABB.Grid.Editor.VisualElements
 		private void BuildUI(out VisualElement popupInput, List<TerrainColor> choices, int defaultIndex)
 		{
 			colorField = new();
-			colorField.style.width = 25;
-			colorField.style.height = 20;
-			colorField.style.marginRight = 0;
 			colorField.showEyeDropper = false;
 
-			colorPopup = new ColorPopup(choices, defaultIndex)
-			{
-				focusable = true,
-				style =
-				{
-					maxWidth = 90,
-					minWidth = 90,
-					height = 20
-				}
-			};
+			colorPopup = new ColorPopup(choices, defaultIndex);
+			colorPopup.focusable = true;
 
 			popupInput = colorPopup.Q<VisualElement>(null, "unity-base-popup-field__input");
 
+			addChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Plus More"));
+			addChoiceButton.name = "add-color-button";
+
+			removeChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Minus"));
+			removeChoiceButton.name = "remove-color-button";
+
 			Add(colorField);
 			Add(colorPopup);
+			Add(addChoiceButton);
+			Add(removeChoiceButton);
 		}
 
 		private void AddLogic(VisualElement popupInput)
@@ -103,6 +109,44 @@ namespace ABB.Grid.Editor.VisualElements
 				evt.rect = popupInput.worldBound;
 				evt.StopPropagation();
 			}, TrickleDown.TrickleDown);
+
+			addChoiceButton.clicked += () =>
+			{
+				EditorWindow owner = Resources.FindObjectsOfTypeAll<EditorWindow>()
+				.FirstOrDefault(w => w.rootVisualElement == this || w.rootVisualElement.Contains(this));
+
+				TextInputDialog window = TextInputDialog.OpenWindow(
+					"Add new color",
+					"Color name:",
+					"Confirm",
+					owner.position,
+					(value) =>
+					{
+						TerrainColor terrainColor = new(value.ToUpper(), colorPopup.choices.Count, Color.white);
+						AddChoice(terrainColor);
+						OnChoiceAdded?.Invoke(terrainColor);
+						SetIndex(terrainColor.terrain);
+					},
+					false
+				);
+			};
+
+			removeChoiceButton.clicked += () =>
+			{
+				RemoveChoice(index);
+				OnChoiceRemoved?.Invoke(index);
+				SetIndex(index-- < 0 ? 0 : index--);
+			};
+		}
+
+		public void AddChoice(TerrainColor newChoice)
+		{
+			colorPopup.choices.Add(newChoice);
+		}
+
+		public void RemoveChoice(int index)
+		{
+			colorPopup.choices.RemoveAt(index);
 		}
 
 		private void DelayedBehaviour()
@@ -159,24 +203,33 @@ namespace ABB.Grid.Editor.VisualElements
 		public void SetIndex(int index)
 		{
 			this.index = index;
+
+			if (colorPopup.choices.Count == 0)
+			{
+				colorPopup.SetText("EMPTY");
+				return;
+			}
+
 			auxColor = colorPopup.choices[index].color;
 			colorField.SetValueWithoutNotify(colorPopup.choices[index].color);
 			colorPopup.SetValueWithoutNotify(colorPopup.choices[index]);
-			OnValueChanged?.Invoke(index);
+			OnIndexChanged?.Invoke(index);
 		}
-
-		public void Configure(List<TerrainColor> choices) => colorPopup.choices = choices;
 
 
 		public class ColorPopup : PopupField<TerrainColor>
 		{
 			public ColorPopup()
 			{
-				formatSelectedValueCallback = FormatItem;
-				formatListItemCallback = FormatItem;
+				Init();
 			}
 
 			public ColorPopup(List<TerrainColor> terrainColors, int defaultIndex = 0) : base(terrainColors, defaultIndex)
+			{
+				Init();
+			}
+
+			private void Init()
 			{
 				formatSelectedValueCallback = FormatItem;
 				formatListItemCallback = FormatItem;
@@ -185,6 +238,11 @@ namespace ABB.Grid.Editor.VisualElements
 			static string FormatItem(TerrainColor terrainColor)
 			{
 				return terrainColor.name;
+			}
+
+			public void SetText(string text)
+			{
+				textElement.text = text;
 			}
 		}
 	}

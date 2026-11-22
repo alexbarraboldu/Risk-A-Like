@@ -4,6 +4,8 @@ using System.Linq;
 using ABB.Grid.Editor.Data;
 using ABB.Grid.Editor.Windows;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -19,8 +21,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private readonly GridEditorWindow owner = null;
 
 		///	VISUAL ELEMENTS
-		private ColorSelectorDropdown leftTerrainTypeSelector = null;
-		private ColorSelectorDropdown rightTerrainTypeSelector = null;
+		private ColorSelectorDropdown leftColorSelector = null;
+		private ColorSelectorDropdown rightColorSelector = null;
 
 		private Vector2IntField gridSizeField = null;
 
@@ -36,13 +38,13 @@ namespace ABB.Grid.Editor.VisualElements
 		///	ACTIONS
 		public event Action<int, Color> OnLeftColorChanged
 		{
-			add => leftTerrainTypeSelector.OnColorChanged += value;
-			remove => leftTerrainTypeSelector.OnColorChanged -= value;
+			add => leftColorSelector.OnColorChanged += value;
+			remove => leftColorSelector.OnColorChanged -= value;
 		}
 		public event Action<int, Color> OnRightColorChanged
 		{
-			add => rightTerrainTypeSelector.OnColorChanged += value;
-			remove => rightTerrainTypeSelector.OnColorChanged -= value;
+			add => rightColorSelector.OnColorChanged += value;
+			remove => rightColorSelector.OnColorChanged -= value;
 		}
 		public event Action<Vector2Int> OnGridSizeChanged
 		{
@@ -135,8 +137,8 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			///	Terrain type selector
-			leftTerrainTypeSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
-			rightTerrainTypeSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
+			leftColorSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
+			rightColorSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
 			///----------------------
 
 			///	Eraser Button
@@ -222,8 +224,8 @@ namespace ABB.Grid.Editor.VisualElements
 			VisualElement rowSelectorParent = new();
 			rowSelectorParent.style.flexDirection = FlexDirection.Row;
 
-			rowSelectorParent.Add(leftTerrainTypeSelector);
-			rowSelectorParent.Add(rightTerrainTypeSelector);
+			rowSelectorParent.Add(leftColorSelector);
+			rowSelectorParent.Add(rightColorSelector);
 
 			VisualElement rowGridSizeDeleteParent = new VisualElement()
 			{
@@ -266,17 +268,23 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddLogic()
 		{
-			leftTerrainTypeSelector.isDelayed = true;
-			rightTerrainTypeSelector.isDelayed = true;
+			leftColorSelector.isDelayed = true;
+			rightColorSelector.isDelayed = true;
 
-			leftTerrainTypeSelector.OnValueChanged += LeftSelectorValueChanged;
-			rightTerrainTypeSelector.OnValueChanged += RightSelectorValueChanged;
+			leftColorSelector.OnIndexChanged += LeftSelectorValueChanged;
+			rightColorSelector.OnIndexChanged += RightSelectorValueChanged;
 
-			leftTerrainTypeSelector.OnColorChanged += LeftSelectorColorChanged;
-			rightTerrainTypeSelector.OnColorChanged += RightSelectorColorChanged;
+			leftColorSelector.OnColorChanged += LeftSelectorColorChanged;
+			rightColorSelector.OnColorChanged += RightSelectorColorChanged;
 
-			if (leftTerrainTypeSelector.choices.Count != 0) leftTerrainTypeSelector.SetIndex((int)session.leftColor);
-			if (rightTerrainTypeSelector.choices.Count != 0) rightTerrainTypeSelector.SetIndex((int)session.rightColor);
+			leftColorSelector.OnChoiceAdded += LeftSelectorChoiceAdded;
+			rightColorSelector.OnChoiceAdded += RightSelectorChoiceAdded;
+
+			leftColorSelector.OnChoiceRemoved += LeftSelectorChoiceRemoved;
+			rightColorSelector.OnChoiceRemoved += RightSelectorChoiceRemoved;
+
+			leftColorSelector.SetIndex((int)session.leftColor);
+			rightColorSelector.SetIndex((int)session.rightColor);
 
 			eraserButton.clicked += OnEraseButton;
 			fillGridButton.clicked += OnFillButton;
@@ -381,18 +389,55 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void LeftSelectorColorChanged(int value, Color color)
 		{
-			rightTerrainTypeSelector.SetColor(value, color);
+			rightColorSelector.SetColor(value, color);
 
-			TerrainColor newTerrainColor = leftTerrainTypeSelector.choices[value];
+			TerrainColor newTerrainColor = leftColorSelector.choices[value];
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
 		private void RightSelectorColorChanged(int value, Color color)
 		{
-			leftTerrainTypeSelector.SetColor(value, color);
+			leftColorSelector.SetColor(value, color);
 
-			TerrainColor newTerrainColor = leftTerrainTypeSelector.choices[value];
+			TerrainColor newTerrainColor = leftColorSelector.choices[value];
 			terrainColors.terrainColors[value] = newTerrainColor;
 		}
+
+		private void LeftSelectorChoiceAdded(TerrainColor newChoice)
+		{
+			rightColorSelector.AddChoice(newChoice);
+			if (rightColorSelector.index == 0)
+				rightColorSelector.SetIndex(0);
+
+			ArrayUtility.Add(ref terrainColors.terrainColors, newChoice);
+		}
+
+		private void RightSelectorChoiceAdded(TerrainColor newChoice)
+		{
+			leftColorSelector.AddChoice(newChoice);
+			if (leftColorSelector.index == 0)
+				leftColorSelector.SetIndex(0);
+
+			ArrayUtility.Add(ref terrainColors.terrainColors, newChoice);
+		}
+
+		private void LeftSelectorChoiceRemoved(int index)
+		{
+			rightColorSelector.RemoveChoice(index);
+			if (leftColorSelector.index == index)
+				rightColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
+
+			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
+		}
+
+		private void RightSelectorChoiceRemoved(int index)
+		{
+			leftColorSelector.RemoveChoice(index);
+			if (leftColorSelector.index == index)
+				leftColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
+
+			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
+		}
+
 
 		#endregion
 	}

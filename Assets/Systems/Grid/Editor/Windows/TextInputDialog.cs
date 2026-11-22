@@ -85,9 +85,22 @@ internal class TextInputDialog : EditorWindow
 
 	private void AddLogic()
 	{
+		rootVisualElement.RegisterCallback<KeyDownEvent>(evt =>
+		{
+			if (evt.keyCode != KeyCode.Return && evt.keyCode != KeyCode.KeypadEnter) return;
+
+			evt.StopPropagation();
+			if (!acceptButton.enabledInHierarchy) return;
+
+			using var submit = NavigationSubmitEvent.GetPooled(evt.modifiers);
+			submit.target = acceptButton;
+			acceptButton.SendEvent(submit);
+		}, TrickleDown.TrickleDown);
+
 		acceptButton.SetEnabled(acceptBlankInput);
 		acceptButton.clicked += OnAcceptButtonClicked;
 
+		textField.Focus();
 		textField.RegisterValueChangedCallback(evt =>
 		{
 			if (!acceptBlankInput)

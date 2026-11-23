@@ -57,6 +57,15 @@
 	align-items: center;
 }
 
+.abb-tools-view__block-buttons-parent {
+	flex-direction: column;
+}
+
+.abb-tools-view__block-buttons-parent Button {
+	height: 18px;
+	margin-left: -1px;
+}
+
 .abb-tools-view__file-actions {
 	flex-direction: row;
 }

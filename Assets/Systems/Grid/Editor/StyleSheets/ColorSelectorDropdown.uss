@@ -29,32 +29,29 @@
 }
 
 #color-popup > VisualElement {
-	border-top-left-radius: 0px;
-	border-bottom-left-radius: 0px;
-}
-
-#color-popup {
+	border-radius: 0px;
 	background-color: #585858;
 }
 
-#color-popup:hover {
+#color-popup:hover > VisualElement {
 	background-color: #676767;
 }
 
-.abb-color-selector-dropdown > Button {
+.abb-color-selector-dropdown Button {
 	padding: 0px;
 	margin-right: 0px;
 	min-width: 22px;
 	min-height: 20px;
 }
 
-.abb-color-selector-dropdown > #add-color-button {
+#add-color-button {
 	border-right-width: 0px;
-	border-bottom-right-radius: 0px;
-	border-top-right-radius: 0px;
+	border-left-width: 0px;
+	border-radius: 0px;
+	margin-left: 0px;
 }
 
-.abb-color-selector-dropdown > #remove-color-button {
+#remove-color-button {
 	margin-left: 0px;
 	border-bottom-left-radius: 0px;
 	border-top-left-radius: 0px;

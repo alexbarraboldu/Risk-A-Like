@@ -132,7 +132,7 @@ namespace ABB.Grid.Editor.Windows
 					icon.style.display = DisplayStyle.Flex;
 				}
 
-				element.Q<Label>(className: ResultIconClass).text = name;
+				element.Q<Label>(className: ResultLabelClass).text = name;
 			};
 
 

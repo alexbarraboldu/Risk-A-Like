@@ -26,8 +26,13 @@ namespace ABB.Grid.Editor.VisualElements
 		///	VISUAL ELEMENTS
 		private ColorSelectorDropdown leftColorSelector = null;
 		private ColorSelectorDropdown rightColorSelector = null;
+		private Button swapSelectorsColorsButton = null;
 
 		private Vector2IntField gridSizeField = null;
+		private Button blockXButton = null;
+		private bool xLocked = false;
+		private Button blockYButton = null;
+		private bool yLocked = false;
 
 		private Button eraserButton = null;
 		private Button resetGridButton = null;
@@ -56,6 +61,7 @@ namespace ABB.Grid.Editor.VisualElements
 			add => gridSizeField.ValueChanged += value;
 			remove => gridSizeField.ValueChanged -= value;
 		}
+
 		public event Action OnEraserClicked;
 		public event Action OnResetGrid
 		{
@@ -101,6 +107,14 @@ namespace ABB.Grid.Editor.VisualElements
 			leftOptionsElement.AddToClassList("abb-tools-view__editing-tools");
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
+			blockXButton = new(EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon"))
+			{
+				tooltip = xLocked ? "Unlock" : "Lock"
+			};
+			blockYButton = new(EditorGUIUtility.FindTexture(yLocked ? "LockIcon-On" : "LockIcon"))
+			{
+				tooltip = yLocked ? "Unlock" : "Lock"
+			};
 
 			VisualElement middleOptionsElement = new()
 			{
@@ -117,6 +131,8 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Terrain type selector
 			leftColorSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
 			rightColorSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
+			swapSelectorsColorsButton = new Button(EditorGUIUtility.FindTexture("preAudioLoopOff"), SwapSelectorsColors);
+			swapSelectorsColorsButton.tooltip = "Swap colors";
 			///----------------------
 
 			///	Eraser Button
@@ -174,6 +190,7 @@ namespace ABB.Grid.Editor.VisualElements
 			selectorParent.AddToClassList("abb-tools-view__color-selectors");
 
 			selectorParent.Add(leftColorSelector);
+			selectorParent.Add(swapSelectorsColorsButton);
 			selectorParent.Add(rightColorSelector);
 
 			VisualElement gridSizeButtonsParent = new VisualElement()
@@ -182,6 +199,16 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 			gridSizeButtonsParent.AddToClassList("abb-tools-view__grid-controls");
 			gridSizeButtonsParent.Add(gridSizeField);
+
+			VisualElement blockButtonsParent = new VisualElement()
+			{
+				name = "block-buttons-parent"
+			};
+			blockButtonsParent.AddToClassList("abb-tools-view__block-buttons-parent");
+			blockButtonsParent.Add(blockXButton);
+			blockButtonsParent.Add(blockYButton);
+
+			gridSizeButtonsParent.Add(blockButtonsParent);
 			gridSizeButtonsParent.Add(eraserButton);
 			gridSizeButtonsParent.Add(resetGridButton);
 			gridSizeButtonsParent.Add(fillGridButton);
@@ -237,6 +264,9 @@ namespace ABB.Grid.Editor.VisualElements
 			leftColorSelector.SetIndex((int)session.leftColor);
 			rightColorSelector.SetIndex((int)session.rightColor);
 
+			blockXButton.clicked += XFieldBlockClicked;
+			blockYButton.clicked += YFieldBlockClicked;
+
 			eraserButton.clicked += OnEraseButton;
 			fillGridButton.clicked += OnFillButton;
 
@@ -282,6 +312,21 @@ namespace ABB.Grid.Editor.VisualElements
 
 			SetEnableUI(!(currentGrid.fileName == string.Empty));
 		}
+
+		#region SWAP SELECTORS COLORS BUTTON
+
+		private void SwapSelectorsColors()
+		{
+			if (terrainColors.terrainColors.Length == 0) return;
+
+			int leftIndex = leftColorSelector.index;
+			int rightIndex = rightColorSelector.index;
+
+			leftColorSelector.SetIndex(rightIndex);
+			rightColorSelector.SetIndex(leftIndex);
+		}
+
+		#endregion
 
 		#region ERASE & FILL BUTTONS
 
@@ -329,6 +374,25 @@ namespace ABB.Grid.Editor.VisualElements
 				eraserButton.SetCheckedPseudoState(false);
 				eraserButton.style.backgroundColor = new Color(0.345098f, 0.345098f, 0.345098f, 1f);
 			}
+		}
+
+		#endregion
+
+		#region GRID SIZE
+
+		private void XFieldBlockClicked()
+		{
+			xLocked = !xLocked;
+			blockXButton.tooltip = xLocked ? "Unlock" : "Lock";
+			blockXButton.iconImage = EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon");
+			gridSizeField.Q("x-field").Q("unity-text-input").SetEnabled(!xLocked);
+		}
+		private void YFieldBlockClicked()
+		{
+			yLocked = !yLocked;
+			blockYButton.tooltip = yLocked ? "Unlock" : "Lock";
+			blockYButton.iconImage = EditorGUIUtility.FindTexture(yLocked ? "LockIcon-On" : "LockIcon");
+			gridSizeField.Q("y-field").Q("unity-text-input").SetEnabled(!yLocked);
 		}
 
 		#endregion

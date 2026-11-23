@@ -13,7 +13,7 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ToolsView : VisualElement
 	{
-		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/ToolsView.uss";
+		private static readonly GUID StyleSheetGuid = new("a0440a4f759e35543b5063dfec33da71");
 		public StyleSheet uss;
 
 		///	DATA
@@ -73,11 +73,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public ToolsView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, GridEditorWindow owner, int maxVector2IntFieldSize)
 		{
-			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-			if (uss != null)
-			{
-				styleSheets.Add(uss);
-			}
+			if (uss == null) uss = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
+			if (uss != null) styleSheets.Add(uss);
 
 			///	INJECT DATA
 			this.session = session;
@@ -95,23 +92,27 @@ namespace ABB.Grid.Editor.VisualElements
 		private void BuildUI(int maxVector2IntFieldSize)
 		{
 			name = "tools-view";
+			AddToClassList("abb-tools-view");
 
 			VisualElement leftOptionsElement = new()
 			{
-				name = "tools-view--left-options"
+				name = "editing-tools"
 			};
+			leftOptionsElement.AddToClassList("abb-tools-view__editing-tools");
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
 
 			VisualElement middleOptionsElement = new()
 			{
-				name = "tools-view--middle-options"
+				name = "toolbar-spacer"
 			};
+			middleOptionsElement.AddToClassList("abb-tools-view__spacer");
 
 			VisualElement rightOptionsElement = new()
 			{
-				name = "tools-view--right-options"
+				name = "file-tools"
 			};
+			rightOptionsElement.AddToClassList("abb-tools-view__file-tools");
 
 			///	Terrain type selector
 			leftColorSelector = new ColorSelectorDropdown(terrainColors.terrainColors.ToList());
@@ -121,35 +122,35 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Eraser Button
 			eraserButton = new()
 			{
-				name = "tools-view--eraser__button",
+				name = "eraser-button",
 				tooltip = "Eraser",
 				iconImage = (Texture2D)EditorGUIUtility.IconContent("Grid.EraserTool").image
 			};
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
-				name = "tools-view--reset-grid__button",
+				name = "reset-grid-button",
 				tooltip = "Reset grid",
 				iconImage = (Texture2D)EditorGUIUtility.IconContent("Refresh").image
 			};
 			///	Fill Grid Button
 			fillGridButton = new()
 			{
-				name = "tools-view--fill-grid__button",
+				name = "fill-grid-button",
 				tooltip = "Fill grid",
 				iconImage = (Texture2D)EditorGUIUtility.IconContent("Grid.FillTool").image
 			};
 			///	Export Grid Button
 			exportGridButton = new()
 			{
-				name = "tools-view--export-grid__button",
+				name = "export-grid-button",
 				tooltip = "Export grid",
 				iconImage = (Texture2D)EditorGUIUtility.IconContent("SceneLoadOut").image
 			};
 			///	New Grid Button
 			newGridButton = new()
 			{
-				name = "tools-view--new-grid__button",
+				name = "new-grid-button",
 				tooltip = "New grid",
 				iconImage = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image
 			};
@@ -158,8 +159,9 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Grid Text Label
 			gridTextLabel = new(currentGrid.fileName == string.Empty ? "No grid loaded" : currentGrid.fileName)
 			{
-				name = "tools-view-grid-text-label"
+				name = "grid-name-label"
 			};
+			gridTextLabel.AddToClassList("abb-tools-view__grid-name-label");
 
 			///	ADD TO UI
 			///	Left
@@ -167,16 +169,18 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement selectorParent = new()
 			{
-				name = "tools-view-selector-parent"
+				name = "color-selectors"
 			};
+			selectorParent.AddToClassList("abb-tools-view__color-selectors");
 
 			selectorParent.Add(leftColorSelector);
 			selectorParent.Add(rightColorSelector);
 
 			VisualElement gridSizeButtonsParent = new VisualElement()
 			{
-				name = "tools-view-grid-size-buttons-parent"
+				name = "grid-controls"
 			};
+			gridSizeButtonsParent.AddToClassList("abb-tools-view__grid-controls");
 			gridSizeButtonsParent.Add(gridSizeField);
 			gridSizeButtonsParent.Add(eraserButton);
 			gridSizeButtonsParent.Add(resetGridButton);
@@ -193,8 +197,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 			VisualElement rightButtonsParent = new()
 			{
-				name = "tools-view-right-buttons-parent"
+				name = "file-actions"
 			};
+			rightButtonsParent.AddToClassList("abb-tools-view__file-actions");
 
 			rightOptionsElement.Add(gridTextLabel);
 			rightOptionsElement.Add(rightButtonsParent);
@@ -205,11 +210,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void AddStyle()
 		{
-			eraserButton.AddToClassList("tools-view-button");
-			resetGridButton.AddToClassList("tools-view-button");
-			fillGridButton.AddToClassList("tools-view-button");
-			exportGridButton.AddToClassList("tools-view-button");
-			newGridButton.AddToClassList("tools-view-button");
+			eraserButton.AddToClassList("abb-tools-view__button");
+			resetGridButton.AddToClassList("abb-tools-view__button");
+			fillGridButton.AddToClassList("abb-tools-view__button");
+			exportGridButton.AddToClassList("abb-tools-view__button");
+			newGridButton.AddToClassList("abb-tools-view__button");
 		}
 
 		private void AddLogic()

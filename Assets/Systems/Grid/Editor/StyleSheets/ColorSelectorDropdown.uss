@@ -1,23 +1,23 @@
-ColorSelectorDropdown {
+.abb-color-selector-dropdown {
 	flex-direction: row;
 	flex-shrink: 0;
 	margin-right: 3px;
 }
 
-ColorSelectorDropdown > ColorField {
+.abb-color-selector-dropdown__color-field {
 	width: 20px;
 	height: 20px;
 	margin-right: 0px;
 	border-radius: 0px;
 }
 
-ColorSelectorDropdown ColorField > VisualElement {
+.abb-color-selector-dropdown__color-field > VisualElement {
 	border-right-width: 0px;
 	border-bottom-right-radius: 0px;
 	border-top-right-radius: 0px;
 }
 
-ColorSelectorDropdown > ColorPopup {
+#color-popup {
 	max-width: 85px;
 	min-width: 85px;
 	height: 20px;
@@ -28,43 +28,43 @@ ColorSelectorDropdown > ColorPopup {
 	border-top-left-radius: 0px;
 }
 
-ColorSelectorDropdown > ColorPopup > VisualElement {
+#color-popup > VisualElement {
 	border-top-left-radius: 0px;
 	border-bottom-left-radius: 0px;
 }
 
-ColorPopup {
+#color-popup {
 	background-color: #585858;
 }
 
-ColorPopup:hover {
+#color-popup:hover {
 	background-color: #676767;
 }
 
-ColorSelectorDropdown > Button {
+.abb-color-selector-dropdown > Button {
 	padding: 0px;
 	margin-right: 0px;
 	min-width: 22px;
 	min-height: 20px;
 }
 
-ColorSelectorDropdown > #add-color-button {
+.abb-color-selector-dropdown > #add-color-button {
 	border-right-width: 0px;
 	border-bottom-right-radius: 0px;
 	border-top-right-radius: 0px;
 }
 
-ColorSelectorDropdown > #remove-color-button {
+.abb-color-selector-dropdown > #remove-color-button {
 	margin-left: 0px;
 	border-bottom-left-radius: 0px;
 	border-top-left-radius: 0px;
 }
 
-ColorSelectorDropdown #unity-internal-color-field {
+.abb-color-selector-dropdown #unity-internal-color-field {
 	border-top-left-radius: 3px;
 }
 
-ColorSelectorDropdown ProgressBar .unity-progress-bar__progress {
+.abb-color-selector-dropdown ProgressBar .unity-progress-bar__progress {
 	border-bottom-left-radius: 3px;
 }
 

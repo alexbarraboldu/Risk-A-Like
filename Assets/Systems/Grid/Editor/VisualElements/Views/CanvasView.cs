@@ -14,7 +14,7 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class CanvasView : VisualElement
 	{
-		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/CanvasView.uss";
+		private static readonly GUID StyleSheetGuid = new("3992a330f4f35004eb95a1f7a35d619c");
 		public StyleSheet uss;
 
 		///	DATA
@@ -51,29 +51,24 @@ namespace ABB.Grid.Editor.VisualElements
 		private long totalStaticCanvasMemorySizeBytes = 0;
 
 		///	VISUAL ELEMENTS
-		private Label memoryLabel = new()
-		{
-			name = "canvas-view-memory-label"
-		};
+		private Label memoryLabel = null;
 
 		private int maxMemoryAllocationMB = 0;
 
 		private readonly VisualElement gridLayer = new()
 		{
 			pickingMode = PickingMode.Ignore,
-			name = "canvas-view-grid"
+			name = "grid-layer"
 		};
 
 
 		public CanvasView(SessionData session, GridData currentGrid, TerrainColorData terrainColors, int maxMemoryAllocationMB)
 		{
-			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-			if (uss != null)
-			{
-				styleSheets.Add(uss);
-			}
+			if (uss == null) uss = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
+			if (uss != null) styleSheets.Add(uss);
 
 			name = "canvas-view";
+			AddToClassList("abb-canvas-view");
 			focusable = true;
 
 			this.session = session;
@@ -81,6 +76,14 @@ namespace ABB.Grid.Editor.VisualElements
 			this.terrainColors = terrainColors;
 
 			this.maxMemoryAllocationMB = maxMemoryAllocationMB;
+
+			memoryLabel = new()
+			{
+				name = "memory-label"
+			};
+			memoryLabel.AddToClassList("abb-canvas-view__memory-label");
+
+			gridLayer.AddToClassList("abb-canvas-view__grid-layer");
 
 			AddLogic();
 

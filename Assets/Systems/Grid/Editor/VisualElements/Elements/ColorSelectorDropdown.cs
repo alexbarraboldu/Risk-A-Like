@@ -14,7 +14,7 @@ namespace ABB.Grid.Editor.VisualElements
 {
 	public class ColorSelectorDropdown : VisualElement
 	{
-		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/ColorSelectorDropdown.uss";
+		private static readonly GUID StyleSheetGuid = new("d6cd07adf3dd5f547ad889cc0be11f1d");
 		public StyleSheet uss;
 
 		public bool isDelayed = false;
@@ -48,7 +48,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void Init(List<TerrainColor> choices, int defaultIndex = 0)
 		{
-			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (uss == null) uss = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
 			if (uss != null) styleSheets.Add(uss);
 
 			VisualElement popupInput;
@@ -59,22 +59,35 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void BuildUI(out VisualElement popupInput, List<TerrainColor> choices, int defaultIndex)
 		{
-			colorField = new();
+			name = "color-selector-dropdown";
+			AddToClassList("abb-color-selector-dropdown");
+
+			colorField = new()
+			{
+				name = "color-field",
+				showEyeDropper = false
+			};
+			colorField.AddToClassList("abb-color-selector-dropdown__color-field");
 			colorField.SetValueWithoutNotify(Color.white);
-			colorField.showEyeDropper = false;
 
 			colorPopup = new ColorPopup(choices, defaultIndex);
-			colorPopup.focusable = true;
+			colorPopup.AddToClassList("abb-color-selector-dropdown__color-popup");
 
 			popupInput = colorPopup.Q<VisualElement>(null, "unity-base-popup-field__input");
 
-			addChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Plus More"));
-			addChoiceButton.name = "add-color-button";
-			addChoiceButton.tooltip = "Add new color";
+			addChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Plus More"))
+			{
+				name = "add-color-button",
+				tooltip = "Add new color"
+			};
+			addChoiceButton.AddToClassList("abb-color-selector-dropdown__add-color-button");
 
-			removeChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Minus"));
-			removeChoiceButton.name = "remove-color-button";
-			removeChoiceButton.tooltip = "Remove selected color";
+			removeChoiceButton = new Button(EditorGUIUtility.FindTexture("Toolbar Minus"))
+			{
+				name = "remove-color-button",
+				tooltip = "Remove selected color"
+			};
+			removeChoiceButton.AddToClassList("abb-color-selector-dropdown__remove-color-button");
 
 			Add(colorField);
 			Add(colorPopup);
@@ -235,6 +248,9 @@ namespace ABB.Grid.Editor.VisualElements
 
 			private void Init()
 			{
+				name = "color-popup";
+				focusable = true;
+
 				formatSelectedValueCallback = FormatItem;
 				formatListItemCallback = FormatItem;
 			}

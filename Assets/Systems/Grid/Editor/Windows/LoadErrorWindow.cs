@@ -5,8 +5,7 @@ using UnityEngine.UIElements;
 
 internal class LoadErrorWindow : EditorWindow
 {
-	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/LoadErrorWindow.uss";
-	public StyleSheet uss;
+	[SerializeField] public StyleSheet uss;
 
 	private Label affectedFilesLabel = null;
 	private Button continueButton = null;
@@ -46,29 +45,32 @@ internal class LoadErrorWindow : EditorWindow
 
 	private void CreateGUI()
 	{
-		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
 		if (uss != null) rootVisualElement.styleSheets.Add(uss);
 
-		rootVisualElement.name = "load-error-window-root";
+		rootVisualElement.name = "load-error-window";
+		rootVisualElement.AddToClassList("abb-load-error-window");
 
 		affectedFilesLabel = new(affectedFiles)
 		{
-			name = "load-error-window-affected-files-label"
+			name = "affected-files-label"
 		};
+		affectedFilesLabel.AddToClassList("abb-load-error-window__affected-files");
 
 		closeEditorButton = new()
 		{
-			name = "load-error-window-close-editor-button",
+			name = "close-editor-button",
 			text = closeButtonContent,
 			tooltip = closeButtonContent
 		};
+		closeEditorButton.AddToClassList("abb-load-error-window__close-editor-button");
 
 		continueButton = new()
 		{
-			name = "load-error-window-continue-button",
+			name = "continue-button",
 			text = continueButtonContent,
 			tooltip = continueButtonContent
 		};
+		continueButton.AddToClassList("abb-load-error-window__continue-button");
 
 		rootVisualElement.Add(affectedFilesLabel);
 		rootVisualElement.Add(closeEditorButton);

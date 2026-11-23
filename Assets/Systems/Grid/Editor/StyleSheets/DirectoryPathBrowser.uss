@@ -1,19 +1,19 @@
-DirectoryPathBrowser {
+.abb-directory-path-browser {
 	flex-direction: row;
 	margin: 6px 6px 1px 6px;
 }
 
-TextField {
+.abb-directory-path-browser__text-field {
 	margin-left: 0px;
 	margin-right: 0px;
 	flex-grow: 1;
 	flex-shrink: 1;
 }
 
-TextField > Label {
+.abb-directory-path-browser__text-field > Label {
 	min-width: 100px;
 }
 
-Button {
+.abb-directory-path-browser__browse-button {
 	margin-right: 0px;
 }

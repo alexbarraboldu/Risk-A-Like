@@ -1,17 +1,17 @@
-#canvas-view {
+.abb-canvas-view {
 	flex-grow: 1;
 	overflow: hidden;
 	background-color: rgba(38, 38, 38, 255);
 	margin: 4px;
 }
 
-#canvas-view-grid {
+.abb-canvas-view__grid {
 	position: absolute;
 	left: 0;
 	top: 0;
 }
 
-#canvas-view-memory-label {
+.abb-canvas-view__memory-label {
 	background-color: rgba(38, 38, 38, 255);
 	align-self: flex-end;
 	padding-bottom: 2px;

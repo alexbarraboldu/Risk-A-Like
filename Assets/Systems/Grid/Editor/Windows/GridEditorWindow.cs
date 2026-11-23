@@ -51,7 +51,8 @@ namespace ABB.Grid.Editor.Windows
 
 		public void CreateGUI()
 		{
-			rootVisualElement.name = "grid-editor-root";
+			rootVisualElement.name = "grid-editor";
+			rootVisualElement.AddToClassList("abb-grid-editor-window");
 			rootVisualElement.style.minWidth = minWindowWidth;
 			rootVisualElement.style.minHeight = minWindowHeight;
 
@@ -64,7 +65,8 @@ namespace ABB.Grid.Editor.Windows
 			CheckData();
 
 			///	BUILD WINDOW UI
-			tabView = new() { name = "grid-editor-window__tab-view" };
+			tabView = new() { name = "main-tabs" };
+			tabView.AddToClassList("abb-grid-editor-window__tabs");
 			tabView.style.flexGrow = 1;
 			tabView.contentContainer.style.flexGrow = 1;
 

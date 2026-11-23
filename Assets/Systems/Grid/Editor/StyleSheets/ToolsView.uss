@@ -1,44 +1,44 @@
-#tools-view {
+.abb-tools-view {
 	flex-direction: row;
 	align-items: center;
 	padding: 4px;
 	background-color: rgba(102, 102, 102, 255);
 }
 
-#vector2int-field {
+.abb-vector2-int-field {
 	flex-grow: 1;
 }
 
-#vector2int-field__label {
+.abb-vector2-int-field__label {
 	display: none
 }
 
-#vector2int-field__fields-xField, #vector2int-field__fields-yField {
+.abb-vector2-int-field #x-field, .abb-vector2-int-field #y-field {
 	width: 118px;
 }
 
-#tools-view-grid-text-label {
+.abb-tools-view__grid-name-label {
 	align-self: stretch;
 }
 
-.tools-view-button {
+.abb-tools-view__button {
 	min-width: 35px;
 	max-width: 35px;
 	min-height: 35px;
 	max-height: 35px;
 }
 
-#tools-view--left-options {
+.abb-tools-view__editing-tools {
 	flex-direction: column;
 }
 
-#tools-view--middle-options {
+.abb-tools-view__spacer {
 	flex-grow: 1;
 	flex-direction: column;
 	justify-content: center;
 }
 
-#tools-view--right-options {
+.abb-tools-view__file-tools {
 	flex-direction: column;
 	align-items: center;
 	align-self: stretch;
@@ -46,17 +46,17 @@
 	max-width: 300px;
 }
 
-#tools-view-selector-parent {
+.abb-tools-view__color-selectors {
 	flex-direction: row;
 }
 
-#tools-view-grid-size-buttons-parent {
+.abb-tools-view__grid-controls {
 	padding-top: 4px;
 	align-self: flex-start;
 	flex-direction: row;
 	align-items: center;
 }
 
-#tools-view-right-buttons-parent {
+.abb-tools-view__file-actions {
 	flex-direction: row;
 }

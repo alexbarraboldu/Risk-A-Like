@@ -1,20 +1,20 @@
-SaveFileEntry {
+.abb-save-file-entry {
 	flex-direction: row;
 	align-items: center;
 	padding-left: 18px;
 }
 
-Image {
+.abb-save-file-entry__icon {
 	width: 16px;
 	height: 16px;
 	flex-shrink: 0;
 }
 
-Label {
+.abb-save-file-entry__file-name {
 	margin-left: 3px;
 }
 
-Button {
+.abb-save-file-entry__delete-button {
 	border-radius: 0px;
 	border-width: 0px;
 	align-self: stretch;

@@ -48,18 +48,23 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void BuildUI(string label, string xLabel, string yLabel)
 		{
-			name = "vector2int-field";
+			name = "vector2-int-field";
+			AddToClassList("abb-vector2-int-field");
 
-			_label = new(label) { name = "vector2int-field__label" };
+			_label = new(label) { name = "vector-label" };
+			_label.AddToClassList("abb-vector2-int-field__label");
 			_label.style.width = 100;
 			_label.style.top = -10;
 			_label.style.left = 3;
 
-			VisualElement fieldsContainer = new() { name = "vector2int-field__fields-container" };
+			VisualElement fieldsContainer = new() { name = "axis-fields" };
+			fieldsContainer.AddToClassList("abb-vector2-int-field__fields");
 			fieldsContainer.style.flexDirection = FlexDirection.Column;
 
-			xField = new(xLabel) { name = "vector2int-field__fields-xField" };
-			yField = new(yLabel) { name = "vector2int-field__fields-yField" };
+			xField = new(xLabel) { name = "x-field" };
+			xField.AddToClassList("abb-vector2-int-field__axis-field");
+			yField = new(yLabel) { name = "y-field" };
+			yField.AddToClassList("abb-vector2-int-field__axis-field");
 
 			xField.value = Value.x;
 			yField.value = Value.y;

@@ -7,8 +7,7 @@ using UnityEngine.UIElements;
 
 internal class TextInputDialog : EditorWindow
 {
-	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/TextInputDialog.uss";
-	public StyleSheet uss;
+	[SerializeField] public StyleSheet uss;
 
 	private string textLabel = string.Empty;
 	private string buttonLabel = string.Empty;
@@ -44,19 +43,24 @@ internal class TextInputDialog : EditorWindow
 
 	private void CreateGUI()
 	{
-		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-		if (uss != null)
-		{
-			rootVisualElement.styleSheets.Add(uss);
-			rootVisualElement.AddToClassList("text-input-dialog__root");
-		}
+		if (uss != null) rootVisualElement.styleSheets.Add(uss);
+
+		rootVisualElement.AddToClassList("abb-text-input-dialog");
 
 		///	TEXT FIELD
-		textField = new();
+		textField = new()
+		{
+			name = "text-field"
+		};
+		textField.AddToClassList("abb-text-input-dialog__text-field");
 		textField.label = textLabel;
 
 		///	CREATE BUTTON
-		acceptButton = new();
+		acceptButton = new()
+		{
+			name = "accept-button"
+		};
+		acceptButton.AddToClassList("abb-text-input-dialog__accept-button");
 
 		Label createLabel = new(buttonLabel);
 		acceptButton.Add(createLabel);

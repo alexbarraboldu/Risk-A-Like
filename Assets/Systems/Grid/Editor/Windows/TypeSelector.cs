@@ -12,6 +12,9 @@ namespace ABB.Grid.Editor.Windows
 {
 	internal class TypeSelector : EditorWindow
 	{
+		private const string ResultIconClass = "abb-type-selector__result-icon";
+		private const string ResultLabelClass = "abb-type-selector__result-label";
+
 		private Type _type = typeof(MonoScript);
 		public Type Type
 		{
@@ -47,6 +50,7 @@ namespace ABB.Grid.Editor.Windows
 		private void CreateGUI()
 		{
 			rootVisualElement.name = "unity-object-selector";
+			rootVisualElement.AddToClassList("abb-type-selector");
 
 			VisualElement visualElement = new VisualElement
 			{
@@ -95,16 +99,19 @@ namespace ABB.Grid.Editor.Windows
 			_listView.makeItem = () =>
 			{
 				VisualElement parent = new();
+				parent.AddToClassList("abb-type-selector__result");
 				parent.style.flexDirection = FlexDirection.Row;
 				parent.style.alignItems = Align.Center;
 				parent.style.paddingLeft = 18;
 
-				Image icon = new() { name = "icon" };
+				Image icon = new();
+				icon.AddToClassList(ResultIconClass);
 				icon.style.width = 16;
 				icon.style.height = 16;
 				icon.style.flexShrink = 0;
 
-				Label label = new() { name = "label" };
+				Label label = new();
+				label.AddToClassList(ResultLabelClass);
 
 				parent.Add(icon);
 				parent.Add(label);
@@ -116,7 +123,7 @@ namespace ABB.Grid.Editor.Windows
 				MonoScript script = (MonoScript)_listView.itemsSource[index];
 				string name = script?.name ?? "None";
 
-				Image icon = element.Q<Image>("icon");
+				Image icon = element.Q<Image>(className: ResultIconClass);
 				if (script == null)
 					icon.style.display = DisplayStyle.None;
 				else
@@ -125,8 +132,7 @@ namespace ABB.Grid.Editor.Windows
 					icon.style.display = DisplayStyle.Flex;
 				}
 
-				element.name = $"Parent_{name}";
-				element.Q<Label>("label").text = name;
+				element.Q<Label>(className: ResultIconClass).text = name;
 			};
 
 

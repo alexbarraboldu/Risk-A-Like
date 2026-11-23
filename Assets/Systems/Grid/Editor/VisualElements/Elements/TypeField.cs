@@ -20,6 +20,7 @@ namespace ABB.Grid.Editor.VisualElements
 		public TypeField(string text)
 		{
 			name = "type-field";
+			AddToClassList("abb-type-field");
 			focusable = true;
 
 			label = new Label();

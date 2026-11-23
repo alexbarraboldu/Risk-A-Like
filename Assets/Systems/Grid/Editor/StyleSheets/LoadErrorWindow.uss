@@ -1,12 +1,12 @@
-#load-error-window-root {
+.abb-load-error-window {
 	padding: 4px;
 }
 
-#load-error-window-affected-files-label {
+.abb-load-error-window__affected-files {
 	margin-top: 4px;
 }
 
-#load-error-window-close-editor-button, #load-error-window-continue-button {
+.abb-load-error-window__close-editor-button, .abb-load-error-window__continue-button {
 	margin-top: 4px;
 	min-height: 30px;
 }

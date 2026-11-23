@@ -5,14 +5,15 @@ using ABB.Grid.Editor.Data;
 
 using UnityEditor;
 
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace ABB.Grid.Editor.VisualElements
 {
 	public class SaveFilesView : VisualElement
 	{
-		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/SaveFileEntry.uss";
-		public StyleSheet saveFileEntryUSS;
+		private static readonly GUID StyleSheetGuid = new("cc31d2ce52787024ab4c53a83a1ee223");
+		[SerializeField] public StyleSheet saveFileEntryUSS;
 
 		private GridData[] grids;
 
@@ -24,7 +25,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		public SaveFilesView(GridData[] gridsData)
 		{
-			if (saveFileEntryUSS == null) saveFileEntryUSS = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (saveFileEntryUSS == null) saveFileEntryUSS = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
 
 			this.grids = gridsData;
 
@@ -59,10 +60,10 @@ namespace ABB.Grid.Editor.VisualElements
 
 				element.userData = gridSave;
 
-				Image icon = element.Q<Image>("icon");
+				Image icon = element.Q<Image>(className: SaveFileEntry.IconClass);
 				icon.image = EditorGUIUtility.IconContent("DefaultAsset Icon").image;
 
-				element.Q<Label>("label").text = gridSave.fileName;
+				element.Q<Label>(className: SaveFileEntry.FileNameClass).text = gridSave.fileName;
 			};
 
 			listView.itemsSource = gridsData;
@@ -83,19 +84,34 @@ namespace ABB.Grid.Editor.VisualElements
 			private Label label = null;
 			private Button deleteButton = null;
 
+			internal const string IconClass = "abb-save-file-entry__icon";
+			internal const string FileNameClass = "abb-save-file-entry__file-name";
+
 			public event Action OnDeleteClicked;
 
 			public SaveFileEntry(StyleSheet uss)
 			{
-				styleSheets.Add(uss);
+				if (uss != null) styleSheets.Add(uss);
 
-				icon = new() { name = "icon" };
-				label = new() { name = "label" };
+				name = "save-file-entry";
+				AddToClassList("abb-save-file-entry");
+
+				icon = new()
+				{
+					name = "icon"
+				};
+				icon.AddToClassList(IconClass);
+				label = new()
+				{
+					name = "label"
+				};
+				label.AddToClassList(FileNameClass);
 
 				VisualElement spacer = new();
 				spacer.style.flexGrow = 1;
 
-				deleteButton = new() { name = "delete", tooltip = "Delete grid", iconImage = EditorGUIUtility.FindTexture("TreeEditor.Trash") };
+				deleteButton = new() { tooltip = "Delete grid", iconImage = EditorGUIUtility.FindTexture("TreeEditor.Trash") };
+				deleteButton.AddToClassList("abb-save-file-entry__delete-button");
 				deleteButton.clicked += () => OnDeleteClicked?.Invoke();
 
 				Add(icon);

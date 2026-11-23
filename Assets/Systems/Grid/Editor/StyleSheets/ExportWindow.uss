@@ -1,18 +1,18 @@
-#export-window-file-name-field {
+.abb-export-window__file-name-field {
 	margin-left: 6px;
 	margin-right: 6px;
 	margin-top: 6px;
 }
 
-#export-window-file-name-field > Label {
+.abb-export-window__file-name-field > Label {
 	min-width: 100px;
 }
 
-#export-window-spacer {
-	flex-grow: 0.5f;
+.abb-export-window__spacer {
+	flex-grow: 0.5;
 }
 
-#export-window--export-grid__button {
+.abb-export-window__export-button {
 	align-self: center;
 	min-width: 100px;
 	max-width: 100px;

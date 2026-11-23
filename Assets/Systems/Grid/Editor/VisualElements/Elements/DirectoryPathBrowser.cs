@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 public class DirectoryPathBrowser : VisualElement
 {
-	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/DirectoryPathBrowser.uss";
+	private static readonly GUID StyleSheetGuid = new("4b399f63cff3ffe408f7055d55259b74");
 	public StyleSheet uss;
 
 	private string folderPanelTitle = string.Empty;
@@ -25,20 +25,28 @@ public class DirectoryPathBrowser : VisualElement
 
 	public DirectoryPathBrowser(string label, string folderPanelTitle = "")
 	{
-		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
-		if (uss != null)
-		{
-			styleSheets.Add(uss);
-		}
+		if (uss == null) uss = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
+		if (uss != null) styleSheets.Add(uss);
 
 		this.folderPanelTitle = folderPanelTitle;
 
-		textField = new TextField(label);
-		textField.isReadOnly = true;
+		name = "directory-path-browser";
+		AddToClassList("abb-directory-path-browser");
+
+		textField = new TextField(label)
+		{
+			name = "text-field",
+			isReadOnly = true
+		};
+		textField.AddToClassList("abb-directory-path-browser__text-field");
 		textField.RegisterValueChangedCallback(FolderFieldValueChanged);
 
-		browseButton = new Button(OnBrowseClick);
-		browseButton.text = "Browse...";
+		browseButton = new Button(OnBrowseClick)
+		{
+			name = "browse-button",
+			text = "Browse..."
+		};
+		browseButton.AddToClassList("abb-directory-path-browser__browse-button");
 
 		Add(textField);
 		Add(browseButton);

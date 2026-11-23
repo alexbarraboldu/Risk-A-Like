@@ -1,19 +1,19 @@
-.text-input-dialog__root {
+.abb-text-input-dialog {
 	justify-content: space-between;
 }
 
-TextField {
+.abb-text-input-dialog__text-field {
 	margin-top: 8px;
 	margin-left: 8px;
 	margin-right: 8px;
 	align-self: stretch;
 }
 
-TextField > Label {
+.abb-text-input-dialog__text-field > Label {
 	min-width: 68px;
 }
 
-Button {
+.abb-text-input-dialog__accept-button {
 	margin-left: 8px;
 	margin-right: 8px;
 	margin-bottom: 8px;
@@ -21,6 +21,6 @@ Button {
 	justify-content: center;
 }
 
-Button > Label {
+.abb-text-input-dialog__accept-button > Label {
 	font-size: 18px;
 }

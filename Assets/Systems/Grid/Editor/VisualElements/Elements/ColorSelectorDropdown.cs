@@ -159,7 +159,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 			if (pickerWatcher?.isActive == true)
 			{
-				if (colorPopup.choices[index].color != auxColor)
+				if (colorPopup.choices.Count != 0 && colorPopup.choices[index].color != auxColor)
 				{
 					TerrainColor terrainColor = colorPopup.choices[index];
 					terrainColor.color = auxColor;
@@ -177,7 +177,7 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				if (colorPicker == null)
 				{
-					if (colorPopup.choices[index].color != auxColor)
+					if (colorPopup.choices.Count != 0 && colorPopup.choices[index].color != auxColor)
 					{
 						TerrainColor terrainColor = colorPopup.choices[index];
 						terrainColor.color = auxColor;

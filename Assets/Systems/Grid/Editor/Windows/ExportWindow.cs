@@ -14,6 +14,9 @@ namespace ABB.Grid.Editor.Windows
 {
 	public class ExportWindow : EditorWindow
 	{
+		private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/ExportWindow.uss";
+		public StyleSheet uss;
+
 		private bool guiBuilt = false;
 		private bool closeExportWindow = true;
 
@@ -45,6 +48,9 @@ namespace ABB.Grid.Editor.Windows
 
 		public void CreateGUI()
 		{
+			if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+			if (uss != null) rootVisualElement.styleSheets.Add(uss);
+
 			closeExportWindow = true;
 			closeExportWindow = !LoadExportSettings();
 			if (closeExportWindow)
@@ -63,41 +69,27 @@ namespace ABB.Grid.Editor.Windows
 
 			fileNameField = new("File name")
 			{
-				style =
-				{
-					marginLeft = 6,
-					marginRight = 6,
-					marginTop = 6
-				}
+				name = "export-window-file-name-field",
+				value = exportSettings.fileName
 			};
-			fileNameField.labelElement.style.minWidth = 100;
-			fileNameField.value = exportSettings.fileName;
 			fileNameField.RegisterValueChangedCallback(evt =>
 			{
 				exportSettings.fileName = evt.newValue;
 				SetEnabledExportButton();
 			});
 
-			VisualElement spacer = new();
-			spacer.style.flexGrow = 0.5f;
+			VisualElement spacer = new()
+			{
+				name = "export-window-spacer"
+			};
 
 			///	Export Grid Button
 			exportButton = new()
 			{
 				name = "export-window--export-grid__button",
 				tooltip = "Export grid",
-				style =
-				{
-					alignSelf = Align.Center,
-					minWidth = 100,
-					maxWidth = 100,
-					minHeight = 50,
-					maxHeight = 50,
-					fontSize = 24
-				},
 				text = "Export",
 			};
-
 			exportButton.clicked += Export;
 
 

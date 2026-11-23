@@ -102,12 +102,6 @@ namespace ABB.Grid.Editor.VisualElements
 			};
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
-			gridSizeField.Q<Label>("vector2int-field__label").style.display = DisplayStyle.None;
-			gridSizeField.Q("vector2int-field").style.flexGrow = 1;
-
-			VisualElement visualElement = new();
-			gridSizeField.Q("vector2int-field__fields-xField").style.width = 118;
-			gridSizeField.Q("vector2int-field__fields-yField").style.width = 118;
 
 			VisualElement middleOptionsElement = new()
 			{
@@ -128,70 +122,68 @@ namespace ABB.Grid.Editor.VisualElements
 			eraserButton = new()
 			{
 				name = "tools-view--eraser__button",
-				tooltip = "Eraser"
+				tooltip = "Eraser",
+				iconImage = (Texture2D)EditorGUIUtility.IconContent("Grid.EraserTool").image
 			};
-			eraserButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.EraserTool").image;
 			///	Reset Grid Button
 			resetGridButton = new()
 			{
 				name = "tools-view--reset-grid__button",
-				tooltip = "Reset grid"
+				tooltip = "Reset grid",
+				iconImage = (Texture2D)EditorGUIUtility.IconContent("Refresh").image
 			};
-			resetGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Refresh").image;
 			///	Fill Grid Button
 			fillGridButton = new()
 			{
 				name = "tools-view--fill-grid__button",
 				tooltip = "Fill grid",
+				iconImage = (Texture2D)EditorGUIUtility.IconContent("Grid.FillTool").image
 			};
-			fillGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Grid.FillTool").image;
 			///	Export Grid Button
 			exportGridButton = new()
 			{
 				name = "tools-view--export-grid__button",
-				tooltip = "Export grid"
+				tooltip = "Export grid",
+				iconImage = (Texture2D)EditorGUIUtility.IconContent("SceneLoadOut").image
 			};
-			exportGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("SceneLoadOut").image;
 			///	New Grid Button
 			newGridButton = new()
 			{
 				name = "tools-view--new-grid__button",
-				tooltip = "New grid"
+				tooltip = "New grid",
+				iconImage = (Texture2D)EditorGUIUtility.IconContent("Toolbar Plus").image
 			};
-			newGridButton.iconImage = (Texture2D)UnityEditor.EditorGUIUtility.IconContent("Toolbar Plus").image;
 			///-------------------
 
 			///	Grid Text Label
-			gridTextLabel = new(currentGrid.fileName == string.Empty ? "No grid loaded" : currentGrid.fileName);
-			gridTextLabel.style.alignSelf = Align.Stretch;
+			gridTextLabel = new(currentGrid.fileName == string.Empty ? "No grid loaded" : currentGrid.fileName)
+			{
+				name = "tools-view-grid-text-label"
+			};
 
 			///	ADD TO UI
 			///	Left
 			Add(leftOptionsElement);
 
-			VisualElement rowSelectorParent = new();
-			rowSelectorParent.style.flexDirection = FlexDirection.Row;
-
-			rowSelectorParent.Add(leftColorSelector);
-			rowSelectorParent.Add(rightColorSelector);
-
-			VisualElement rowGridSizeDeleteParent = new VisualElement()
+			VisualElement selectorParent = new()
 			{
-				style =
-				{
-					paddingTop = 4,
-					alignSelf = Align.FlexStart,
-					flexDirection = FlexDirection.Row,
-					alignItems = Align.Center
-				}
+				name = "tools-view-selector-parent"
 			};
-			rowGridSizeDeleteParent.Add(gridSizeField);
-			rowGridSizeDeleteParent.Add(eraserButton);
-			rowGridSizeDeleteParent.Add(resetGridButton);
-			rowGridSizeDeleteParent.Add(fillGridButton);
 
-			leftOptionsElement.Add(rowSelectorParent);
-			leftOptionsElement.Add(rowGridSizeDeleteParent);
+			selectorParent.Add(leftColorSelector);
+			selectorParent.Add(rightColorSelector);
+
+			VisualElement gridSizeButtonsParent = new VisualElement()
+			{
+				name = "tools-view-grid-size-buttons-parent"
+			};
+			gridSizeButtonsParent.Add(gridSizeField);
+			gridSizeButtonsParent.Add(eraserButton);
+			gridSizeButtonsParent.Add(resetGridButton);
+			gridSizeButtonsParent.Add(fillGridButton);
+
+			leftOptionsElement.Add(selectorParent);
+			leftOptionsElement.Add(gridSizeButtonsParent);
 
 			///	Middle
 			Add(middleOptionsElement);
@@ -199,8 +191,10 @@ namespace ABB.Grid.Editor.VisualElements
 			///	Right
 			Add(rightOptionsElement);
 
-			VisualElement rightButtonsParent = new();
-			rightButtonsParent.style.flexDirection = FlexDirection.Row;
+			VisualElement rightButtonsParent = new()
+			{
+				name = "tools-view-right-buttons-parent"
+			};
 
 			rightOptionsElement.Add(gridTextLabel);
 			rightOptionsElement.Add(rightButtonsParent);

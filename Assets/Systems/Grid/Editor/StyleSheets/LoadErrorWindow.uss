@@ -1,0 +1,12 @@
+#load-error-window-root {
+	padding: 4px;
+}
+
+#load-error-window-affected-files-label {
+	margin-top: 4px;
+}
+
+#load-error-window-close-editor-button, #load-error-window-continue-button {
+	margin-top: 4px;
+	min-height: 30px;
+}

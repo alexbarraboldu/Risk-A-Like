@@ -5,6 +5,9 @@ using UnityEngine.UIElements;
 
 internal class LoadErrorWindow : EditorWindow
 {
+	private const string StylePath = "Assets/Systems/Grid/Editor/StyleSheets/LoadErrorWindow.uss";
+	public StyleSheet uss;
+
 	private Label affectedFilesLabel = null;
 	private Button continueButton = null;
 	private Button closeEditorButton = null;
@@ -43,29 +46,29 @@ internal class LoadErrorWindow : EditorWindow
 
 	private void CreateGUI()
 	{
-		rootVisualElement.style.paddingLeft = 4;
-		rootVisualElement.style.paddingRight = 4;
-		rootVisualElement.style.paddingBottom = 4;
-		rootVisualElement.style.paddingTop = 4;
+		if (uss == null) uss = AssetDatabase.LoadAssetAtPath<StyleSheet>(StylePath);
+		if (uss != null) rootVisualElement.styleSheets.Add(uss);
 
-		affectedFilesLabel = new(affectedFiles);
-		affectedFilesLabel.style.marginTop = 4;
+		rootVisualElement.name = "load-error-window-root";
+
+		affectedFilesLabel = new(affectedFiles)
+		{
+			name = "load-error-window-affected-files-label"
+		};
 
 		closeEditorButton = new()
 		{
+			name = "load-error-window-close-editor-button",
 			text = closeButtonContent,
 			tooltip = closeButtonContent
 		};
-		closeEditorButton.style.marginTop = 4;
-		closeEditorButton.style.minHeight = 30;
 
 		continueButton = new()
 		{
+			name = "load-error-window-continue-button",
 			text = continueButtonContent,
 			tooltip = continueButtonContent
 		};
-		continueButton.style.marginTop = 4;
-		continueButton.style.minHeight = 30;
 
 		rootVisualElement.Add(affectedFilesLabel);
 		rootVisualElement.Add(closeEditorButton);

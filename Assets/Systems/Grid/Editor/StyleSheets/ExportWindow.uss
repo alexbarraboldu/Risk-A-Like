@@ -1,0 +1,22 @@
+#export-window-file-name-field {
+	margin-left: 6px;
+	margin-right: 6px;
+	margin-top: 6px;
+}
+
+#export-window-file-name-field > Label {
+	min-width: 100px;
+}
+
+#export-window-spacer {
+	flex-grow: 0.5f;
+}
+
+#export-window--export-grid__button {
+	align-self: center;
+	min-width: 100px;
+	max-width: 100px;
+	min-height: 100px;
+	max-height: 100px;
+	font-size: 24px;
+}

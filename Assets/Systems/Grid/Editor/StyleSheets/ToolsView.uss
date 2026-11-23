@@ -5,6 +5,22 @@
 	background-color: rgba(102, 102, 102, 255);
 }
 
+#vector2int-field {
+	flex-grow: 1;
+}
+
+#vector2int-field__label {
+	display: none
+}
+
+#vector2int-field__fields-xField, #vector2int-field__fields-yField {
+	width: 118px;
+}
+
+#tools-view-grid-text-label {
+	align-self: stretch;
+}
+
 .tools-view-button {
 	min-width: 35px;
 	max-width: 35px;
@@ -14,8 +30,6 @@
 
 #tools-view--left-options {
 	flex-direction: column;
-	max-width: 300px;
-	padding-right: 4px;
 }
 
 #tools-view--middle-options {
@@ -30,4 +44,19 @@
 	align-self: stretch;
 	justify-content: space-around;
 	max-width: 300px;
+}
+
+#tools-view-selector-parent {
+	flex-direction: row;
+}
+
+#tools-view-grid-size-buttons-parent {
+	padding-top: 4px;
+	align-self: flex-start;
+	flex-direction: row;
+	align-items: center;
+}
+
+#tools-view-right-buttons-parent {
+	flex-direction: row;
 }

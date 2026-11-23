@@ -51,6 +51,7 @@ namespace ABB.Grid.Editor.Windows
 
 		public void CreateGUI()
 		{
+			rootVisualElement.name = "grid-editor-root";
 			rootVisualElement.style.minWidth = minWindowWidth;
 			rootVisualElement.style.minHeight = minWindowHeight;
 

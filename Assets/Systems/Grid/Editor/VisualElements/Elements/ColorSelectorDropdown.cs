@@ -253,6 +253,19 @@ namespace ABB.Grid.Editor.VisualElements
 
 				formatSelectedValueCallback = FormatItem;
 				formatListItemCallback = FormatItem;
+
+				RegisterCallback<PointerDownEvent>(evt =>
+				{
+					if (evt.button != 0) return;
+
+					evt.StopImmediatePropagation();
+					schedule.Execute(ShowColorMenu);
+				}, TrickleDown.TrickleDown);
+				RegisterCallback<NavigationSubmitEvent>(evt =>
+				{
+					evt.StopImmediatePropagation();
+					ShowColorMenu();
+				}, TrickleDown.TrickleDown);
 			}
 
 			static string FormatItem(TerrainColor terrainColor)
@@ -263,6 +276,33 @@ namespace ABB.Grid.Editor.VisualElements
 			public void SetText(string text)
 			{
 				textElement.text = text;
+			}
+
+			private void ShowColorMenu()
+			{
+				var menu = new GenericDropdownMenu();
+
+				for (int i = 0; i < choices.Count; i++)
+				{
+					TerrainColor terrain = choices[i];
+					menu.AddItem(i.ToString(), i == index, () => value = terrain);
+
+					var label = menu.contentContainer[i].Q<Label>();
+					label.text = FormatItem(terrain);
+
+					var checkmark = menu.contentContainer[i].Q(null, "unity-base-dropdown__checkmark");
+					checkmark.style.position = Position.Absolute;
+
+					VisualElement color = new() { pickingMode = PickingMode.Ignore };
+					color.style.backgroundColor = terrain.color;
+					color.style.width = 18;
+					color.style.marginRight = 3;
+
+					label.parent.Add(color);
+					color.SendToBack();
+				}
+
+				menu.DropDown(worldBound, this, DropdownMenuSizeMode.Content);
 			}
 		}
 	}

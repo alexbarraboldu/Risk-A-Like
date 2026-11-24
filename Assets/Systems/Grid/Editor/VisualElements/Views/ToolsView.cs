@@ -107,6 +107,7 @@ namespace ABB.Grid.Editor.VisualElements
 			leftOptionsElement.AddToClassList("abb-tools-view__editing-tools");
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
+
 			blockXButton = new(EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon"))
 			{
 				tooltip = xLocked ? "Unlock" : "Lock"
@@ -264,6 +265,11 @@ namespace ABB.Grid.Editor.VisualElements
 			leftColorSelector.SetIndex((int)session.leftColor);
 			rightColorSelector.SetIndex((int)session.rightColor);
 
+			xLocked = !session.xLocked;
+			yLocked = !session.yLocked;
+			XFieldBlockClicked();
+			YFieldBlockClicked();
+
 			blockXButton.clicked += XFieldBlockClicked;
 			blockYButton.clicked += YFieldBlockClicked;
 
@@ -386,6 +392,8 @@ namespace ABB.Grid.Editor.VisualElements
 			blockXButton.tooltip = xLocked ? "Unlock" : "Lock";
 			blockXButton.iconImage = EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon");
 			gridSizeField.Q("x-field").Q("unity-text-input").SetEnabled(!xLocked);
+
+			session.xLocked = xLocked;
 		}
 		private void YFieldBlockClicked()
 		{
@@ -393,14 +401,16 @@ namespace ABB.Grid.Editor.VisualElements
 			blockYButton.tooltip = yLocked ? "Unlock" : "Lock";
 			blockYButton.iconImage = EditorGUIUtility.FindTexture(yLocked ? "LockIcon-On" : "LockIcon");
 			gridSizeField.Q("y-field").Q("unity-text-input").SetEnabled(!yLocked);
+
+			session.yLocked = yLocked;
 		}
 
 		#endregion
 
 		#region COLOR SELECTORS
 
-		private void LeftSelectorValueChanged(int value) => session.leftColor = (uint)value;
-		private void RightSelectorValueChanged(int value) => session.rightColor = (uint)value;
+		private void LeftSelectorValueChanged(int value) => session.leftColor = value;
+		private void RightSelectorValueChanged(int value) => session.rightColor = value;
 
 		private void LeftSelectorColorChanged(int value, Color color)
 		{
@@ -445,7 +455,10 @@ namespace ABB.Grid.Editor.VisualElements
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
 
 			if (terrainColors.terrainColors.Length == 0)
+			{
+				session.leftColor = session.rightColor = -1;
 				rightColorSelector.SetIndex(0);
+			}
 
 			OnRemoveTerrain?.Invoke(index);
 		}
@@ -460,7 +473,10 @@ namespace ABB.Grid.Editor.VisualElements
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
 
 			if (terrainColors.terrainColors.Length == 0)
+			{
+				session.leftColor = session.rightColor = -1;
 				leftColorSelector.SetIndex(0);
+			}
 
 			OnRemoveTerrain?.Invoke(index);
 		}

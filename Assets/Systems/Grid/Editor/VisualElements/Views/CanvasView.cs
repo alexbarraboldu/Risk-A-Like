@@ -89,6 +89,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			Add(gridLayer);
 			Add(memoryLabel);
+
+			SetGridPosition(session.gridPosition);
 		}
 
 
@@ -207,6 +209,15 @@ namespace ABB.Grid.Editor.VisualElements
 				$"{(renderBytes + totalStaticCanvasMemorySizeBytes) / 1000000L} MB";
 		}
 
+		private void SetGridPosition(Vector2 position)
+		{
+			gridPosition = position;
+			gridLayer.style.translate = position;
+
+			session.gridPosition = position;
+			session.hasGridPosition = true;
+		}
+
 		#region ACTIONS 
 
 		private bool EditGridCells(Vector2 pointerPosition)
@@ -310,8 +321,7 @@ namespace ABB.Grid.Editor.VisualElements
 			Vector2 mouse = localMousePosition - Vector2.one * 2f;
 			Vector2 gridPoint = (mouse - gridPosition) / previousCellSize;
 
-			gridPosition = mouse - gridPoint * session.cellSize;
-			gridLayer.style.translate = gridPosition;
+			SetGridPosition(mouse - gridPoint * session.cellSize);
 
 			if (previousCellSize != session.cellSize)
 			{
@@ -321,8 +331,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void Pan()
 		{
-			gridPosition = localMouseDeltaPosition;
-			gridLayer.style.translate = gridPosition;
+			SetGridPosition(localMouseDeltaPosition);
 		}
 
 		public void EraseClicked() => isErasing = !isErasing;
@@ -465,8 +474,7 @@ namespace ABB.Grid.Editor.VisualElements
 			Vector2 drawnOffset = new(2f, 2f);
 			Vector2 gridExtent = new(gridWidth, gridHeight);
 
-			gridPosition = (evt.newRect.size - gridExtent) / 2f - drawnOffset;
-			gridLayer.style.translate = gridPosition;
+			SetGridPosition(session.hasGridPosition ? session.gridPosition : (evt.newRect.size - gridExtent) / 2f - drawnOffset);
 
 			CanvasMarkDirtyRepaint("OnResizeWindow");
 		}

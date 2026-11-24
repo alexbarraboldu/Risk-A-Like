@@ -77,7 +77,11 @@ namespace ABB.Grid.Editor.Windows
 
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackNewGridData(NewEntry);
-			_saveFilesTab.OnGridDataSelected += ActivateGrid;
+			_saveFilesTab.OnGridDataSelected += (grid, index) =>
+			{
+				session.hasGridPosition = false;
+				ActivateGrid(grid, index);
+			};
 			_saveFilesTab.OnGridDataDeleted += DeleteGrid;
 
 			///	ADD UI
@@ -231,7 +235,7 @@ namespace ABB.Grid.Editor.Windows
 				}
 			}
 
-			uint fallbackBrush = paletteLength > 0 ? (uint)(paletteLength - 1) : 0u;
+			int fallbackBrush = paletteLength > 0 ? (paletteLength - 1) : 0;
 
 			if (session.leftColor >= paletteLength)
 				session.leftColor = fallbackBrush;

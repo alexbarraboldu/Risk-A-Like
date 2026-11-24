@@ -37,8 +37,13 @@ namespace ABB.Grid.Editor.Utils
 					sessionData.currentTab = reader.ReadInt32();
 					sessionData.saveFileIndex = reader.ReadInt32();
 					sessionData.cellSize = reader.ReadSingle();
-					sessionData.leftColor = reader.ReadUInt32();
-					sessionData.rightColor = reader.ReadUInt32();
+					sessionData.gridPosition.x = reader.ReadSingle();
+					sessionData.gridPosition.y = reader.ReadSingle();
+					sessionData.hasGridPosition = reader.ReadBoolean();
+					sessionData.leftColor = reader.ReadInt32();
+					sessionData.rightColor = reader.ReadInt32();
+					sessionData.xLocked = reader.ReadBoolean();
+					sessionData.yLocked = reader.ReadBoolean();
 
 					return sessionData;
 				});
@@ -181,8 +186,13 @@ namespace ABB.Grid.Editor.Utils
 					writer.Write(sessionData.currentTab);
 					writer.Write(sessionData.saveFileIndex);
 					writer.Write(sessionData.cellSize);
+					writer.Write(sessionData.gridPosition.x);
+					writer.Write(sessionData.gridPosition.y);
+					writer.Write(sessionData.hasGridPosition);
 					writer.Write(sessionData.leftColor);
 					writer.Write(sessionData.rightColor);
+					writer.Write(sessionData.xLocked);
+					writer.Write(sessionData.yLocked);
 				});
 
 				return true;

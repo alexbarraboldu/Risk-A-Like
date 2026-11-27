@@ -11,25 +11,25 @@ namespace ABB.Grid.Editor.VisualElements
 		private SaveFilesView _saveFilesView = null;
 
 
-		public event Action<GridData, int> OnGridDataSelected
+		public event Action<GridData, int> OnGridLoaded
 		{
-			add => _saveFilesView.OnGridDataSelected += value;
-			remove => _saveFilesView.OnGridDataSelected -= value;
+			add => _saveFilesView.OnGridLoaded += value;
+			remove => _saveFilesView.OnGridLoaded -= value;
 		}
 
-		public event Action<int> OnGridDataDeleted
+		public event Action<int> OnGridDeleted
 		{
-			add => _saveFilesView.OnGridDataDeleted += value;
-			remove => _saveFilesView.OnGridDataDeleted -= value;
+			add => _saveFilesView.OnGridDeleted += value;
+			remove => _saveFilesView.OnGridDeleted -= value;
 		}
 
 
-		public SaveFilesTab(string label, GridData[] gridSaves)
+		public SaveFilesTab(string label, GridData[] gridSaves, SessionData sessionData)
 		{
 			base.label = label;
 			closeable = false;
 
-			_saveFilesView = new(gridSaves);
+			_saveFilesView = new(gridSaves, sessionData);
 
 			Add(_saveFilesView);
 		}

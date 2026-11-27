@@ -73,16 +73,16 @@ namespace ABB.Grid.Editor.Windows
 			int maxVector2IntFieldSize = Math.Min(CalculateVector2IntFieldMaxIntegerSize(maxMemoryAllocationMB), Constants.MAX_GRID_DIMENSION);
 
 			_editorTab = new("Editor", session, terrainColors, currentGrid, this, maxVector2IntFieldSize, maxMemoryAllocationMB);
-			_saveFilesTab = new("Save Files", grids);
+			_saveFilesTab = new("Save Files", grids, session);
 
 			///	ADD LOGIC
 			_editorTab.RegisterCallbackNewGridData(NewEntry);
-			_saveFilesTab.OnGridDataSelected += (grid, index) =>
+			_saveFilesTab.OnGridLoaded += (grid, index) =>
 			{
 				session.hasGridPosition = false;
 				ActivateGrid(grid, index);
 			};
-			_saveFilesTab.OnGridDataDeleted += DeleteGrid;
+			_saveFilesTab.OnGridDeleted += DeleteGrid;
 
 			///	ADD UI
 			rootVisualElement.Add(tabView);
@@ -235,7 +235,7 @@ namespace ABB.Grid.Editor.Windows
 				}
 			}
 
-			int fallbackBrush = paletteLength > 0 ? (paletteLength - 1) : 0;
+			int fallbackBrush = paletteLength - 1;
 
 			if (session.leftColor >= paletteLength)
 				session.leftColor = fallbackBrush;
@@ -284,6 +284,7 @@ namespace ABB.Grid.Editor.Windows
 			}
 
 			_editorTab.LoadGrid(currentGrid, index);
+			session.saveFileIndex = index;
 
 			///	REFRESH & SAVE
 			_saveFilesTab.SetEntries(grids);
@@ -306,6 +307,10 @@ namespace ABB.Grid.Editor.Windows
 
 				currentGrid = new GridData();
 				session.saveFileIndex = -1;
+			}
+			else if (session.saveFileIndex > index)
+			{
+				session.saveFileIndex--;
 			}
 
 			_saveFilesTab.SetEntries(grids);

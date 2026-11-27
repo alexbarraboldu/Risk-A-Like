@@ -75,7 +75,7 @@ namespace ABB.Grid.Editor.Utils
 						colors[i] = new TerrainColor
 						{
 							name = reader.ReadString(),
-							terrain = reader.ReadInt32(),
+							value = reader.ReadInt32(),
 							r = reader.ReadSingle(),
 							g = reader.ReadSingle(),
 							b = reader.ReadSingle(),
@@ -217,7 +217,7 @@ namespace ABB.Grid.Editor.Utils
 					for (int i = 0; i < terrainColorsData.terrainColors.Length; i++)
 					{
 						writer.Write(terrainColorsData.terrainColors[i].name);
-						writer.Write(terrainColorsData.terrainColors[i].terrain);
+						writer.Write(terrainColorsData.terrainColors[i].value);
 						writer.Write(terrainColorsData.terrainColors[i].r);
 						writer.Write(terrainColorsData.terrainColors[i].g);
 						writer.Write(terrainColorsData.terrainColors[i].b);

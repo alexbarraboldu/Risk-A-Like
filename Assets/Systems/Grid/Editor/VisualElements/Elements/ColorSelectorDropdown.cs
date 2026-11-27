@@ -105,7 +105,9 @@ namespace ABB.Grid.Editor.VisualElements
 			{
 				auxColor = colorEvent.newValue;
 
-				if (isDelayed && pickerWatcher?.isActive == true) return;
+				if (isDelayed && pickerWatcher?.isActive == true ||
+					colorPopup.choices.Count == 0)
+					return;
 
 				TerrainColor terrainColor = colorPopup.choices[index];
 				terrainColor.color = auxColor;
@@ -126,44 +128,60 @@ namespace ABB.Grid.Editor.VisualElements
 				evt.StopPropagation();
 			}, TrickleDown.TrickleDown);
 
-			addChoiceButton.clicked += () =>
-			{
-				EditorWindow owner = Resources.FindObjectsOfTypeAll<EditorWindow>()
-				.FirstOrDefault(w => w.rootVisualElement == this || w.rootVisualElement.Contains(this));
-
-				TextInputDialog window = TextInputDialog.OpenWindow(
-					"Add new color",
-					"Color name:",
-					"Confirm",
-					owner.position,
-					(value) =>
-					{
-						TerrainColor terrainColor = new(value.ToUpper(), colorPopup.choices.Count, Color.white);
-						AddChoice(terrainColor);
-						OnChoiceAdded?.Invoke(terrainColor);
-						SetIndex(terrainColor.terrain);
-					},
-					false
-				);
-			};
+			addChoiceButton.clicked += AddColorClicked;
 
 			removeChoiceButton.clicked += () =>
 			{
-				RemoveChoice(index);
-				OnChoiceRemoved?.Invoke(index);
-				SetIndex(index - 1 < 0 ? 0 : index - 1);
+				int oldIndex = index;
+				RemoveChoice(oldIndex);
+				if (oldIndex < 0) return;
+				OnChoiceRemoved?.Invoke(oldIndex);
 			};
+		}
+
+		private void AddColorClicked()
+		{
+			EditorWindow owner = Resources.FindObjectsOfTypeAll<EditorWindow>()
+							.FirstOrDefault(w => w.rootVisualElement == this || w.rootVisualElement.Contains(this));
+
+			TextInputDialog window = TextInputDialog.OpenWindow(
+				"Add new color",
+				"Color name:",
+				"Confirm",
+				owner.position,
+				(value) =>
+				{
+					int newTerrainValue = colorPopup.choices.Count;
+					for (int i = 0; i < colorPopup.choices.Count; i++)
+					{
+						if (colorPopup.choices[i].value != i)
+						{
+							newTerrainValue = i;
+							break;
+						}
+					}
+					TerrainColor terrainColor = new(value.ToUpper(), newTerrainValue, Color.white);
+					AddChoice(terrainColor);
+					OnChoiceAdded?.Invoke(terrainColor);
+					SetIndex(terrainColor.value);
+				},
+				false
+			);
 		}
 
 		public void AddChoice(TerrainColor newChoice)
 		{
 			colorPopup.choices.Add(newChoice);
+			IEnumerable<TerrainColor> toOrder = colorPopup.choices;
+			colorPopup.choices = toOrder.OrderBy(terrain => terrain.value).ToList();
 		}
 
 		public void RemoveChoice(int index)
 		{
-			if (colorPopup.choices.Count == 0) return;
+			if (colorPopup.choices.Count == 0 || index < 0) return;
 			colorPopup.choices.RemoveAt(index);
+			int count = colorPopup.choices.Count;
+			SetIndex(index >= count ? count - 1 : index);
 		}
 
 		private void DelayedBehaviour()
@@ -224,6 +242,7 @@ namespace ABB.Grid.Editor.VisualElements
 			if (colorPopup.choices.Count == 0)
 			{
 				colorPopup.SetText("EMPTY");
+				colorField.value = Color.white;
 				return;
 			}
 
@@ -280,6 +299,8 @@ namespace ABB.Grid.Editor.VisualElements
 
 			private void ShowColorMenu()
 			{
+				if (choices.Count == 0) return;
+
 				var menu = new GenericDropdownMenu();
 
 				for (int i = 0; i < choices.Count; i++)

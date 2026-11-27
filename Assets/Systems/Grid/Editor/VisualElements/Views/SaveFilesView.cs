@@ -19,11 +19,11 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private ListView listView = null;
 
-		public event Action<GridData, int> OnGridDataSelected;
-		public event Action<int> OnGridDataDeleted;
+		public event Action<GridData, int> OnGridLoaded;
+		public event Action<int> OnGridDeleted;
 
 
-		public SaveFilesView(GridData[] gridsData)
+		public SaveFilesView(GridData[] gridsData, SessionData sessionData)
 		{
 			if (saveFileEntryUSS == null) saveFileEntryUSS = AssetDatabase.LoadAssetByGUID<StyleSheet>(StyleSheetGuid);
 
@@ -41,7 +41,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 				int index = listView.itemsSource.IndexOf(obj);
 
-				OnGridDataSelected?.Invoke(gridData, index);
+				OnGridLoaded?.Invoke(gridData, index);
 			};
 			listView.makeItem = () =>
 			{
@@ -50,7 +50,7 @@ namespace ABB.Grid.Editor.VisualElements
 				{
 					int index = listView.itemsSource.IndexOf(saveFileEntry.userData);
 					if (index >= 0)
-						OnGridDataDeleted?.Invoke(index);
+						OnGridDeleted?.Invoke(index);
 				};
 				return saveFileEntry;
 			};
@@ -64,6 +64,11 @@ namespace ABB.Grid.Editor.VisualElements
 				icon.image = EditorGUIUtility.IconContent("DefaultAsset Icon").image;
 
 				element.Q<Label>(className: SaveFileEntry.FileNameClass).text = gridSave.fileName;
+			};
+			listView.itemIndexChanged += (from, to) =>
+			{
+				if (sessionData.saveFileIndex == from)
+					sessionData.saveFileIndex = to;
 			};
 
 			listView.itemsSource = gridsData;

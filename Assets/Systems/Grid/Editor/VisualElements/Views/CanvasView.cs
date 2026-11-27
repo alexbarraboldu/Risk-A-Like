@@ -68,8 +68,8 @@ namespace ABB.Grid.Editor.VisualElements
 			if (uss != null) styleSheets.Add(uss);
 
 			name = "canvas-view";
-			AddToClassList("abb-canvas-view");
 			focusable = true;
+			AddToClassList("abb-canvas-view");
 
 			this.session = session;
 			this.currentGrid = currentGrid;
@@ -190,12 +190,6 @@ namespace ABB.Grid.Editor.VisualElements
 			CanvasMarkDirtyRepaint("SetCurrentGrid");
 		}
 
-		public void SetGridSize(Vector2Int value)
-		{
-			EnsureGrid(ref currentGrid, value.x, value.y);
-			CanvasMarkDirtyRepaint("SetGridSize");
-		}
-
 		private void SetMemoryLabelText(TimerState timerState)
 		{
 			CalculateStaticCanvasMemory();
@@ -219,6 +213,12 @@ namespace ABB.Grid.Editor.VisualElements
 		}
 
 		#region ACTIONS 
+
+		public void SetGridSize(Vector2Int value)
+		{
+			EnsureGrid(ref currentGrid, value.x, value.y);
+			CanvasMarkDirtyRepaint("SetGridSize");
+		}
 
 		private bool EditGridCells(Vector2 pointerPosition)
 		{
@@ -401,7 +401,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerDown(PointerDownEvent evt)
 		{
-			if (session.cellSize <= 0f || currentGrid.columns <= 0f || currentGrid.rows <= 0f || evt.button > 2) return;
+			if (session.cellSize <= 0f || currentGrid.columns <= 0f || currentGrid.rows <= 0f || evt.button > 2 || !session.canPaint) return;
 
 			localMousePosition = evt.localPosition;
 			localMouseStartPosition = (Vector2)evt.localPosition - gridPosition;
@@ -418,7 +418,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void OnPointerMove(PointerMoveEvent evt)
 		{
-			if (!isPainting) return;
+			if (!isPainting || !session.canPaint) return;
 
 			Vector2 previousPosition = localMousePosition;
 

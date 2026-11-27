@@ -15,6 +15,7 @@ namespace ABB.Grid.Editor.Data
 		public Vector2 gridPosition = Vector2.zero;
 		public bool hasGridPosition = false;
 
+		public bool canPaint => leftColor >= 0 && rightColor >= 0;
 		public int leftColor = 0;
 		public int rightColor = 0;
 

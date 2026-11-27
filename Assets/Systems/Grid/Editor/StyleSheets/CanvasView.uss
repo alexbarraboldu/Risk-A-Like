@@ -5,7 +5,7 @@
 	margin: 4px;
 }
 
-.abb-canvas-view__grid {
+.abb-canvas-view__grid-layer {
 	position: absolute;
 	left: 0;
 	top: 0;

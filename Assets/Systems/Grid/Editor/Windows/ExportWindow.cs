@@ -279,6 +279,7 @@ namespace ABB.Grid.Editor.Windows
 			bool result = CreateExporterInstance(exporterType);
 
 			if (result) typeField.SetTypeName(typeName);
+			else typeField.SetTypeName(string.Empty);
 
 			return result;
 		}
@@ -310,7 +311,7 @@ namespace ABB.Grid.Editor.Windows
 
 			try
 			{
-				if (_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, currentGrid.grid, currentGrid.columns, currentGrid.rows))
+				if (_exporter.ExportGrid(fileNameField.text, exportSettings.folderPath, (int[])currentGrid.grid.Clone(), currentGrid.columns, currentGrid.rows))
 					Debug.Log("Grid data exported successfully!");
 				else
 				{

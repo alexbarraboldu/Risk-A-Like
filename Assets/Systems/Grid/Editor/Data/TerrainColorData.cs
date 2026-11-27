@@ -14,7 +14,7 @@ namespace ABB.Grid.Editor.Data
 	public struct TerrainColor
 	{
 		public string name;
-		public int terrain;
+		public int value;
 		public float r;
 		public float g;
 		public float b;
@@ -32,10 +32,10 @@ namespace ABB.Grid.Editor.Data
 			}
 		}
 
-		public TerrainColor(string name, int terrain, Color color)
+		public TerrainColor(string name, int value, Color color)
 		{
 			this.name = name;
-			this.terrain = terrain;
+			this.value = value;
 			this.r = color.r;
 			this.g = color.g;
 			this.b = color.b;

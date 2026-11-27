@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using ABB.Grid.Editor.Data;
@@ -30,9 +31,7 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private Vector2IntField gridSizeField = null;
 		private Button blockXButton = null;
-		private bool xLocked = false;
 		private Button blockYButton = null;
-		private bool yLocked = false;
 
 		private Button eraserButton = null;
 		private Button resetGridButton = null;
@@ -44,16 +43,7 @@ namespace ABB.Grid.Editor.VisualElements
 		private Label gridTextLabel = null;
 
 		///	ACTIONS
-		public event Action<int, Color> OnLeftColorChanged
-		{
-			add => leftColorSelector.OnColorChanged += value;
-			remove => leftColorSelector.OnColorChanged -= value;
-		}
-		public event Action<int, Color> OnRightColorChanged
-		{
-			add => rightColorSelector.OnColorChanged += value;
-			remove => rightColorSelector.OnColorChanged -= value;
-		}
+		public event Action<string> RequestCanvasRepaint;
 		public event Action<int> OnRemoveTerrain;
 
 		public event Action<Vector2Int> OnGridSizeChanged
@@ -108,13 +98,13 @@ namespace ABB.Grid.Editor.VisualElements
 
 			gridSizeField = new Vector2IntField("Grid Size", "Columns", "Rows", false, maxVector2IntFieldSize);
 
-			blockXButton = new(EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon"))
+			blockXButton = new(EditorGUIUtility.FindTexture(session.xLocked ? "LockIcon-On" : "LockIcon"))
 			{
-				tooltip = xLocked ? "Unlock" : "Lock"
+				tooltip = session.xLocked ? "Unlock" : "Lock"
 			};
-			blockYButton = new(EditorGUIUtility.FindTexture(yLocked ? "LockIcon-On" : "LockIcon"))
+			blockYButton = new(EditorGUIUtility.FindTexture(session.yLocked ? "LockIcon-On" : "LockIcon"))
 			{
-				tooltip = yLocked ? "Unlock" : "Lock"
+				tooltip = session.yLocked ? "Unlock" : "Lock"
 			};
 
 			VisualElement middleOptionsElement = new()
@@ -254,19 +244,23 @@ namespace ABB.Grid.Editor.VisualElements
 			rightColorSelector.OnIndexChanged += RightSelectorValueChanged;
 
 			leftColorSelector.OnColorChanged += LeftSelectorColorChanged;
+			leftColorSelector.OnColorChanged += (index, color) => RequestCanvasRepaint?.Invoke("Left color selector: OnColorChanged");
 			rightColorSelector.OnColorChanged += RightSelectorColorChanged;
+			rightColorSelector.OnColorChanged += (index, color) => RequestCanvasRepaint?.Invoke("Right color selector: OnColorChanged");
 
 			leftColorSelector.OnChoiceAdded += LeftSelectorChoiceAdded;
+			leftColorSelector.OnChoiceAdded += (terrainColor) => RequestCanvasRepaint?.Invoke("Left color selector: OnChoiceAdded");
 			rightColorSelector.OnChoiceAdded += RightSelectorChoiceAdded;
+			rightColorSelector.OnChoiceAdded += (terrainColor) => RequestCanvasRepaint?.Invoke("Right color selector: OnChoiceAdded");
 
 			leftColorSelector.OnChoiceRemoved += LeftSelectorChoiceRemoved;
+			leftColorSelector.OnChoiceRemoved += (index) => RequestCanvasRepaint?.Invoke("Left color selector: OnChoiceRemoved");
 			rightColorSelector.OnChoiceRemoved += RightSelectorChoiceRemoved;
+			rightColorSelector.OnChoiceRemoved += (index) => RequestCanvasRepaint?.Invoke("Right color selector: OnChoiceRemoved");
 
 			leftColorSelector.SetIndex((int)session.leftColor);
 			rightColorSelector.SetIndex((int)session.rightColor);
 
-			xLocked = !session.xLocked;
-			yLocked = !session.yLocked;
 			XFieldBlockClicked();
 			YFieldBlockClicked();
 
@@ -302,6 +296,8 @@ namespace ABB.Grid.Editor.VisualElements
 		private void SetEnableUI(bool value)
 		{
 			gridSizeField.SetEnabled(value);
+			blockXButton.SetEnabled(value);
+			blockYButton.SetEnabled(value);
 
 			eraserButton.SetEnabled(value);
 			resetGridButton.SetEnabled(value);
@@ -315,6 +311,10 @@ namespace ABB.Grid.Editor.VisualElements
 			this.currentGrid = currentGrid;
 			gridSizeField.SetValueWithoutNotify(new Vector2Int(currentGrid.columns, currentGrid.rows));
 			gridTextLabel.text = currentGrid.fileName;
+
+			session.xLocked = session.yLocked = false;
+			SetXFieldEnabled(session.xLocked);
+			SetYFieldEnabled(session.yLocked);
 
 			SetEnableUI(!(currentGrid.fileName == string.Empty));
 		}
@@ -388,21 +388,28 @@ namespace ABB.Grid.Editor.VisualElements
 
 		private void XFieldBlockClicked()
 		{
-			xLocked = !xLocked;
-			blockXButton.tooltip = xLocked ? "Unlock" : "Lock";
-			blockXButton.iconImage = EditorGUIUtility.FindTexture(xLocked ? "LockIcon-On" : "LockIcon");
-			gridSizeField.Q("x-field").Q("unity-text-input").SetEnabled(!xLocked);
-
-			session.xLocked = xLocked;
+			session.xLocked = !session.xLocked;
+			SetXFieldEnabled(session.xLocked);
 		}
+
+		private void SetXFieldEnabled(bool value)
+		{
+			blockXButton.tooltip = value ? "Unlock" : "Lock";
+			blockXButton.iconImage = EditorGUIUtility.FindTexture(value ? "LockIcon-On" : "LockIcon");
+			gridSizeField.Q("x-field").Q("unity-text-input").SetEnabled(!value);
+		}
+
 		private void YFieldBlockClicked()
 		{
-			yLocked = !yLocked;
-			blockYButton.tooltip = yLocked ? "Unlock" : "Lock";
-			blockYButton.iconImage = EditorGUIUtility.FindTexture(yLocked ? "LockIcon-On" : "LockIcon");
-			gridSizeField.Q("y-field").Q("unity-text-input").SetEnabled(!yLocked);
+			session.yLocked = !session.yLocked;
+			SetYFieldEnabled(session.yLocked);
+		}
 
-			session.yLocked = yLocked;
+		private void SetYFieldEnabled(bool value)
+		{
+			blockYButton.tooltip = value ? "Unlock" : "Lock";
+			blockYButton.iconImage = EditorGUIUtility.FindTexture(value ? "LockIcon-On" : "LockIcon");
+			gridSizeField.Q("y-field").Q("unity-text-input").SetEnabled(!value);
 		}
 
 		#endregion
@@ -430,18 +437,22 @@ namespace ABB.Grid.Editor.VisualElements
 		private void LeftSelectorChoiceAdded(TerrainColor newChoice)
 		{
 			rightColorSelector.AddChoice(newChoice);
-			if (rightColorSelector.index == 0)
+			if (rightColorSelector.index <= 0)
 				rightColorSelector.SetIndex(0);
 
 			ArrayUtility.Add(ref terrainColors.terrainColors, newChoice);
+			IEnumerable<TerrainColor> toOrder = terrainColors.terrainColors;
+			terrainColors.terrainColors = toOrder.OrderBy(terrain => terrain.value).ToArray();
 		}
 		private void RightSelectorChoiceAdded(TerrainColor newChoice)
 		{
 			leftColorSelector.AddChoice(newChoice);
-			if (leftColorSelector.index == 0)
+			if (leftColorSelector.index <= 0)
 				leftColorSelector.SetIndex(0);
 
 			ArrayUtility.Add(ref terrainColors.terrainColors, newChoice);
+			IEnumerable<TerrainColor> toOrder = terrainColors.terrainColors;
+			terrainColors.terrainColors = toOrder.OrderBy(terrain => terrain.value).ToArray();
 		}
 
 		private void LeftSelectorChoiceRemoved(int index)
@@ -449,16 +460,10 @@ namespace ABB.Grid.Editor.VisualElements
 			if (rightColorSelector.choices.Count == 0) return;
 
 			rightColorSelector.RemoveChoice(index);
-			if (leftColorSelector.index == index)
-				rightColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
-
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
 
 			if (terrainColors.terrainColors.Length == 0)
-			{
 				session.leftColor = session.rightColor = -1;
-				rightColorSelector.SetIndex(0);
-			}
 
 			OnRemoveTerrain?.Invoke(index);
 		}
@@ -467,16 +472,10 @@ namespace ABB.Grid.Editor.VisualElements
 			if (leftColorSelector.choices.Count == 0) return;
 
 			leftColorSelector.RemoveChoice(index);
-			if (leftColorSelector.index == index)
-				leftColorSelector.SetIndex(index - 1 < 0 ? 0 : index - 1);
-
 			ArrayUtility.RemoveAt(ref terrainColors.terrainColors, index);
 
 			if (terrainColors.terrainColors.Length == 0)
-			{
 				session.leftColor = session.rightColor = -1;
-				leftColorSelector.SetIndex(0);
-			}
 
 			OnRemoveTerrain?.Invoke(index);
 		}

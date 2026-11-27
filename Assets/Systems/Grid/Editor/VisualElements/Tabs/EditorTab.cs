@@ -50,8 +50,7 @@ namespace ABB.Grid.Editor.VisualElements
 			contentContainer.Add(_canvasView);
 
 			///	ADD LOGIC
-			_toolsView.OnLeftColorChanged += (value, color) => _canvasView.CanvasMarkDirtyRepaint();
-			_toolsView.OnRightColorChanged += (value, color) => _canvasView.CanvasMarkDirtyRepaint();
+			_toolsView.RequestCanvasRepaint += _canvasView.CanvasMarkDirtyRepaint;
 			_toolsView.OnGridSizeChanged += _canvasView.SetGridSize;
 			_toolsView.OnEraserClicked += _canvasView.EraseClicked;
 			_toolsView.OnResetGrid += _canvasView.ResetGrid;
@@ -101,7 +100,6 @@ namespace ABB.Grid.Editor.VisualElements
 			_toolsView.SetCurrentGrid(newGrid);
 
 			currentGrid = newGrid;
-			session.saveFileIndex = index;
 
 			return true;
 		}
